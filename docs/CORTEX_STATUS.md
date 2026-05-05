@@ -57,7 +57,7 @@ Subsystem boundaries: Core owns commitment/provenance/dispatch truth; SRE owns r
 
 Grounding rule: any product claim, plan, or implementation seam must name identity/current truth, a code owner, a proof surface, and the model-I/O path. If the relevant code was not read, say so before taking a position.
 
-Current train: `codex-app-cli-task-standard-live-capture-rerun`. Next train: `codex-app-cli-task-standard-stop-gating-live-probe`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
+Current train: `codex-app-cli-task-standard-stop-gating-calibration-probe`. Next train: `codex-app-cli-task-standard-stop-gating-live-run`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
 
 ## Live Product Truth
 
@@ -67,9 +67,9 @@ Current train: `codex-app-cli-task-standard-live-capture-rerun`. Next train: `co
 
 ## Current Focus
 
-- Current tracked train: `codex-app-cli-task-standard-live-capture-rerun`
-- Active quality/risk focus: This product/lab evidence seam reran the task-standard live probe after the transcript-capture fix. It earned fresh Codex CLI proof that signed prospective task-set context reaches the model, the model assimilates it into a pre-tool Work standard / Likely misses / Closure evidence block, and Cortex captures that assistant-authored block into TaskStandardSpine before tool evidence scoring. It still does not earn gate use, behavior lift, output-quality lift, Codex App parity, or shipping promotion.
-- Next product train after the current focus: `codex-app-cli-task-standard-stop-gating-live-probe`
+- Current tracked train: `codex-app-cli-task-standard-stop-gating-calibration-probe`
+- Active quality/risk focus: This product/lab calibration seam proved captured TaskStandardSpine state can feed existing Stop closure law structurally: a premature closure gap blocks with the locked overdue-verification text, a clean evidenced readback closure stays silent, and replay of the latest live capture artifact no longer overblocks. It fixed only task-agnostic standard/evidence alignment and likely-miss risk semantics; it does not earn a live Stop-gating run, behavior lift, output-quality lift, Codex App parity, or shipping promotion.
+- Next product train after the current focus: `codex-app-cli-task-standard-stop-gating-live-run`
 
 ## Bio-To-Code Matrix
 
@@ -214,13 +214,13 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `codex-app-cli-task-standard-stop-gating-live-probe`
+- Train: `codex-app-cli-task-standard-stop-gating-live-run`
 - Surface: product
-- Executive benefit: Prove the next link in the task-standard executive loop: captured model-derived standards can lawfully influence Stop closure gating and continuation resolution through existing identity-continuous Stop text.
-- Why now: Fresh live evidence now proves context delivery, model assimilation, and TaskStandardSpine capture before tool evidence. The remaining product question before behavior comparison is whether that captured state can drive a model-visible closure intervention without overclaiming lift.
-- Primary metric: A live run with Stop blocks enabled records host stdout, context, model assimilation, state capture, gate_used_captured_state=true when a standard/evidence mismatch exists, continuation evidence or honest narrowing resolves/preserves the expectation, no runtime snapshot, unchanged root config, and behavior_lift_claim_allowed=false.
-- Guardrail: Do not edit signed task-standard text, Stop text, SRE law, selector thresholds, hidden-verifier boundaries, root hook configuration, or add behavior-lift claims; this is a gating/continuation proof, not a paired quality comparison.
-- Kill rule: If captured standards cannot drive lawful Stop gating without false blocks on clean closure, record a selector/gating finding and decide between gating remediation, PreToolUse motor inhibition, or scope narrowing before any behavior-lift comparison.
+- Executive benefit: Run the real Codex CLI Stop-gating live check after structural calibration: captured model-derived standards should either drive a lawful Stop block when closure outruns aligned evidence or stay silent when closure is adequately evidenced.
+- Why now: The structural calibration probe now shows captured standards can block a premature closure gap, stay silent on clean readback evidence, and replay the latest live capture without overblock. The next unknown is the same gate-use boundary in a real Codex CLI run.
+- Primary metric: A live run with Stop blocks enabled records Codex-native UserPromptSubmit context, model standard assimilation, TaskStandardSpine state capture, Stop block or clean `pressure_below_visible_threshold` silence from captured state, no runtime snapshot, unchanged root config, and behavior_lift_claim_allowed=false.
+- Guardrail: Do not edit signed task-standard text, Stop text, SRE law, selector thresholds, hidden-verifier boundaries, root hook configuration, or add behavior-lift claims; this is live gate-use evidence, not a paired output-quality comparison.
+- Kill rule: If live captured standards overblock clean closure, underblock a clear mismatch, or fail to expose comparable lifecycle evidence, record the scoped finding and queue alignment, selector, or host-capture remediation before any behavior-lift comparison.
 
 ## Research Lines Under Evaluation
 
@@ -245,6 +245,7 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - The Codex App/CLI communication-boundary audit then classified the recent trickle failures as a localized product proof-quality issue rather than SRE doctrine failure. It records five failure classes: host-contract mismatch, lifecycle-config mismatch, temporal capture mismatch, live-vs-Gate-0 mismatch, and workflow-health/closeout coupling. The task-standard evidence ladder now distinguishes host stdout, host-attached context, model assimilation, state capture, gate use, and behavior-lift permission; task-standard reports separate mechanical success from product-evidence success and mark `partial_delivery_only` as partial evidence only.
 - The Codex App/CLI task-standard PreTool transcript-capture seam then repaired the live capture boundary without changing signed text, Stop text, SRE law, selector thresholds, root hook config, or behavior claims: the OpenAI Codex coordinator now reads product-visible `transcript_path` on PreToolUse with PostToolUse fallback, extracts assistant-authored `Work standard` / `Likely misses` / `Closure evidence` blocks before the first function/tool call, ignores developer context, user text, tool calls, tool outputs, hidden verifier data, and task identity, and stores the first valid block through `TaskStandardSpine`. Gate 0 now requires live-equivalent pre-tool transcript capture before tool evidence scoring, and the no-spend replay against `.cortex/live_validation/openai/codex_app_cli_task_standard_live_probe/run_20260505T195300Z` captured three standard items with state capture observed while gate use and behavior-lift permission remain false. This earns state-capture structural/replay proof only; a fresh live capture rerun and standard-to-gating integration remain unearned.
 - The approved Codex App/CLI task-standard live capture rerun then produced `pass_prework_standard_capture`: the isolated Codex CLI subject emitted the signed UserPromptSubmit context through Codex-native additionalContext with hash `9021a0efef77eb6371eecf4996332d7fce31febae8462decf10b48056f6cf1a9`, the model wrote a Work standard / Likely misses / Closure evidence block before tool execution, and Cortex captured three assistant-authored standard items from product-visible transcript_path on the PreToolUse row before PostToolUse evidence scoring. The boundary ladder is true through state capture and false for gate use and behavior-lift permission; Stop blocks were disabled for the capture probe, root config stayed unchanged, no runtime snapshot loaded, and no unexpected model-visible text appeared.
+- The Codex App/CLI task-standard Stop-gating calibration probe then proved the next structural link without live spend: captured standard items can drive existing Stop verification law, a premature closure gap emits the locked overdue-verification block text with rendered hash `a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc`, a clean readback closure stays silent with `pressure_below_visible_threshold`, and replay of `.cortex/live_validation/openai/codex_app_cli_task_standard_live_probe/run_20260505T213824Z` no longer overblocks. The seam fixed a task-agnostic alignment bug where trailing punctuation prevented `cat.` from aligning with the `cat` command and tightened generic `likely_miss` handling so likely misses act as risk checks rather than automatic closure requirements. This earns structural gate calibration only; no live Stop-gating run, behavior lift, output-quality lift, or broad task-standard claim is earned.
 
 ## Canonical Proof
 
@@ -367,4 +368,5 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/recon/cortex_codex_app_cli_communication_boundary_audit_and_hardening.md`
 - `docs/recon/cortex_codex_app_cli_task_standard_pretool_transcript_capture.md`
 - `docs/recon/cortex_codex_app_cli_task_standard_live_capture_rerun.md`
+- `docs/recon/cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md`
 - `docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md`

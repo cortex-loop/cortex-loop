@@ -325,13 +325,13 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-task-standard-live-capture-rerun`
+- Slug: `codex-app-cli-task-standard-stop-gating-calibration-probe`
 
 ### Next Product Train
 
-- Slug: `codex-app-cli-task-standard-stop-gating-live-probe`
+- Slug: `codex-app-cli-task-standard-stop-gating-live-run`
 - Surface: `product`
-- Why now: Fresh live evidence now proves context delivery, model assimilation, and TaskStandardSpine capture before tool evidence. The remaining product question before behavior comparison is whether that captured state can drive a model-visible closure intervention without overclaiming lift.
+- Why now: The structural calibration probe now shows captured standards can block a premature closure gap, stay silent on clean readback evidence, and replay the latest live capture without overblock. The next unknown is the same gate-use boundary in a real Codex CLI run.
 
 ### Research Lines Under Evaluation
 
@@ -367,6 +367,7 @@ state, read `internal/truth/cortex_status.json` directly.
 - The Codex App/CLI communication-boundary audit then classified the recent trickle failures as a localized product proof-quality issue rather than SRE doctrine failure. It records five failure classes: host-contract mismatch, lifecycle-config mismatch, temporal capture mismatch, live-vs-Gate-0 mismatch, and workflow-health/closeout coupling. The task-standard evidence ladder now distinguishes host stdout, host-attached context, model assimilation, state capture, gate use, and behavior-lift permission; task-standard reports separate mechanical success from product-evidence success and mark `partial_delivery_only` as partial evidence only.
 - The Codex App/CLI task-standard PreTool transcript-capture seam then repaired the live capture boundary without changing signed text, Stop text, SRE law, selector thresholds, root hook config, or behavior claims: the OpenAI Codex coordinator now reads product-visible `transcript_path` on PreToolUse with PostToolUse fallback, extracts assistant-authored `Work standard` / `Likely misses` / `Closure evidence` blocks before the first function/tool call, ignores developer context, user text, tool calls, tool outputs, hidden verifier data, and task identity, and stores the first valid block through `TaskStandardSpine`. Gate 0 now requires live-equivalent pre-tool transcript capture before tool evidence scoring, and the no-spend replay against `.cortex/live_validation/openai/codex_app_cli_task_standard_live_probe/run_20260505T195300Z` captured three standard items with state capture observed while gate use and behavior-lift permission remain false. This earns state-capture structural/replay proof only; a fresh live capture rerun and standard-to-gating integration remain unearned.
 - The approved Codex App/CLI task-standard live capture rerun then produced `pass_prework_standard_capture`: the isolated Codex CLI subject emitted the signed UserPromptSubmit context through Codex-native additionalContext with hash `9021a0efef77eb6371eecf4996332d7fce31febae8462decf10b48056f6cf1a9`, the model wrote a Work standard / Likely misses / Closure evidence block before tool execution, and Cortex captured three assistant-authored standard items from product-visible transcript_path on the PreToolUse row before PostToolUse evidence scoring. The boundary ladder is true through state capture and false for gate use and behavior-lift permission; Stop blocks were disabled for the capture probe, root config stayed unchanged, no runtime snapshot loaded, and no unexpected model-visible text appeared.
+- The Codex App/CLI task-standard Stop-gating calibration probe then proved the next structural link without live spend: captured standard items can drive existing Stop verification law, a premature closure gap emits the locked overdue-verification block text with rendered hash `a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc`, a clean readback closure stays silent with `pressure_below_visible_threshold`, and replay of `.cortex/live_validation/openai/codex_app_cli_task_standard_live_probe/run_20260505T213824Z` no longer overblocks. The seam fixed a task-agnostic alignment bug where trailing punctuation prevented `cat.` from aligning with the `cat` command and tightened generic `likely_miss` handling so likely misses act as risk checks rather than automatic closure requirements. This earns structural gate calibration only; no live Stop-gating run, behavior lift, output-quality lift, or broad task-standard claim is earned.
 <!-- END GENERATED: current-state-and-strategy -->
 
 ### V2 Model-I/O Analysis
@@ -730,6 +731,5 @@ status registry wins on current-state questions. Conflicts resolve by
 which dimension the question is in; this document does not authorize
 breaking packet law or current-state truth.
 
-This document is updated when learnings warrant. Routine state changes
-flow through the registry and regenerate sections §2, §4, §5 automatically;
-narrative sections change only when closeout marks a load-bearing lesson.
+This document is updated when learnings warrant. Routine state changes flow
+through registry regeneration; narrative changes require a load-bearing lesson.

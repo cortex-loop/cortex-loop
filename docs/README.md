@@ -156,6 +156,10 @@ Active docs:
   live Codex CLI evidence that signed task-standard context reaches the model,
   the model writes a pre-tool standard block, and Cortex captures it into
   `TaskStandardSpine` before tool evidence scoring
+- [Cortex Codex App/CLI Task-Standard Stop-Gating Calibration Probe](recon/cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md) —
+  structural calibration evidence that captured task standards can block
+  premature Stop closure while clean readback evidence stays silent, with the
+  latest live capture replay no longer overblocking
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch

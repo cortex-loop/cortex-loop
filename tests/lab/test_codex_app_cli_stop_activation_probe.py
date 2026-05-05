@@ -26,6 +26,8 @@ from lab.codex_app_cli_stop_activation_probe import (
     TASK_STANDARD_LIVE_HOOK_EVENTS,
     TASK_STANDARD_LIVE_OUTPUT_ROOT,
     TASK_STANDARD_LIVE_PROMPT,
+    TASK_STANDARD_STOP_GATING_APPROVAL_ENV,
+    TASK_STANDARD_STOP_GATING_OUTPUT_ROOT,
     run_gate0_probe,
     run_live_canary_probe,
     run_product_event_capture_live_probe,
@@ -36,6 +38,8 @@ from lab.codex_app_cli_stop_activation_probe import (
     run_task_standard_pretool_transcript_replay,
     run_task_standard_live_gate0_probe,
     run_task_standard_live_probe,
+    run_task_standard_stop_gating_gate0_probe,
+    run_task_standard_stop_gating_live_probe,
 )
 
 
@@ -463,6 +467,96 @@ def test_task_standard_pretool_transcript_replay_captures_prior_live_shape(
     )
 
 
+def test_task_standard_stop_gating_live_refuses_without_explicit_approval(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv(TASK_STANDARD_STOP_GATING_APPROVAL_ENV, raising=False)
+
+    report = run_task_standard_stop_gating_live_probe(output_root=tmp_path)
+
+    assert report["passed"] is False
+    assert report["live_probe_ran"] is False
+    assert report["verdict"] == "not_run"
+    assert report["blocked_reason"] == (
+        "task_standard_stop_gating_live_requires_explicit_current_turn_approval"
+    )
+    assert report["approval_env"] == TASK_STANDARD_STOP_GATING_APPROVAL_ENV
+
+
+def test_task_standard_stop_gating_gate0_calibrates_block_and_clean_silence(
+    tmp_path: Path,
+) -> None:
+    root_config = Path(".codex/config.toml")
+    root_config_before = root_config.read_text(encoding="utf-8")
+
+    report = run_task_standard_stop_gating_gate0_probe(output_root=tmp_path)
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_gating_calibrated"
+    assert report["case_results"] == {
+        "premature_closure_gap_blocks": True,
+        "clean_evidenced_closure_stays_silent": True,
+        "latest_live_capture_replay_available": True,
+        "latest_live_capture_replay_does_not_overblock": True,
+    }
+    assert report["boundary_results"] == {
+        "root_config_unchanged": True,
+        "subject_config_product_hook_only": True,
+        "subject_config_enables_task_standard_text": True,
+        "subject_config_omits_runtime_snapshot": True,
+        "subject_config_does_not_suppress_stop_blocks": True,
+        "no_runtime_snapshot_fixture": True,
+        "no_unexpected_model_visible_text": True,
+    }
+    assert report["stop_stdout_payload"] == {
+        "decision": "block",
+        "reason": EXPECTED_OVERDUE_VERIFICATION_TEXT,
+    }
+    assert report["rendered_text_hash"]
+    assert report["captured_standard_ids"]
+    assert report["gap_unmatched_standard_item_ids"]
+    assert report["clean_evidence_item_ids"]
+    assert report["clean_unmatched_standard_item_ids"] == []
+    assert report["overblock_detection"] == {
+        "clean_control_overblock": False,
+        "latest_live_capture_replay_overblock": False,
+        "latest_live_capture_replay_missing": False,
+        "latest_live_capture_replay_source": str(
+            codex_app_cli_stop_activation_probe._task_standard_stop_gating_replay_artifact_root()
+        ),
+        "latest_live_capture_replay_unmatched_standard_item_ids": [],
+        "failure_reason": None,
+    }
+    assert report["boundary_evidence_ladder"] == {
+        "host_stdout_contract_ok": True,
+        "host_attached_context_observed": False,
+        "model_assimilation_observed": True,
+        "state_capture_observed": True,
+        "gate_used_captured_state": True,
+        "behavior_lift_claim_allowed": False,
+    }
+    assert root_config.read_text(encoding="utf-8") == root_config_before
+    rows = [
+        json.loads(line)
+        for line in Path(str(report["trajectory_path"]))
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    ]
+    sequence_rows = {row["case_id"]: row for row in rows if "steps" in row}
+    assert sequence_rows["premature_closure_gap"]["final_stdout_payload"] == {
+        "decision": "block",
+        "reason": EXPECTED_OVERDUE_VERIFICATION_TEXT,
+    }
+    assert sequence_rows["clean_evidenced_closure"]["final_silence_reason"] == (
+        "pressure_below_visible_threshold"
+    )
+    assert sequence_rows["latest_live_capture_replay"]["final_silence_reason"] == (
+        "pressure_below_visible_threshold"
+    )
+
+
 def test_product_perception_live_uses_separate_no_snapshot_output_root() -> None:
     selected_root = codex_app_cli_stop_activation_probe._selected_output_root(
         SimpleArgs(
@@ -512,6 +606,19 @@ def test_task_standard_live_uses_separate_output_root() -> None:
 
     assert selected_root == TASK_STANDARD_LIVE_OUTPUT_ROOT
     assert "codex_app_cli_task_standard_live_probe" in str(selected_root)
+
+
+def test_task_standard_stop_gating_uses_separate_output_root() -> None:
+    selected_root = codex_app_cli_stop_activation_probe._selected_output_root(
+        SimpleArgs(
+            output_root=None,
+            product_perception_live=False,
+            task_standard_stop_gating_gate0=True,
+        )
+    )
+
+    assert selected_root == TASK_STANDARD_STOP_GATING_OUTPUT_ROOT
+    assert "codex_app_cli_task_standard_stop_gating_probe" in str(selected_root)
 
 
 def test_product_perception_live_subject_config_omits_runtime_snapshot(
@@ -733,10 +840,12 @@ def test_live_trajectory_rows_record_no_snapshot_product_state() -> None:
                 }
             ),
             "stop_hook_active": False,
+            "task_standard_evidence_item_ids": [],
             "task_standard_evidence_ref_count": 0,
             "task_standard_final_closure_claim_count": 0,
             "task_standard_malformed_standard_block_count": 0,
             "task_standard_standard_item_count": 0,
+            "task_standard_standard_item_ids": [],
             "task_standard_standard_item_source_refs": [],
             "task_standard_unmatched_standard_item_ids": [],
             "task_standard_visible_obligation_count": 0,
@@ -786,6 +895,9 @@ class SimpleArgs:
         stop_continuation_resolution_live=False,
         task_standard_live_gate0=False,
         task_standard_live=False,
+        task_standard_pretool_transcript_replay=False,
+        task_standard_stop_gating_gate0=False,
+        task_standard_stop_gating_live=False,
     ) -> None:
         self.output_root = output_root
         self.product_perception_live = product_perception_live
@@ -794,3 +906,8 @@ class SimpleArgs:
         self.stop_continuation_resolution_live = stop_continuation_resolution_live
         self.task_standard_live_gate0 = task_standard_live_gate0
         self.task_standard_live = task_standard_live
+        self.task_standard_pretool_transcript_replay = (
+            task_standard_pretool_transcript_replay
+        )
+        self.task_standard_stop_gating_gate0 = task_standard_stop_gating_gate0
+        self.task_standard_stop_gating_live = task_standard_stop_gating_live

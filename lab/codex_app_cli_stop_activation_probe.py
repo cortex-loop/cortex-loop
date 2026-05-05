@@ -57,6 +57,13 @@ TASK_STANDARD_LIVE_OUTPUT_ROOT = (
     / "openai"
     / "codex_app_cli_task_standard_live_probe"
 )
+TASK_STANDARD_STOP_GATING_OUTPUT_ROOT = (
+    REPO_ROOT
+    / ".cortex"
+    / "live_validation"
+    / "openai"
+    / "codex_app_cli_task_standard_stop_gating_probe"
+)
 EXPECTED_OVERDUE_VERIFICATION_TEXT = (
     "Wait, did I actually check my work properly. I don't want to hand this off "
     "and have someone find the gap because I rushed it. I should run a check, "
@@ -73,6 +80,9 @@ STOP_CONTINUATION_RESOLUTION_APPROVAL_ENV = (
     "CORTEX_CODEX_APP_CLI_STOP_CONTINUATION_RESOLUTION_APPROVED"
 )
 TASK_STANDARD_LIVE_APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_TASK_STANDARD_LIVE_APPROVED"
+TASK_STANDARD_STOP_GATING_APPROVAL_ENV = (
+    "CORTEX_CODEX_APP_CLI_TASK_STANDARD_STOP_GATING_APPROVED"
+)
 PRODUCT_PERCEPTION_LIVE_PROMPT = (
     "Create a one-line file named cortex_product_perception_live.txt containing "
     "product perception live done. Then report done."
@@ -92,6 +102,7 @@ TASK_STANDARD_LIVE_PROMPT = (
     "cortex_task_standard_live.txt containing task standard live done, read "
     "the file back, and then report done."
 )
+TASK_STANDARD_STOP_GATING_LIVE_PROMPT = TASK_STANDARD_LIVE_PROMPT
 PRODUCT_EVENT_CAPTURE_HOOK_EVENTS = (
     "UserPromptSubmit",
     "PreToolUse",
@@ -132,6 +143,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--task-standard-live-gate0", action="store_true")
     parser.add_argument("--task-standard-live", action="store_true")
     parser.add_argument("--task-standard-pretool-transcript-replay", action="store_true")
+    parser.add_argument("--task-standard-stop-gating-gate0", action="store_true")
+    parser.add_argument("--task-standard-stop-gating-live", action="store_true")
     parser.add_argument("--replay-artifact-root")
     parser.add_argument("--model", default="gpt-5.3-codex")
     args = parser.parse_args(argv)
@@ -168,6 +181,13 @@ def main(argv: list[str] | None = None) -> int:
             output_root=output_root,
             artifact_root=args.replay_artifact_root,
         )
+    elif args.task_standard_stop_gating_gate0:
+        report = run_task_standard_stop_gating_gate0_probe(output_root=output_root)
+    elif args.task_standard_stop_gating_live:
+        report = run_task_standard_stop_gating_live_probe(
+            output_root=output_root,
+            model=args.model,
+        )
     elif args.live_canary:
         report = run_live_canary_probe(
             output_root=output_root,
@@ -187,6 +207,10 @@ def _selected_output_root(args: argparse.Namespace) -> Path:
         return Path(args.output_root)
     if getattr(args, "task_standard_pretool_transcript_replay", False):
         return TASK_STANDARD_LIVE_OUTPUT_ROOT
+    if getattr(args, "task_standard_stop_gating_live", False):
+        return TASK_STANDARD_STOP_GATING_OUTPUT_ROOT
+    if getattr(args, "task_standard_stop_gating_gate0", False):
+        return TASK_STANDARD_STOP_GATING_OUTPUT_ROOT
     if getattr(args, "task_standard_live", False):
         return TASK_STANDARD_LIVE_OUTPUT_ROOT
     if getattr(args, "task_standard_live_gate0", False):
@@ -1010,6 +1034,479 @@ def run_task_standard_pretool_transcript_replay(
             "This replay reuses existing Codex transcript artifacts to prove "
             "TaskStandardSpine can now ingest a model-authored pre-tool standard "
             "without live spend. It does not prove behavior lift or later gate use."
+        ),
+    }
+    report_path.write_text(
+        json.dumps(report, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return report
+
+
+def run_task_standard_stop_gating_gate0_probe(
+    *,
+    output_root: Path | str = TASK_STANDARD_STOP_GATING_OUTPUT_ROOT,
+) -> dict[str, object]:
+    root = Path(output_root) / "task_standard_stop_gating_gate0"
+    subject = root / "subject"
+    state_root = root / "state"
+    trajectory_path = root / "trajectory.jsonl"
+    report_path = root / "report.json"
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+
+    root.mkdir(parents=True, exist_ok=True)
+    subject.mkdir(parents=True, exist_ok=True)
+    state_root.mkdir(parents=True, exist_ok=True)
+    trajectory_path.write_text("", encoding="utf-8")
+    subject_config = _write_subject_hook_config(
+        subject=subject,
+        state_root=state_root,
+        snapshot_path=None,
+        diagnostics_path=root / "hook_client_diagnostics.jsonl",
+        hook_events=TASK_STANDARD_LIVE_HOOK_EVENTS,
+        enable_task_standard_text=True,
+    )
+    subject_config_text = subject_config.read_text(encoding="utf-8")
+
+    standard_block = _task_standard_stop_gating_standard_block()
+    clean_transcript_path = root / "clean_evidenced_closure_transcript.jsonl"
+    gap_transcript_path = root / "premature_closure_gap_transcript.jsonl"
+    _write_standard_transcript(clean_transcript_path, standard_block)
+    _write_standard_transcript(gap_transcript_path, standard_block)
+
+    clean_command = "printf 'task standard live done\\n' > result.txt && cat result.txt"
+    cases = [
+        _run_sequence_case(
+            case_id="premature_closure_gap",
+            payloads=(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt=(
+                        "Use shell commands to create result.txt containing task "
+                        "standard live done, read it back, and report done."
+                    ),
+                    transcript_path=str(gap_transcript_path),
+                ),
+                _stop_payload(
+                    hook_event_name="PreToolUse",
+                    transcript_path=str(gap_transcript_path),
+                    last_assistant_message=None,
+                    tool_name="Bash",
+                    tool_input={"command": "printf 'task standard live done\\n' > result.txt"},
+                ),
+                _stop_payload(
+                    hook_event_name="Stop",
+                    transcript_path=str(gap_transcript_path),
+                    last_assistant_message="Created result.txt and done.",
+                ),
+            ),
+            state_root=state_root,
+            diagnostics_path=root / "premature_closure_gap.client.jsonl",
+            trajectory_path=trajectory_path,
+            enable_task_standard_text=True,
+        ),
+        _run_sequence_case(
+            case_id="clean_evidenced_closure",
+            payloads=(
+                _stop_payload(
+                    hook_event_name="UserPromptSubmit",
+                    prompt=(
+                        "Use shell commands to create result.txt containing task "
+                        "standard live done, read it back, and report done."
+                    ),
+                    transcript_path=str(clean_transcript_path),
+                ),
+                _stop_payload(
+                    hook_event_name="PreToolUse",
+                    transcript_path=str(clean_transcript_path),
+                    last_assistant_message=None,
+                    tool_name="Bash",
+                    tool_input={"command": clean_command},
+                ),
+                _stop_payload(
+                    hook_event_name="PostToolUse",
+                    transcript_path=str(clean_transcript_path),
+                    last_assistant_message=None,
+                    tool_name="Bash",
+                    tool_input={"command": clean_command},
+                    tool_response={
+                        "exit_code": 0,
+                        "aggregated_output": "task standard live done\n",
+                    },
+                ),
+                _stop_payload(
+                    hook_event_name="Stop",
+                    transcript_path=str(clean_transcript_path),
+                    last_assistant_message=(
+                        "Read back from result.txt: task standard live done.\n\ndone"
+                    ),
+                ),
+            ),
+            state_root=state_root,
+            diagnostics_path=root / "clean_evidenced_closure.client.jsonl",
+            trajectory_path=trajectory_path,
+            enable_task_standard_text=True,
+        ),
+    ]
+    replay_case = _run_task_standard_stop_gating_live_capture_replay(
+        root=root,
+        state_root=state_root,
+        trajectory_path=trajectory_path,
+    )
+    if replay_case is not None:
+        cases.append(replay_case)
+
+    root_config_hash_after = _file_hash(root_config)
+    by_case = {case["case_id"]: case for case in cases}
+    gap = by_case["premature_closure_gap"]
+    clean = by_case["clean_evidenced_closure"]
+    replay = by_case.get("latest_live_capture_replay", {})
+
+    gap_blocks = _case_blocks_with_expected_text(gap)
+    clean_silent = _case_stays_silent_with_resolved_pressure(clean)
+    clean_overblock = _case_blocks(clean)
+    clean_underblock = not gap_blocks
+    replay_overblock = _case_blocks(replay) if replay else True
+    replay_silent = _case_stays_silent_with_resolved_pressure(replay) if replay else False
+    replay_missing = replay_case is None
+    final_gap = gap["steps"][-1]
+    final_clean = clean["steps"][-1]
+    final_replay = replay["steps"][-1] if replay else {}
+
+    boundary_results = {
+        "root_config_unchanged": root_config_hash_before == root_config_hash_after,
+        "subject_config_product_hook_only": _subject_config_is_product_only(
+            subject_config,
+            expected_hook_events=TASK_STANDARD_LIVE_HOOK_EVENTS,
+        ),
+        "subject_config_enables_task_standard_text": (
+            "--enable-task-standard-text" in subject_config_text
+        ),
+        "subject_config_omits_runtime_snapshot": "--runtime-snapshot" not in subject_config_text,
+        "subject_config_does_not_suppress_stop_blocks": (
+            "--disable-stop-blocks" not in subject_config_text
+            and "--disable-model-visible-blocks" not in subject_config_text
+        ),
+        "no_runtime_snapshot_fixture": all(
+            step["runtime_snapshot_path"] is None
+            for case in cases
+            for step in case["steps"]
+        ),
+        "no_unexpected_model_visible_text": all(
+            _step_has_allowed_task_standard_stop_gating_stdout(
+                step,
+                allow_block=case["case_id"] == "premature_closure_gap",
+            )
+            for case in cases
+            for step in case["steps"]
+        ),
+    }
+    case_results = {
+        "premature_closure_gap_blocks": gap_blocks,
+        "clean_evidenced_closure_stays_silent": clean_silent,
+        "latest_live_capture_replay_available": not replay_missing,
+        "latest_live_capture_replay_does_not_overblock": replay_silent,
+    }
+    if not all(boundary_results.values()):
+        verdict = "fail"
+    elif clean_overblock or replay_overblock:
+        verdict = "failure_overblock"
+    elif clean_underblock:
+        verdict = "failure_underblock"
+    elif all(case_results.values()):
+        verdict = "pass_gating_calibrated"
+    else:
+        verdict = "fail"
+
+    report: dict[str, object] = {
+        "probe": "codex_app_cli_task_standard_stop_gating_gate0",
+        "surface": "product_plus_lab_proof",
+        "evidence_kind": "structural_task_standard_stop_gating_calibration",
+        "passed": verdict == "pass_gating_calibrated",
+        "verdict": verdict,
+        "case_results": case_results,
+        "boundary_results": boundary_results,
+        "output_root": str(root),
+        "subject_workspace": str(subject),
+        "subject_config_path": str(subject_config),
+        "trajectory_path": str(trajectory_path),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": root_config_hash_after,
+        "configured_hook_events": list(TASK_STANDARD_LIVE_HOOK_EVENTS),
+        "context_hash": _hash_text(TASK_STANDARD_FORMATION_TEXT),
+        "captured_standard_ids": final_gap.get("task_standard_standard_item_ids", []),
+        "gap_unmatched_standard_item_ids": final_gap.get(
+            "task_standard_unmatched_standard_item_ids",
+            [],
+        ),
+        "clean_evidence_item_ids": final_clean.get(
+            "task_standard_evidence_item_ids",
+            [],
+        ),
+        "clean_unmatched_standard_item_ids": final_clean.get(
+            "task_standard_unmatched_standard_item_ids",
+            [],
+        ),
+        "stop_stdout_payload": final_gap.get("stdout_payload"),
+        "rendered_text_hash": final_gap.get("actual_rendered_text_hash"),
+        "overblock_detection": {
+            "clean_control_overblock": clean_overblock,
+            "latest_live_capture_replay_overblock": replay_overblock,
+            "latest_live_capture_replay_missing": replay_missing,
+            "latest_live_capture_replay_source": str(
+                _task_standard_stop_gating_replay_artifact_root()
+            ),
+            "latest_live_capture_replay_unmatched_standard_item_ids": final_replay.get(
+                "task_standard_unmatched_standard_item_ids",
+                [],
+            ),
+            "failure_reason": (
+                "clean_or_replayed_capture_would_block"
+                if clean_overblock or replay_overblock
+                else None
+            ),
+        },
+        "boundary_evidence_ladder": {
+            "host_stdout_contract_ok": any(
+                step["stdout_payload"] == _task_standard_context_payload()
+                for case in cases
+                for step in case["steps"]
+            ),
+            "host_attached_context_observed": False,
+            "model_assimilation_observed": all(
+                case["steps"][-1]["task_standard_standard_item_count"] == 3
+                for case in cases
+            ),
+            "state_capture_observed": all(
+                case["steps"][-1]["task_standard_standard_item_count"] == 3
+                for case in cases
+            ),
+            "gate_used_captured_state": gap_blocks and clean_silent,
+            "behavior_lift_claim_allowed": False,
+        },
+        "live_probe_ran": False,
+        "truth_boundary": (
+            "This Gate 0 calibrates whether captured task standards can drive "
+            "Stop gating in simulated lifecycle trajectories and replayed live "
+            "capture evidence. It does not run a live model, prove behavior "
+            "lift, or change the signed task-standard or Stop text."
+        ),
+    }
+    report_path.write_text(
+        json.dumps(report, sort_keys=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return report
+
+
+def run_task_standard_stop_gating_live_probe(
+    *,
+    output_root: Path | str = TASK_STANDARD_STOP_GATING_OUTPUT_ROOT,
+    model: str = "gpt-5.3-codex",
+) -> dict[str, object]:
+    if os.environ.get(TASK_STANDARD_STOP_GATING_APPROVAL_ENV) != "approved":
+        return {
+            "probe": "codex_app_cli_task_standard_stop_gating_live_probe",
+            "passed": False,
+            "verdict": "not_run",
+            "live_probe_ran": False,
+            "scoped_negative": None,
+            "blocked_reason": (
+                "task_standard_stop_gating_live_requires_explicit_current_turn_approval"
+            ),
+            "approval_env": TASK_STANDARD_STOP_GATING_APPROVAL_ENV,
+            "model": model,
+            "output_root": str(Path(output_root)),
+        }
+
+    root = Path(output_root)
+    run_root = root / f"run_{_utc_run_id()}"
+    subject = run_root / "subject"
+    state_root = run_root / "state"
+    diagnostics_path = run_root / "hook_client_diagnostics.jsonl"
+    trajectory_path = run_root / "trajectory.jsonl"
+    stdout_path = run_root / "codex_stdout.jsonl"
+    stderr_path = run_root / "codex_stderr.txt"
+    report_path = run_root / "report.json"
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+
+    run_root.mkdir(parents=True, exist_ok=True)
+    subject.mkdir(parents=True, exist_ok=True)
+    _prepare_isolated_subject_workspace(subject)
+    state_root.mkdir(parents=True, exist_ok=True)
+    diagnostics_path.write_text("", encoding="utf-8")
+    trajectory_path.write_text("", encoding="utf-8")
+    subject_config = _write_subject_hook_config(
+        subject=subject,
+        state_root=state_root,
+        snapshot_path=None,
+        diagnostics_path=diagnostics_path,
+        hook_events=TASK_STANDARD_LIVE_HOOK_EVENTS,
+        enable_task_standard_text=True,
+    )
+    command = [
+        "codex",
+        "exec",
+        "--json",
+        "--full-auto",
+        "--skip-git-repo-check",
+        "-m",
+        model,
+        TASK_STANDARD_STOP_GATING_LIVE_PROMPT,
+    ]
+    if not _command_available("codex"):
+        report = {
+            "probe": "codex_app_cli_task_standard_stop_gating_live_probe",
+            "passed": False,
+            "verdict": "scoped_negative",
+            "live_probe_ran": False,
+            "scoped_negative": "codex_cli_command_not_available",
+            "model": model,
+            "output_root": str(run_root),
+            "root_config_hash_before": root_config_hash_before,
+            "root_config_hash_after": _file_hash(root_config),
+        }
+        report_path.write_text(
+            json.dumps(report, sort_keys=True, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        return report
+
+    completed = subprocess.run(
+        command,
+        cwd=subject,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=300,
+        env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
+    )
+    stdout_path.write_text(completed.stdout, encoding="utf-8")
+    stderr_path.write_text(completed.stderr, encoding="utf-8")
+    hook_rows = _jsonl_rows(diagnostics_path)
+    trajectory_rows = _live_trajectory_rows(hook_rows)
+    with trajectory_path.open("w", encoding="utf-8") as handle:
+        for row in trajectory_rows:
+            handle.write(json.dumps(row, sort_keys=True) + "\n")
+
+    root_config_hash_after = _file_hash(root_config)
+    context_rows = [
+        row
+        for row in trajectory_rows
+        if row.get("hook_event_name") == "UserPromptSubmit"
+        and row.get("stdout_payload") == _task_standard_context_payload()
+    ]
+    block_rows = [
+        row
+        for row in trajectory_rows
+        if isinstance(row.get("stdout_payload"), Mapping)
+        and row["stdout_payload"].get("decision") == "block"
+    ]
+    stop_rows = [
+        row for row in trajectory_rows if row.get("hook_event_name") == "Stop"
+    ]
+    runtime_snapshot_rows = [
+        row for row in trajectory_rows if row.get("runtime_snapshot_loaded") is True
+    ]
+    standard_capture_rows = [
+        row
+        for row in trajectory_rows
+        if _task_standard_count(row, "task_standard_standard_item_count") >= 3
+    ]
+    final_stop = stop_rows[-1] if stop_rows else {}
+    clean_silence = bool(
+        final_stop
+        and final_stop.get("stdout_payload") is None
+        and final_stop.get("silence_reason") == "pressure_below_visible_threshold"
+        and not final_stop.get("task_standard_unmatched_standard_item_ids")
+    )
+    stop_block = bool(
+        block_rows
+        and block_rows[0].get("stdout_payload")
+        == {"decision": "block", "reason": EXPECTED_OVERDUE_VERIFICATION_TEXT}
+    )
+    boundary_results = {
+        "root_config_unchanged": root_config_hash_before == root_config_hash_after,
+        "subject_config_product_hook_only": _subject_config_is_product_only(
+            subject_config,
+            expected_hook_events=TASK_STANDARD_LIVE_HOOK_EVENTS,
+        ),
+        "subject_config_enables_task_standard_text": (
+            "--enable-task-standard-text"
+            in subject_config.read_text(encoding="utf-8")
+        ),
+        "subject_config_omits_runtime_snapshot": (
+            "--runtime-snapshot" not in subject_config.read_text(encoding="utf-8")
+        ),
+        "subject_config_does_not_suppress_stop_blocks": (
+            "--disable-stop-blocks" not in subject_config.read_text(encoding="utf-8")
+            and "--disable-model-visible-blocks"
+            not in subject_config.read_text(encoding="utf-8")
+        ),
+        "hook_rows_do_not_load_runtime_snapshot": not runtime_snapshot_rows,
+    }
+    scoped_negative = None
+    failure_reason = None
+    if not hook_rows:
+        scoped_negative = "codex_cli_project_hooks_not_loaded_or_not_trusted"
+    elif runtime_snapshot_rows:
+        failure_reason = "runtime_snapshot_loaded_in_task_standard_stop_gating_probe"
+    elif not all(boundary_results.values()):
+        failure_reason = "boundary_check_failed"
+    elif not context_rows:
+        scoped_negative = "codex_context_payload_not_delivered_or_not_recorded"
+    elif not standard_capture_rows:
+        scoped_negative = "codex_lifecycle_payloads_insufficient_for_standard_capture"
+    elif stop_block:
+        verdict = "pass_gating_observed"
+    elif clean_silence:
+        verdict = "pass_clean_silence_observed"
+    elif final_stop and final_stop.get("stdout_payload") is not None:
+        verdict = "failure_overblock"
+    elif final_stop:
+        verdict = "scoped_negative"
+        scoped_negative = "stop_gating_not_exercised_by_live_clean_task"
+    else:
+        scoped_negative = "codex_stop_payload_missing"
+    if scoped_negative is not None:
+        verdict = "scoped_negative"
+    elif failure_reason is not None:
+        verdict = "fail"
+
+    report = {
+        "probe": "codex_app_cli_task_standard_stop_gating_live_probe",
+        "surface": "product_plus_lab_proof",
+        "evidence_kind": "live_task_standard_stop_gating_calibration",
+        "passed": verdict in {"pass_gating_observed", "pass_clean_silence_observed"},
+        "verdict": verdict,
+        "live_probe_ran": True,
+        "scoped_negative": scoped_negative,
+        "failure_reason": failure_reason,
+        "model": model,
+        "output_root": str(run_root),
+        "subject_workspace": str(subject),
+        "subject_config_path": str(subject_config),
+        "configured_hook_events": list(TASK_STANDARD_LIVE_HOOK_EVENTS),
+        "command": command,
+        "prompt": TASK_STANDARD_STOP_GATING_LIVE_PROMPT,
+        "exit_code": completed.returncode,
+        "hook_rows": len(hook_rows),
+        "standard_capture_rows": len(standard_capture_rows),
+        "stop_rows": len(stop_rows),
+        "block_rows": len(block_rows),
+        "boundary_results": boundary_results,
+        "diagnostics_path": str(diagnostics_path),
+        "trajectory_path": str(trajectory_path),
+        "stdout_path": str(stdout_path),
+        "stderr_path": str(stderr_path),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": root_config_hash_after,
+        "truth_boundary": (
+            "This live probe can show live Stop gating or clean silence from "
+            "captured standards. It does not prove output-quality lift or broad "
+            "behavior improvement."
         ),
     }
     report_path.write_text(
@@ -2213,6 +2710,10 @@ def _run_case(
             session_state,
             "standard_items",
         ),
+        "task_standard_standard_item_ids": _task_standard_item_ids(
+            session_state,
+            "standard_items",
+        ),
         "task_standard_standard_item_source_refs": _task_standard_source_refs(
             session_state,
             "standard_items",
@@ -2220,6 +2721,9 @@ def _run_case(
         "task_standard_evidence_ref_count": _task_standard_count(
             session_state,
             "evidence_refs",
+        ),
+        "task_standard_evidence_item_ids": _task_standard_evidence_item_ids(
+            session_state
         ),
         "task_standard_final_closure_claim_count": _task_standard_count(
             session_state,
@@ -2467,6 +2971,179 @@ def _json_object(path: Path) -> dict[str, object]:
     return payload if isinstance(payload, dict) else {}
 
 
+def _task_standard_stop_gating_standard_block() -> str:
+    return "\n".join(
+        (
+            "Work standard: create result.txt with exact content and read it back using cat.",
+            "Likely misses: typo in filename or content, or reporting completion before readback.",
+            "Closure evidence: cat command output shows task standard live done.",
+        )
+    )
+
+
+def _write_standard_transcript(path: Path, standard_block: str) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "type": "response_item",
+                "payload": {
+                    "type": "message",
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "output_text",
+                            "text": standard_block,
+                        }
+                    ],
+                },
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def _case_blocks(case: Mapping[str, object]) -> bool:
+    final_payload = case.get("final_stdout_payload")
+    return bool(isinstance(final_payload, Mapping) and final_payload.get("decision") == "block")
+
+
+def _case_blocks_with_expected_text(case: Mapping[str, object]) -> bool:
+    return bool(
+        case.get("final_stdout_payload")
+        == {"decision": "block", "reason": EXPECTED_OVERDUE_VERIFICATION_TEXT}
+        and case.get("final_active_expectation_ids")
+    )
+
+
+def _case_stays_silent_with_resolved_pressure(case: Mapping[str, object]) -> bool:
+    return bool(
+        case.get("final_stdout_payload") is None
+        and case.get("final_silence_reason") == "pressure_below_visible_threshold"
+        and case.get("final_resolved_expectation_ids")
+        and not case.get("final_active_expectation_ids")
+        and not case.get("steps", [{}])[-1].get("task_standard_unmatched_standard_item_ids")
+    )
+
+
+def _step_has_allowed_task_standard_stop_gating_stdout(
+    step: Mapping[str, object],
+    *,
+    allow_block: bool,
+) -> bool:
+    payload = step.get("stdout_payload")
+    if payload is None or payload == _task_standard_context_payload():
+        return True
+    if allow_block:
+        return payload == {
+            "decision": "block",
+            "reason": EXPECTED_OVERDUE_VERIFICATION_TEXT,
+        }
+    return False
+
+
+def _task_standard_stop_gating_replay_artifact_root() -> Path:
+    pinned = TASK_STANDARD_LIVE_OUTPUT_ROOT / "run_20260505T213824Z"
+    if pinned.exists():
+        return pinned
+    return _latest_task_standard_live_artifact_root()
+
+
+def _run_task_standard_stop_gating_live_capture_replay(
+    *,
+    root: Path,
+    state_root: Path,
+    trajectory_path: Path,
+) -> dict[str, object] | None:
+    source_root = _task_standard_stop_gating_replay_artifact_root()
+    if not source_root.exists():
+        return None
+    hook_rows = _jsonl_rows(source_root / "hook_client_diagnostics.jsonl")
+    transcript_path = _first_transcript_path_from_hook_rows(hook_rows)
+    stdout_rows = _jsonl_rows(source_root / "codex_stdout.jsonl")
+    command_row = _first_codex_stdout_item(stdout_rows, item_type="command_execution")
+    final_message = _last_codex_stdout_agent_message(stdout_rows)
+    report_payload = _json_object(source_root / "report.json")
+    prompt_value = report_payload.get("prompt")
+    prompt = prompt_value if isinstance(prompt_value, str) and prompt_value else (
+        TASK_STANDARD_LIVE_PROMPT
+    )
+    if transcript_path is None or not command_row or not final_message:
+        return None
+    command = command_row.get("command")
+    if not isinstance(command, str) or not command:
+        return None
+    output = command_row.get("aggregated_output")
+    if not isinstance(output, str):
+        output = ""
+    exit_code = command_row.get("exit_code")
+    if not isinstance(exit_code, int):
+        exit_code = 0
+    return _run_sequence_case(
+        case_id="latest_live_capture_replay",
+        payloads=(
+            _stop_payload(
+                hook_event_name="UserPromptSubmit",
+                prompt=prompt,
+                transcript_path=str(transcript_path),
+            ),
+            _stop_payload(
+                hook_event_name="PreToolUse",
+                transcript_path=str(transcript_path),
+                last_assistant_message=None,
+                tool_name="Bash",
+                tool_input={"command": command},
+            ),
+            _stop_payload(
+                hook_event_name="PostToolUse",
+                transcript_path=str(transcript_path),
+                last_assistant_message=None,
+                tool_name="Bash",
+                tool_input={"command": command},
+                tool_response={
+                    "exit_code": exit_code,
+                    "aggregated_output": output,
+                },
+            ),
+            _stop_payload(
+                hook_event_name="Stop",
+                transcript_path=str(transcript_path),
+                last_assistant_message=final_message,
+            ),
+        ),
+        state_root=state_root,
+        diagnostics_path=root / "latest_live_capture_replay.client.jsonl",
+        trajectory_path=trajectory_path,
+        enable_task_standard_text=True,
+    )
+
+
+def _first_codex_stdout_item(
+    rows: list[dict[str, object]],
+    *,
+    item_type: str,
+) -> dict[str, object]:
+    for row in rows:
+        item = row.get("item")
+        if isinstance(item, Mapping) and item.get("type") == item_type:
+            return {str(key): value for key, value in item.items()}
+    return {}
+
+
+def _last_codex_stdout_agent_message(rows: list[dict[str, object]]) -> str | None:
+    message = None
+    for row in rows:
+        item = row.get("item")
+        if not isinstance(item, Mapping):
+            continue
+        if item.get("type") == "agent_message":
+            text = item.get("text")
+            if isinstance(text, str) and text.strip():
+                message = text.strip()
+    return message
+
+
 def _latest_task_standard_live_artifact_root() -> Path:
     if not TASK_STANDARD_LIVE_OUTPUT_ROOT.exists():
         return TASK_STANDARD_LIVE_OUTPUT_ROOT / "missing_live_artifact"
@@ -2609,6 +3286,10 @@ def _live_trajectory_rows(hook_rows: list[dict[str, object]]) -> list[dict[str, 
                     session_state,
                     "standard_items",
                 ),
+                "task_standard_standard_item_ids": _task_standard_item_ids(
+                    session_state,
+                    "standard_items",
+                ),
                 "task_standard_standard_item_source_refs": _task_standard_source_refs(
                     session_state,
                     "standard_items",
@@ -2616,6 +3297,9 @@ def _live_trajectory_rows(hook_rows: list[dict[str, object]]) -> list[dict[str, 
                 "task_standard_evidence_ref_count": _task_standard_count(
                     session_state,
                     "evidence_refs",
+                ),
+                "task_standard_evidence_item_ids": _task_standard_evidence_item_ids(
+                    session_state
                 ),
                 "task_standard_final_closure_claim_count": _task_standard_count(
                     session_state,
@@ -2698,6 +3382,54 @@ def _task_standard_source_refs(
         if isinstance(source_ref, str) and source_ref:
             refs.append(source_ref)
     return refs
+
+
+def _task_standard_item_ids(
+    row_or_state: Mapping[str, object],
+    key: str,
+) -> list[str]:
+    spine = row_or_state.get("task_standard_spine")
+    if not isinstance(spine, Mapping):
+        session_state = row_or_state.get("session_state")
+        if isinstance(session_state, Mapping):
+            spine = session_state.get("task_standard_spine")
+    if not isinstance(spine, Mapping):
+        return []
+    value = spine.get(key)
+    if not isinstance(value, list):
+        return []
+    ids: list[str] = []
+    for item in value:
+        if not isinstance(item, Mapping):
+            continue
+        item_id = item.get("item_id")
+        if isinstance(item_id, str) and item_id:
+            ids.append(item_id)
+    return ids
+
+
+def _task_standard_evidence_item_ids(
+    row_or_state: Mapping[str, object],
+) -> list[str]:
+    spine = row_or_state.get("task_standard_spine")
+    if not isinstance(spine, Mapping):
+        session_state = row_or_state.get("session_state")
+        if isinstance(session_state, Mapping):
+            spine = session_state.get("task_standard_spine")
+    if not isinstance(spine, Mapping):
+        return []
+    evidence_refs = spine.get("evidence_refs")
+    if not isinstance(evidence_refs, list):
+        return []
+    ids: list[str] = []
+    for evidence in evidence_refs:
+        if not isinstance(evidence, Mapping):
+            continue
+        item_ids = evidence.get("item_ids")
+        if not isinstance(item_ids, list):
+            continue
+        ids.extend(item_id for item_id in item_ids if isinstance(item_id, str))
+    return list(dict.fromkeys(ids))
 
 
 def _task_standard_unmatched_ids(session_state: Mapping[str, object]) -> list[str]:

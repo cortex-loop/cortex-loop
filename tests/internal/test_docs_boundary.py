@@ -252,6 +252,12 @@ CODEX_APP_CLI_TASK_STANDARD_LIVE_CAPTURE_RERUN_PATH = (
     / "recon"
     / "cortex_codex_app_cli_task_standard_live_capture_rerun.md"
 )
+CODEX_APP_CLI_TASK_STANDARD_STOP_GATING_CALIBRATION_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md"
+)
 TASK_STANDARD_SRE_CORRESPONDENCE_RECON_PATH = (
     REPO_ROOT
     / "docs"
@@ -986,6 +992,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_codex_app_cli_task_standard_live_run.md",
         "cortex_codex_app_cli_task_standard_pretool_transcript_capture.md",
         "cortex_codex_app_cli_task_standard_spine.md",
+        "cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md",
         "cortex_codex_app_cli_value_ablation_audit.md",
         "cortex_openai_operator_debt_control_enactment.md",
         "cortex_openai_operator_output_quality_fixture_refresh.md",
@@ -1827,7 +1834,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-capture-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stop-gating-calibration-probe"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1853,8 +1860,8 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-capture-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-probe"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stop-gating-calibration-probe"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-run"
 
 
 def test_openai_operator_visible_intervention_live_probe_records_scoped_success() -> None:
@@ -1879,8 +1886,8 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-capture-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-probe"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stop-gating-calibration-probe"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-run"
 
 
 def test_visible_intervention_product_perception_hardening_records_structural_gate() -> None:
@@ -1904,8 +1911,8 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-capture-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-probe"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stop-gating-calibration-probe"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-run"
 
 
 def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -> None:
@@ -1928,8 +1935,8 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-capture-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-probe"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stop-gating-calibration-probe"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-run"
 
 
 def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
@@ -1952,8 +1959,8 @@ def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-capture-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-probe"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stop-gating-calibration-probe"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-run"
 
 
 def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
@@ -1971,13 +1978,13 @@ def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
     assert "a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc" in text
     assert "No product perception claim" in text
     assert "No model-output behavior-lift claim" in text
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-probe"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-run"
     assert "recon/cortex_codex_app_cli_hook_native_stop_live_canary.md" in docs_index
     assert (
         "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-capture-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stop-gating-calibration-probe"
 
 
 def test_codex_app_cli_product_perception_loop_records_structural_gate0() -> None:
@@ -2041,10 +2048,10 @@ def test_codex_app_cli_product_event_capture_remediation_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-live-capture-rerun"
+        "codex-app-cli-task-standard-stop-gating-calibration-probe"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-task-standard-stop-gating-live-probe"
+        "codex-app-cli-task-standard-stop-gating-live-run"
     )
 
 
@@ -2068,10 +2075,10 @@ def test_codex_app_cli_stop_continuation_resolution_loop_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-live-capture-rerun"
+        "codex-app-cli-task-standard-stop-gating-calibration-probe"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-task-standard-stop-gating-live-probe"
+        "codex-app-cli-task-standard-stop-gating-live-run"
     )
 
 
@@ -2097,10 +2104,10 @@ def test_codex_app_cli_hook_native_behavior_comparison_records_live_baseline_gat
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-live-capture-rerun"
+        "codex-app-cli-task-standard-stop-gating-calibration-probe"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-task-standard-stop-gating-live-probe"
+        "codex-app-cli-task-standard-stop-gating-live-run"
     )
 
 
@@ -2125,9 +2132,9 @@ def test_codex_app_cli_astro_three_arm_fixture_refresh_records_mixed_signal() ->
         "docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-capture-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stop-gating-calibration-probe"
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-task-standard-stop-gating-live-probe"
+        "codex-app-cli-task-standard-stop-gating-live-run"
     )
 
 
@@ -2153,8 +2160,8 @@ def test_codex_app_cli_value_ablation_audit_records_requirement_perception_decis
         "docs/recon/cortex_codex_app_cli_value_ablation_audit.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-capture-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-probe"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stop-gating-calibration-probe"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-run"
 
 
 def test_codex_app_cli_task_standard_spine_records_structural_product_spine() -> None:
@@ -2180,9 +2187,9 @@ def test_codex_app_cli_task_standard_spine_records_structural_product_spine() ->
         "docs/recon/cortex_codex_app_cli_task_standard_spine.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-capture-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stop-gating-calibration-probe"
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-task-standard-stop-gating-live-probe"
+        "codex-app-cli-task-standard-stop-gating-live-run"
     )
 
 
@@ -2210,8 +2217,8 @@ def test_codex_app_cli_task_standard_live_probe_records_structural_gate0() -> No
         "docs/recon/cortex_codex_app_cli_task_standard_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-capture-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-probe"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stop-gating-calibration-probe"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-run"
 
 
 def test_codex_app_cli_task_standard_live_run_records_capture_failure() -> None:
@@ -2241,10 +2248,10 @@ def test_codex_app_cli_task_standard_live_run_records_capture_failure() -> None:
         "docs/recon/cortex_codex_app_cli_task_standard_live_run.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-capture-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stop-gating-calibration-probe"
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-task-standard-stop-gating-live-probe"
+        == "codex-app-cli-task-standard-stop-gating-live-run"
     )
 
 
@@ -2271,11 +2278,11 @@ def test_codex_app_cli_hook_contract_capture_boundary_remediation_records_struct
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-task-standard-live-capture-rerun"
+        == "codex-app-cli-task-standard-stop-gating-calibration-probe"
     )
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-task-standard-stop-gating-live-probe"
+        == "codex-app-cli-task-standard-stop-gating-live-run"
     )
 
 
@@ -2311,11 +2318,11 @@ def test_codex_app_cli_task_standard_context_live_rerun_records_partial_delivery
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-task-standard-live-capture-rerun"
+        == "codex-app-cli-task-standard-stop-gating-calibration-probe"
     )
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-task-standard-stop-gating-live-probe"
+        == "codex-app-cli-task-standard-stop-gating-live-run"
     )
 
 
@@ -2352,16 +2359,16 @@ def test_codex_app_cli_communication_boundary_audit_records_proof_ladder() -> No
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-task-standard-live-capture-rerun"
+        == "codex-app-cli-task-standard-stop-gating-calibration-probe"
     )
     work_note = status["work_today"]["note"].lower()
-    assert "fresh codex cli proof" in work_note
-    assert "model assimilates it" in work_note
-    assert "taskstandardspine before tool evidence scoring" in work_note
-    assert "does not earn gate use" in work_note
+    assert "premature closure gap blocks" in work_note
+    assert "clean evidenced readback closure stays silent" in work_note
+    assert "latest live capture artifact no longer overblocks" in work_note
+    assert "does not earn a live stop-gating run" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-task-standard-stop-gating-live-probe"
+        == "codex-app-cli-task-standard-stop-gating-live-run"
     )
 
 
@@ -2394,15 +2401,15 @@ def test_codex_app_cli_task_standard_pretool_transcript_capture_records_state_ca
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-task-standard-live-capture-rerun"
+        == "codex-app-cli-task-standard-stop-gating-calibration-probe"
     )
     work_note = status["work_today"]["note"].lower()
-    assert "signed prospective task-set context reaches the model" in work_note
-    assert "model assimilates it" in work_note
-    assert "taskstandardspine before tool evidence scoring" in work_note
+    assert "premature closure gap blocks" in work_note
+    assert "clean evidenced readback closure stays silent" in work_note
+    assert "latest live capture artifact no longer overblocks" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-task-standard-stop-gating-live-probe"
+        == "codex-app-cli-task-standard-stop-gating-live-run"
     )
 
 
@@ -2436,15 +2443,51 @@ def test_codex_app_cli_task_standard_live_capture_rerun_records_pass() -> None:
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-task-standard-live-capture-rerun"
+        == "codex-app-cli-task-standard-stop-gating-calibration-probe"
     )
     work_note = status["work_today"]["note"].lower()
-    assert "fresh codex cli proof" in work_note
-    assert "taskstandardspine before tool evidence scoring" in work_note
-    assert "does not earn gate use" in work_note
+    assert "premature closure gap blocks" in work_note
+    assert "latest live capture artifact no longer overblocks" in work_note
+    assert "does not earn a live stop-gating run" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-task-standard-stop-gating-live-probe"
+        == "codex-app-cli-task-standard-stop-gating-live-run"
+    )
+
+
+def test_codex_app_cli_task_standard_stop_gating_calibration_records_pass() -> None:
+    text = _read(CODEX_APP_CLI_TASK_STANDARD_STOP_GATING_CALIBRATION_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product + lab proof" in text
+    assert "Verdict: `pass_gating_calibrated`" in text
+    assert "`premature_closure_gap`" in text
+    assert "`clean_evidenced_closure`" in text
+    assert "run_20260505T213824Z" in text
+    assert "latest_live_capture_replay_does_not_overblock=true" in text
+    assert "a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc" in text
+    assert "No live Codex Stop-gating evidence" in text
+    assert "Queue `codex-app-cli-task-standard-stop-gating-live-run`" in text
+    assert (
+        "recon/cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"]
+        == "codex-app-cli-task-standard-stop-gating-calibration-probe"
+    )
+    work_note = status["work_today"]["note"].lower()
+    assert "premature closure gap blocks" in work_note
+    assert "clean evidenced readback closure stays silent" in work_note
+    assert "does not earn a live stop-gating run" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-task-standard-stop-gating-live-run"
     )
 
 
@@ -2522,7 +2565,7 @@ def test_task_standard_executive_doctrine_math_refinement_is_recorded() -> None:
     )
     assert "recon/cortex_task_standard_executive_doctrine_math_refinement.md" in docs_index
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-live-capture-rerun"
+        "codex-app-cli-task-standard-stop-gating-calibration-probe"
     )
 
 
@@ -2850,29 +2893,29 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
     assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-capture-rerun"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stop-gating-calibration-probe"
     work_note = status["work_today"]["note"].lower()
-    assert "fresh codex cli proof" in work_note
-    assert "signed prospective task-set context reaches the model" in work_note
-    assert "model assimilates it" in work_note
-    assert "taskstandardspine before tool evidence scoring" in work_note
-    assert "does not earn gate use" in work_note
+    assert "premature closure gap blocks" in work_note
+    assert "premature closure gap blocks" in work_note
+    assert "clean evidenced readback closure stays silent" in work_note
+    assert "latest live capture artifact no longer overblocks" in work_note
+    assert "does not earn a live stop-gating run" in work_note
     assert "behavior lift" in work_note
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-probe"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-stop-gating-live-run"
     assert "product" == status["next_product_train"]["surface"]
     assert "captured model-derived standards" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "stop closure gating" in status["next_product_train"][
+    assert "stop-gating" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "fresh live evidence now proves" in status["next_product_train"][
+    assert "structural calibration probe" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "model assimilation" in status["next_product_train"][
+    assert "latest live capture" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "gate_used_captured_state=true" in status["next_product_train"][
+    assert "stop block or clean" in status["next_product_train"][
         "primary_metric"
     ].lower()
     assert "behavior_lift_claim_allowed=false" in status["next_product_train"][
@@ -2882,7 +2925,7 @@ def test_status_registry_is_complete_and_stable() -> None:
         "guardrail"
     ].lower()
     assert "quality comparison" in status["next_product_train"]["guardrail"].lower()
-    assert "pretooluse motor inhibition" in status["next_product_train"][
+    assert "alignment" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -2969,9 +3012,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`codex-app-cli-task-standard-live-capture-rerun`" in text
-    assert "- Next product train after the current focus: `codex-app-cli-task-standard-stop-gating-live-probe`" in text
-    assert "- Train: `codex-app-cli-task-standard-stop-gating-live-probe`" in text
+    assert "`codex-app-cli-task-standard-stop-gating-calibration-probe`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-task-standard-stop-gating-live-run`" in text
+    assert "- Train: `codex-app-cli-task-standard-stop-gating-live-run`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()

@@ -365,10 +365,23 @@ def record_task_standard_evidence(
         )
         return _append_evidence(spine, evidence), evidence
 
-    aligned_item_ids = tuple(
+    directly_aligned_item_ids = tuple(
         item.item_id
         for item in spine.all_items
         if _texts_align(item.text, normalized_tool_text)
+    )
+    closure_evidence_item_ids = tuple(
+        item.item_id
+        for item in spine.standard_items
+        if item.kind is TaskStandardItemKind.CLOSURE_EVIDENCE
+        and _closure_evidence_action_aligns(item.text, normalized_tool_text)
+        and (
+            directly_aligned_item_ids
+            or _generic_verification_markers_present(normalized_tool_text)
+        )
+    )
+    aligned_item_ids = tuple(
+        dict.fromkeys((*directly_aligned_item_ids, *closure_evidence_item_ids))
     )
     if aligned_item_ids:
         evidence_class = (
@@ -421,8 +434,9 @@ def record_closure_claims(
     unmatched_ids: list[str] = []
     updated_items: list[TaskStandardItem] = []
     for item in items:
-        claimed = _texts_align(item.text, normalized_claim_text) or _general_closure_claim(
-            normalized_claim_text
+        claimed = _closure_claims_item(
+            item,
+            normalized_claim_text,
         )
         if claimed and not item.has_aligned_evidence:
             unmatched_ids.append(item.item_id)
@@ -573,6 +587,44 @@ def _texts_align(item_text: str, normalized_other_text: str) -> bool:
     return False
 
 
+def _closure_claims_item(
+    item: TaskStandardItem,
+    normalized_claim_text: str,
+) -> bool:
+    if _texts_align(item.text, normalized_claim_text):
+        return True
+    if item.kind is TaskStandardItemKind.LIKELY_MISS:
+        return False
+    return _general_closure_claim(normalized_claim_text)
+
+
+def _closure_evidence_action_aligns(
+    item_text: str,
+    normalized_tool_text: str,
+) -> bool:
+    item_tokens = set(_meaningful_tokens(item_text))
+    tool_tokens = set(_meaningful_tokens(normalized_tool_text))
+    action_tokens = {
+        "cat",
+        "grep",
+        "stat",
+        "wc",
+        "test",
+        "tests",
+        "pytest",
+        "build",
+        "lint",
+        "typecheck",
+        "check",
+        "verify",
+        "inspect",
+        "output",
+        "read",
+        "readback",
+    }
+    return bool(item_tokens & tool_tokens & action_tokens)
+
+
 def _generic_verification_markers_present(text: str) -> bool:
     return any(
         marker in text
@@ -667,11 +719,12 @@ def _meaningful_tokens(text: str) -> tuple[str, ...]:
         "needs",
         "must",
     }
-    return tuple(
-        token
-        for token in re.findall(r"[a-z0-9_./-]+", normalized)
-        if len(token) >= 3 and token not in stopwords
-    )
+    tokens: list[str] = []
+    for token in re.findall(r"[a-z0-9_./-]+", normalized):
+        cleaned = token.strip("._/-")
+        if len(cleaned) >= 3 and cleaned not in stopwords:
+            tokens.append(cleaned)
+    return tuple(tokens)
 
 
 def _strip_hidden_terms(text: str) -> str:

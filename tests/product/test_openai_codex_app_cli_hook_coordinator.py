@@ -563,6 +563,122 @@ def test_task_standard_aligned_evidence_pays_down_standard_items() -> None:
     assert len(result.session_state.expectation_ledger.resolved) == 1
 
 
+def test_task_standard_clean_readback_stop_stays_silent() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    transcript_path = Path("/tmp/codex-task-standard-clean-readback.jsonl")
+    _write_transcript(transcript_path, _assistant_message_row(_file_standard_block()))
+
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt=(
+                "Use shell commands to create result.txt containing task standard "
+                "live done, read it back, and report done."
+            ),
+            transcript_path=str(transcript_path),
+        ),
+        state_store=store,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PreToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={
+                "command": (
+                    "printf 'task standard live done\\n' > result.txt && cat result.txt"
+                )
+            },
+            last_assistant_message=None,
+        ),
+        state_store=store,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={
+                "command": (
+                    "printf 'task standard live done\\n' > result.txt && cat result.txt"
+                )
+            },
+            tool_response={
+                "exit_code": 0,
+                "aggregated_output": "task standard live done\n",
+            },
+            last_assistant_message=None,
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path=str(transcript_path),
+            last_assistant_message=(
+                "Read back from result.txt: task standard live done.\n\ndone"
+            ),
+        ),
+        state_store=store,
+    )
+
+    assert result.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
+    assert result.directive.silence_reason == "pressure_below_visible_threshold"
+    assert result.session_state.verification_evidence_count == 1
+    assert not result.session_state.task_standard_spine.has_unmatched_closure_items
+    assert len(result.session_state.expectation_ledger.active) == 0
+    assert len(result.session_state.expectation_ledger.resolved) == 1
+
+
+def test_task_standard_gap_stop_blocks_with_captured_standard() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    transcript_path = Path("/tmp/codex-task-standard-gap.jsonl")
+    _write_transcript(transcript_path, _assistant_message_row(_file_standard_block()))
+
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt=(
+                "Use shell commands to create result.txt containing task standard "
+                "live done, read it back, and report done."
+            ),
+            transcript_path=str(transcript_path),
+        ),
+        state_store=store,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PreToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={"command": "printf 'task standard live done\\n' > result.txt"},
+            last_assistant_message=None,
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path=str(transcript_path),
+            last_assistant_message="Created result.txt and done.",
+        ),
+        state_store=store,
+    )
+
+    assert (
+        result.directive.action
+        is OpenAICodexLifecycleDirectiveAction.BLOCK_WITH_IDENTITY_CONTINUOUS_TEXT
+    )
+    assert result.host_response.stdout_payload == {
+        "decision": "block",
+        "reason": OVERDUE_VERIFICATION_IDENTITY_TEXT,
+    }
+    assert result.session_state.task_standard_spine.has_unmatched_closure_items
+    assert len(result.session_state.expectation_ledger.active) == 1
+
+
 def test_continuation_check_resolves_active_verification_expectation() -> None:
     store = OpenAICodexInMemoryStateStore()
     handle_openai_codex_hook_payload(
@@ -998,6 +1114,16 @@ def _standard_block() -> str:
             "Work standard: docs site search, tag pages, and navigation are strong.",
             "Likely misses: search data, tag links, and navigation consistency.",
             "Closure evidence: inspect search data, tag pages, and navigation.",
+        )
+    )
+
+
+def _file_standard_block() -> str:
+    return "\n".join(
+        (
+            "Work standard: create result.txt with exact content and read it back using cat.",
+            "Likely misses: typo in filename or content, or reporting completion before readback.",
+            "Closure evidence: cat command output shows task standard live done.",
         )
     )
 
