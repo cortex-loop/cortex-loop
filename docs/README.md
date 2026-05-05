@@ -112,5 +112,9 @@ Active docs:
 - [Cortex Codex App/CLI Hook-Native Behavior Comparison](recon/cortex_codex_app_cli_hook_native_behavior_comparison.md) —
   structural Gate 0 evidence for a paired silent-only versus hook-native
   behavior comparison harness; live behavior lift remains unearned
+- [Cortex Codex App/CLI Astro Three-Arm Fixture Refresh](recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md) —
+  live three-arm evidence that the Astro hidden verifier is now hidden from
+  subject workspaces, while raw, silent, and full Cortex arms produced mixed
+  output-quality results with no Cortex speech lift
 
 Historical runtime, lab, and governance material now lives under [archive/](archive/).

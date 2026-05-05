@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import re
 import shutil
@@ -340,6 +341,73 @@ def prepare_output_quality_workspace(*, template_root: Path, run_root: Path) -> 
     return project_root
 
 
+def prepare_output_quality_subject_workspace(
+    *,
+    task_pack: OutputQualityTaskPack,
+    run_root: Path,
+) -> Path:
+    """Prepare a model-visible output-quality workspace without verifier-only files."""
+
+    if run_root.exists():
+        shutil.rmtree(run_root)
+    project_root = run_root / "project_a"
+    shutil.copytree(
+        task_pack.template_root,
+        project_root,
+        ignore=shutil.ignore_patterns("node_modules", "dist", ".astro"),
+    )
+    _remove_verifier_only_paths(project_root, task_pack.verifier_only_paths)
+    _sync_hidden_npm_script(
+        project_root=project_root,
+        task_pack=task_pack,
+        restore=False,
+    )
+    _initialize_output_quality_workspace_git(project_root)
+    return project_root
+
+
+def prepare_output_quality_hidden_evaluator_workspace(
+    *,
+    task_pack: OutputQualityTaskPack,
+    subject_project_root: Path,
+    run_root: Path,
+) -> Path:
+    """Prepare an evaluator-only workspace by overlaying hidden verifier files."""
+
+    if run_root.exists():
+        shutil.rmtree(run_root)
+    project_root = run_root / "project_a"
+    shutil.copytree(
+        subject_project_root,
+        project_root,
+        ignore=shutil.ignore_patterns(".git", ".codex", "node_modules", "dist", ".astro"),
+    )
+    for relative_path in task_pack.verifier_only_paths:
+        source = task_pack.template_root / relative_path
+        target = project_root / relative_path
+        if source.is_dir():
+            if target.exists():
+                shutil.rmtree(target)
+            shutil.copytree(source, target)
+        elif source.is_file():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target)
+        else:
+            raise RuntimeError(
+                "output-quality verifier-only path missing from template: "
+                f"{relative_path}"
+            )
+    _sync_hidden_npm_script(
+        project_root=project_root,
+        task_pack=task_pack,
+        restore=True,
+    )
+    subject_node_modules = subject_project_root / "node_modules"
+    if subject_node_modules.exists():
+        (project_root / "node_modules").symlink_to(subject_node_modules)
+    return project_root
+
+
 def prepare_seeded_workspace(
     *,
     template_root: Path,
@@ -392,6 +460,52 @@ def _initialize_output_quality_workspace_git(project_root: Path) -> None:
                 "failed to initialize output-quality git workspace"
                 + (f": {detail}" if detail else "")
             )
+
+
+def _remove_verifier_only_paths(
+    project_root: Path,
+    verifier_only_paths: tuple[str, ...],
+) -> None:
+    for relative_path in verifier_only_paths:
+        target = project_root / relative_path
+        if target.is_dir():
+            shutil.rmtree(target)
+        elif target.exists():
+            target.unlink()
+
+
+def _sync_hidden_npm_script(
+    *,
+    project_root: Path,
+    task_pack: OutputQualityTaskPack,
+    restore: bool,
+) -> None:
+    script_name = _hidden_npm_script_name(task_pack)
+    if script_name is None:
+        return
+    package_path = project_root / "package.json"
+    template_package_path = task_pack.template_root / "package.json"
+    if not package_path.is_file() or not template_package_path.is_file():
+        return
+    package = json.loads(package_path.read_text(encoding="utf-8"))
+    scripts = package.get("scripts")
+    if not isinstance(scripts, dict):
+        return
+    if restore:
+        template_package = json.loads(template_package_path.read_text(encoding="utf-8"))
+        template_scripts = template_package.get("scripts")
+        if isinstance(template_scripts, dict) and script_name in template_scripts:
+            scripts[script_name] = template_scripts[script_name]
+    else:
+        scripts.pop(script_name, None)
+    package_path.write_text(json.dumps(package, indent=2) + "\n", encoding="utf-8")
+
+
+def _hidden_npm_script_name(task_pack: OutputQualityTaskPack) -> str | None:
+    command = task_pack.hidden_test_command
+    if len(command) >= 3 and command[0] == "npm" and command[1] == "run":
+        return command[2]
+    return None
 
 
 def apply_output_files(*, project_root: Path, file_map: dict[str, str]) -> None:

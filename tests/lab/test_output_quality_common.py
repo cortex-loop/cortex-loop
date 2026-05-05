@@ -11,6 +11,8 @@ from lab.output_quality_common import (
     build_output_quality_input_text,
     build_file_block_protocol,
     parse_output_quality_result,
+    prepare_output_quality_hidden_evaluator_workspace,
+    prepare_output_quality_subject_workspace,
 )
 
 
@@ -19,6 +21,14 @@ def _task_pack(tmp_path: Path) -> OutputQualityTaskPack:
     for relative_path, contents in {
         "src/app.ts": "export const value = 1;\n",
         "README_TASK.md": "Implement this cleanly.\n",
+        "package.json": (
+            '{\n'
+            '  "scripts": {\n'
+            '    "test:visible": "echo visible",\n'
+            '    "test:hidden": "echo hidden"\n'
+            "  }\n"
+            "}\n"
+        ),
         "tests/visible.spec.ts": "expect(true).toBe(true);\n",
         "tests/_verifier/hidden.spec.ts": "expect(true).toBe(true);\n",
     }.items():
@@ -37,7 +47,7 @@ def _task_pack(tmp_path: Path) -> OutputQualityTaskPack:
         typecheck_command=("echo", "typecheck"),
         build_command=("echo", "build"),
         visible_test_command=("echo", "visible"),
-        hidden_test_command=("echo", "hidden"),
+        hidden_test_command=("npm", "run", "test:hidden"),
     )
 
 
@@ -52,6 +62,37 @@ def test_build_output_quality_input_text_hides_verifier_only_context(tmp_path: P
     assert "=== CONTEXT FILE: src/app.ts ===" in tooling_input
     assert "=== CONTEXT FILE: README_TASK.md ===" in tooling_input
     assert "hidden.spec.ts" not in tooling_input
+
+
+def test_subject_workspace_hides_verifier_only_files_and_hidden_script(tmp_path: Path) -> None:
+    task_pack = _task_pack(tmp_path)
+
+    subject = prepare_output_quality_subject_workspace(
+        task_pack=task_pack,
+        run_root=tmp_path / "subject",
+    )
+
+    assert not (subject / "tests/_verifier/hidden.spec.ts").exists()
+    assert "test:hidden" not in (subject / "package.json").read_text(encoding="utf-8")
+    assert (subject / "tests/visible.spec.ts").exists()
+
+
+def test_hidden_evaluator_workspace_restores_verifier_only_files(tmp_path: Path) -> None:
+    task_pack = _task_pack(tmp_path)
+    subject = prepare_output_quality_subject_workspace(
+        task_pack=task_pack,
+        run_root=tmp_path / "subject",
+    )
+
+    evaluator = prepare_output_quality_hidden_evaluator_workspace(
+        task_pack=task_pack,
+        subject_project_root=subject,
+        run_root=tmp_path / "evaluator",
+    )
+
+    assert (evaluator / "tests/_verifier/hidden.spec.ts").exists()
+    assert "test:hidden" in (evaluator / "package.json").read_text(encoding="utf-8")
+    assert not (subject / "tests/_verifier/hidden.spec.ts").exists()
 
 
 def test_build_output_quality_input_text_supports_ablation_variants(tmp_path: Path) -> None:

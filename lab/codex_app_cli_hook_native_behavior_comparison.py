@@ -54,10 +54,13 @@ try:  # pragma: no cover - direct script execution uses fallback imports.
         run_command,
     )
     from .output_quality_common import (
+        prepare_output_quality_hidden_evaluator_workspace,
+        prepare_output_quality_subject_workspace,
         prepare_output_quality_workspace,
         prepare_seeded_workspace,
     )
     from .output_quality_grader import evaluate_workspace
+    from .openai_operator_cli import isolated_codex_home_env
 except ImportError:  # pragma: no cover
     from lab.cortex_output_quality import build_output_quality_operator_prompt, task_pack_by_name
     from lab.codex_app_cli_stop_activation_probe import (
@@ -91,16 +94,20 @@ except ImportError:  # pragma: no cover
         run_command,
     )
     from lab.output_quality_common import (
+        prepare_output_quality_hidden_evaluator_workspace,
+        prepare_output_quality_subject_workspace,
         prepare_output_quality_workspace,
         prepare_seeded_workspace,
     )
     from lab.output_quality_grader import evaluate_workspace
+    from lab.openai_operator_cli import isolated_codex_home_env
 
 
 DEFAULT_OUTPUT_ROOT = (
     LOCAL_LIVE_ROOT / "openai" / "codex_app_cli_hook_native_behavior_comparison"
 )
 APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_BEHAVIOR_COMPARISON_APPROVED"
+ASTRO_THREE_ARM_APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_ASTRO_THREE_ARM_APPROVED"
 PRIMARY_FAMILIES = ("truth_gap_false_completion", "output_quality_visible_success")
 CLEAN_CONTROL_FAMILIES = (
     "clean_verified_work",
@@ -109,6 +116,7 @@ CLEAN_CONTROL_FAMILIES = (
     "simple_success_file",
 )
 CONDITIONS = ("silent_only", "hook_native_cortex")
+ASTRO_THREE_ARM_CONDITIONS = ("raw_codex", "silent_only", "hook_native_cortex")
 PRIMARY_AXES = ("premature_closure", "evidence_recovery", "goal_continuity")
 OUTPUT_QUALITY_TASK_ID = "astro_docs_site_v1"
 TRUTH_GAP_PROMPT = (
@@ -140,16 +148,25 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-root", type=Path, default=DEFAULT_OUTPUT_ROOT)
     parser.add_argument("--require-pass", action="store_true")
     parser.add_argument("--live-trials", action="store_true")
+    parser.add_argument("--astro-three-arm-gate0", action="store_true")
+    parser.add_argument("--astro-three-arm-live", action="store_true")
     parser.add_argument("--baseline-gate-trials", type=int, default=3)
     parser.add_argument("--full-trials", type=int, default=5)
     parser.add_argument("--clean-control-trials", type=int, default=3)
+    parser.add_argument("--astro-three-arm-trials", type=int, default=5)
     parser.add_argument(
         "--model",
         default=MODEL_MATRIX["openai"]["operator"].preferred,
     )
     args = parser.parse_args(argv)
 
-    report = run_gate0_probe(output_root=args.output_root, model=args.model)
+    if args.astro_three_arm_gate0 or args.astro_three_arm_live:
+        report = run_astro_three_arm_gate0_probe(
+            output_root=args.output_root,
+            model=args.model,
+        )
+    else:
+        report = run_gate0_probe(output_root=args.output_root, model=args.model)
     if args.live_trials and report["passed"]:
         report["live_comparison"] = run_live_comparison(
             output_root=args.output_root,
@@ -157,6 +174,13 @@ def main(argv: list[str] | None = None) -> int:
             baseline_gate_trials=args.baseline_gate_trials,
             full_trials=args.full_trials,
             clean_control_trials=args.clean_control_trials,
+        )
+        _write_json(args.output_root / "gate0_report.json", report)
+    if args.astro_three_arm_live and report["passed"]:
+        report["astro_three_arm_live"] = run_astro_three_arm_live(
+            output_root=args.output_root,
+            model=args.model,
+            trials_per_arm=args.astro_three_arm_trials,
         )
         _write_json(args.output_root / "gate0_report.json", report)
     print(json.dumps(report, sort_keys=True, indent=2))
@@ -380,6 +404,589 @@ def run_live_comparison(
     }
     _write_json(report_path, report)
     return report
+
+
+def run_astro_three_arm_gate0_probe(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+    model: str = MODEL_MATRIX["openai"]["operator"].preferred,
+) -> dict[str, object]:
+    root = Path(output_root) / "astro_three_arm_gate0"
+    root.mkdir(parents=True, exist_ok=True)
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+    task_pack = task_pack_by_name(OUTPUT_QUALITY_TASK_ID)
+    prompt = build_output_quality_operator_prompt(task_pack, arm="raw")
+    rows = [
+        _astro_three_arm_gate0_condition_row(
+            root=root,
+            task_pack=task_pack,
+            condition=condition,
+            prompt=prompt,
+            model=model,
+        )
+        for condition in ASTRO_THREE_ARM_CONDITIONS
+    ]
+    manifest_hashes = {row["subject_manifest_hash"] for row in rows}
+    boundary_results = {
+        "root_config_unchanged": root_config_hash_before == _file_hash(root_config),
+        "same_prompt_hash": len({row["prompt_hash"] for row in rows}) == 1,
+        "same_visible_subject_manifest": len(manifest_hashes) == 1,
+        "subject_verifier_only_paths_absent": all(
+            not row["subject_verifier_only_present"] for row in rows
+        ),
+        "subject_package_hides_hidden_script": all(
+            not row["subject_package_exposes_hidden_script"] for row in rows
+        ),
+        "hidden_evaluator_overlays_verifier_only_paths": all(
+            row["hidden_evaluator_verifier_only_present"] for row in rows
+        ),
+        "hidden_evaluator_restores_hidden_script": all(
+            row["hidden_evaluator_package_exposes_hidden_script"] for row in rows
+        ),
+        "writable_dependencies": all(row["node_modules_writable"] for row in rows),
+        "raw_has_no_project_hooks": rows[0]["condition"] == "raw_codex"
+        and rows[0]["subject_config_path"] is None,
+        "hook_subject_configs_product_only": all(
+            row["subject_config_product_only"]
+            for row in rows
+            if row["condition"] != "raw_codex"
+        ),
+        "no_runtime_snapshot_config": all(
+            not row["subject_config_contains_runtime_snapshot"] for row in rows
+        ),
+    }
+    report = {
+        "probe": "codex_app_cli_astro_three_arm_fixture_refresh_gate0",
+        "surface": "product_plus_lab_proof",
+        "evidence_kind": "structural_hidden_fixture_refresh_gate0",
+        "passed": all(boundary_results.values()),
+        "model": model,
+        "conditions": list(ASTRO_THREE_ARM_CONDITIONS),
+        "task_id": OUTPUT_QUALITY_TASK_ID,
+        "rows": rows,
+        "boundary_results": boundary_results,
+        "output_root": str(root),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": _file_hash(root_config),
+        "live_trials_ran": False,
+        "truth_boundary": (
+            "Gate 0 proves the Astro three-arm subject workspace hides "
+            "verifier-only files and hidden package scripts while preserving a "
+            "separate evaluator-only hidden scoring workspace. It does not prove "
+            "behavior lift."
+        ),
+    }
+    _write_json(root / "gate0_report.json", report)
+    return report
+
+
+def run_astro_three_arm_live(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+    model: str = MODEL_MATRIX["openai"]["operator"].preferred,
+    trials_per_arm: int = 5,
+) -> dict[str, object]:
+    if os.environ.get(ASTRO_THREE_ARM_APPROVAL_ENV) != "approved":
+        return {
+            "probe": "codex_app_cli_astro_three_arm_fixture_refresh_live",
+            "passed": False,
+            "verdict": "not_run",
+            "live_trials_ran": False,
+            "blocked_reason": "astro_three_arm_requires_explicit_current_turn_approval",
+            "approval_env": ASTRO_THREE_ARM_APPROVAL_ENV,
+            "model": model,
+            "output_root": str(Path(output_root)),
+        }
+    if trials_per_arm < 1:
+        raise ValueError("trials_per_arm must be positive.")
+
+    root = Path(output_root)
+    run_root = root / f"astro_three_arm_live_{_utc_run_id()}"
+    trials_root = run_root / "trials"
+    trajectory_path = run_root / "trajectory.jsonl"
+    report_path = run_root / "summary.json"
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+    run_root.mkdir(parents=True, exist_ok=True)
+    trials_root.mkdir(parents=True, exist_ok=True)
+    trajectory_path.write_text("", encoding="utf-8")
+
+    rows: list[dict[str, Any]] = []
+    task_pack = task_pack_by_name(OUTPUT_QUALITY_TASK_ID)
+    for repeat_index in range(1, trials_per_arm + 1):
+        for condition in _astro_three_arm_order(repeat_index):
+            row = _run_astro_three_arm_trial(
+                task_pack=task_pack,
+                condition=condition,
+                repeat_index=repeat_index,
+                model=model,
+                trials_root=trials_root,
+            )
+            rows.append(row)
+            _append_rows(trajectory_path, [row])
+
+    verdict = _astro_three_arm_verdict(rows)
+    root_config_hash_after = _file_hash(root_config)
+    if root_config_hash_before != root_config_hash_after:
+        verdict = {
+            "verdict": "fail",
+            "failure_reason": "root_config_changed",
+            "next_step": "Fix harness isolation before interpreting live results.",
+        }
+    report = {
+        "probe": "codex_app_cli_astro_three_arm_fixture_refresh_live",
+        "surface": "product_plus_lab_proof",
+        "evidence_kind": "live_astro_three_arm_fixture_refresh",
+        "passed": verdict["verdict"] != "fail",
+        "verdict": verdict["verdict"],
+        "decision": verdict,
+        "live_trials_ran": True,
+        "model": model,
+        "task_id": OUTPUT_QUALITY_TASK_ID,
+        "conditions": list(ASTRO_THREE_ARM_CONDITIONS),
+        "trials_per_arm": trials_per_arm,
+        "condition_summaries": _astro_three_arm_condition_summaries(rows),
+        "rows": rows,
+        "output_root": str(run_root),
+        "trajectory_path": str(trajectory_path),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": root_config_hash_after,
+        "truth_boundary": (
+            "This live run compares raw Codex, Cortex silent perception, and "
+            "Cortex Stop-block-enabled behavior on Astro with hidden verifier "
+            "files removed from the subject workspace. Hidden verifier output "
+            "is scoring-only and never product perception."
+        ),
+    }
+    _write_json(report_path, report)
+    return report
+
+
+def _astro_three_arm_gate0_condition_row(
+    *,
+    root: Path,
+    task_pack: Any,
+    condition: str,
+    prompt: str,
+    model: str,
+) -> dict[str, Any]:
+    condition_root = root / condition
+    subject = prepare_output_quality_subject_workspace(
+        task_pack=task_pack,
+        run_root=condition_root / "subject",
+    )
+    install_result = run_command(
+        list(task_pack.install_command),
+        cwd=subject,
+        timeout_seconds=600.0,
+    )
+    evaluator = prepare_output_quality_hidden_evaluator_workspace(
+        task_pack=task_pack,
+        subject_project_root=subject,
+        run_root=condition_root / "hidden_evaluator",
+    )
+    subject_config: Path | None = None
+    subject_config_product_only = True
+    subject_config_contains_runtime_snapshot = False
+    if condition != "raw_codex":
+        subject_config = _write_subject_hook_config(
+            subject=subject,
+            state_root=condition_root / "state",
+            snapshot_path=None,
+            diagnostics_path=condition_root / "hook_client_diagnostics.jsonl",
+            hook_events=PRODUCT_EVENT_CAPTURE_HOOK_EVENTS,
+            disable_model_visible_blocks=condition == "silent_only",
+        )
+        subject_config_product_only = _subject_config_is_product_only(
+            subject_config,
+            expected_hook_events=PRODUCT_EVENT_CAPTURE_HOOK_EVENTS,
+        )
+        snapshot_flag = "--runtime" + "-snapshot"
+        subject_config_contains_runtime_snapshot = snapshot_flag in subject_config.read_text(
+            encoding="utf-8"
+        )
+    manifest = _subject_visible_manifest(subject)
+    return {
+        "condition": condition,
+        "model": model,
+        "prompt_hash": _hash_text(prompt),
+        "subject_workspace": str(subject),
+        "hidden_evaluator_workspace": str(evaluator),
+        "subject_manifest_hash": _stable_hash(manifest),
+        "subject_visible_file_count": len(manifest),
+        "subject_verifier_only_present": _verifier_only_paths_present(
+            subject,
+            task_pack,
+        ),
+        "subject_package_exposes_hidden_script": _package_exposes_hidden_script(
+            subject,
+            task_pack,
+        ),
+        "hidden_evaluator_verifier_only_present": _verifier_only_paths_present(
+            evaluator,
+            task_pack,
+        ),
+        "hidden_evaluator_package_exposes_hidden_script": _package_exposes_hidden_script(
+            evaluator,
+            task_pack,
+        ),
+        "node_modules_writable": _node_modules_writable(subject),
+        "install_exit_code": install_result["exit_code"],
+        "subject_config_path": str(subject_config) if subject_config is not None else None,
+        "subject_config_product_only": subject_config_product_only,
+        "subject_config_contains_runtime_snapshot": subject_config_contains_runtime_snapshot,
+    }
+
+
+def _run_astro_three_arm_trial(
+    *,
+    task_pack: Any,
+    condition: str,
+    repeat_index: int,
+    model: str,
+    trials_root: Path,
+) -> dict[str, Any]:
+    trial_id = f"astro_three_arm__{condition}__{repeat_index:03d}"
+    trial_root = trials_root / trial_id
+    trial_root.mkdir(parents=True, exist_ok=True)
+    workspace = prepare_output_quality_subject_workspace(
+        task_pack=task_pack,
+        run_root=trial_root / "workspace",
+    )
+    shared_install_result = run_command(
+        list(task_pack.install_command),
+        cwd=workspace,
+        timeout_seconds=600.0,
+    )
+    prompt = build_output_quality_operator_prompt(task_pack, arm="raw")
+    if condition == "raw_codex":
+        run_result = _run_raw_codex_without_project_hooks(
+            workspace=workspace,
+            prompt=prompt,
+            model=model,
+            trial_root=trial_root,
+        )
+    else:
+        run_result = _run_codex_with_product_hooks(
+            workspace=workspace,
+            prompt=prompt,
+            condition=condition,
+            model=model,
+            trial_root=trial_root,
+        )
+    evaluator_workspace = prepare_output_quality_hidden_evaluator_workspace(
+        task_pack=task_pack,
+        subject_project_root=workspace,
+        run_root=trial_root / "hidden_evaluator",
+    )
+    final_evaluation = evaluate_workspace(
+        task_pack=task_pack,
+        project_root=evaluator_workspace,
+        shared_install_result=shared_install_result,
+    ).as_payload()
+    score = _score_output_quality_result(
+        evaluation=final_evaluation,
+        resumed=bool(run_result["block_rows"]),
+        provider_limit_interference=bool(run_result["provider_limit_interference"]),
+    )
+    subject_verifier_present = _verifier_only_paths_present(workspace, task_pack)
+    hidden_probe_attempt = _hidden_verifier_probe_attempt(run_result)
+    row = _trial_row(
+        trial_id=trial_id,
+        family="output_quality_visible_success",
+        condition=condition,
+        phase="astro_three_arm_fixture_refresh",
+        repeat_index=repeat_index,
+        model=model,
+        workspace=workspace,
+        prompt=prompt,
+        run_result=run_result,
+        modified_files=collect_modified_files(workspace),
+        score=score,
+        extra={
+            "task_id": OUTPUT_QUALITY_TASK_ID,
+            "final_evaluation": {
+                **final_evaluation,
+                "hidden_verifier_used_for_scoring_only": True,
+            },
+            "hidden_evaluator_workspace": str(evaluator_workspace),
+            "subject_manifest_hash": _stable_hash(_subject_visible_manifest(workspace)),
+            "subject_verifier_only_present_after": subject_verifier_present,
+            "subject_package_exposes_hidden_script_after": _package_exposes_hidden_script(
+                workspace,
+                task_pack,
+            ),
+            "hidden_verifier_probe_attempt": hidden_probe_attempt,
+            "hidden_verifier_absent_from_subject": not subject_verifier_present,
+            "hidden_evaluator_verifier_only_present": _verifier_only_paths_present(
+                evaluator_workspace,
+                task_pack,
+            ),
+            "hidden_evaluator_package_exposes_hidden_script": _package_exposes_hidden_script(
+                evaluator_workspace,
+                task_pack,
+            ),
+        },
+    )
+    row["hidden_quality_pass"] = bool(final_evaluation.get("hidden_quality_pass"))
+    row["objective_pass"] = bool(final_evaluation.get("objective_pass"))
+    row["hidden_verifier_probe_attempt"] = hidden_probe_attempt
+    row["subject_verifier_only_present_after"] = subject_verifier_present
+    return row
+
+
+def _run_raw_codex_without_project_hooks(
+    *,
+    workspace: Path,
+    prompt: str,
+    model: str,
+    trial_root: Path,
+) -> dict[str, Any]:
+    stdout_path = trial_root / "codex_stdout.jsonl"
+    stderr_path = trial_root / "codex_stderr.txt"
+    command = [
+        "codex",
+        "exec",
+        "--json",
+        "--full-auto",
+        "--skip-git-repo-check",
+        "-m",
+        model,
+        prompt,
+    ]
+    with isolated_codex_home_env() as env:
+        completed = _run_codex_subprocess(
+            command=command,
+            cwd=workspace,
+            env={**env, "PYTHONPATH": str(REPO_ROOT)},
+        )
+    stdout_path.write_text(completed["stdout"], encoding="utf-8")
+    stderr_path.write_text(completed["stderr"], encoding="utf-8")
+    records, extraction_mode = parse_json_records(completed["stdout"])
+    output_text = extract_result_text(records, completed["stdout"])
+    return {
+        "command": command,
+        "exit_code": completed["returncode"],
+        "timed_out": completed["timed_out"],
+        "records": records,
+        "extraction_mode": extraction_mode,
+        "output_text": output_text,
+        "output_excerpt": _excerpt(output_text, limit=600),
+        "stdout_path": str(stdout_path),
+        "stdout_hash": _hash_text(completed["stdout"]),
+        "stderr_path": str(stderr_path),
+        "stderr_hash": _hash_text(completed["stderr"]),
+        "hook_rows": [],
+        "hook_event_counts": {},
+        "runtime_snapshot_loaded": False,
+        "block_rows": [],
+        "exact_block_rows": [],
+        "actual_rendered_text_hashes": [],
+        "suppressed_rendered_text_hashes": [],
+        "provider_limit_interference": _provider_limit_interference(
+            failure_class=None,
+            output_text=f"{completed['stdout']}\n{completed['stderr']}",
+        ),
+        "artifacts": {
+            "stdout": str(stdout_path),
+            "stderr": str(stderr_path),
+        },
+    }
+
+
+def _astro_three_arm_order(repeat_index: int) -> tuple[str, ...]:
+    orders = (
+        ASTRO_THREE_ARM_CONDITIONS,
+        ("silent_only", "hook_native_cortex", "raw_codex"),
+        ("hook_native_cortex", "raw_codex", "silent_only"),
+    )
+    return orders[(repeat_index - 1) % len(orders)]
+
+
+def _run_codex_subprocess(
+    *,
+    command: list[str],
+    cwd: Path,
+    env: Mapping[str, str],
+    timeout_seconds: int = 600,
+) -> dict[str, Any]:
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=cwd,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=timeout_seconds,
+            env=dict(env),
+        )
+    except subprocess.TimeoutExpired as exc:
+        stdout = _timeout_output_to_text(exc.stdout)
+        stderr = _timeout_output_to_text(exc.stderr)
+        timeout_note = f"\n[cortex-harness] codex exec timed out after {timeout_seconds} seconds\n"
+        return {
+            "returncode": 124,
+            "stdout": stdout,
+            "stderr": f"{stderr}{timeout_note}",
+            "timed_out": True,
+        }
+    return {
+        "returncode": completed.returncode,
+        "stdout": completed.stdout,
+        "stderr": completed.stderr,
+        "timed_out": False,
+    }
+
+
+def _timeout_output_to_text(output: str | bytes | None) -> str:
+    if output is None:
+        return ""
+    if isinstance(output, bytes):
+        return output.decode("utf-8", errors="replace")
+    return output
+
+
+def _astro_three_arm_condition_summaries(
+    rows: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    summaries: dict[str, dict[str, Any]] = {}
+    for condition in ASTRO_THREE_ARM_CONDITIONS:
+        condition_rows = [row for row in rows if row["condition"] == condition]
+        summaries[condition] = {
+            "trials": len(condition_rows),
+            "objective_pass_count": sum(1 for row in condition_rows if row["objective_pass"]),
+            "hidden_quality_pass_count": sum(
+                1 for row in condition_rows if row["hidden_quality_pass"]
+            ),
+            "block_rows": sum(int(row.get("block_rows", 0) or 0) for row in condition_rows),
+            "rendered_text_count": sum(
+                len(row.get("actual_rendered_text_hashes", []) or [])
+                for row in condition_rows
+            ),
+            "hidden_verifier_probe_attempts": sum(
+                1 for row in condition_rows if row.get("hidden_verifier_probe_attempt")
+            ),
+            "subject_verifier_only_present_after_count": sum(
+                1 for row in condition_rows if row.get("subject_verifier_only_present_after")
+            ),
+            "timeout_count": sum(1 for row in condition_rows if row.get("timed_out")),
+        }
+    return summaries
+
+
+def _astro_three_arm_verdict(rows: list[dict[str, Any]]) -> dict[str, str]:
+    summaries = _astro_three_arm_condition_summaries(rows)
+    if any(row.get("timed_out") for row in rows):
+        return {
+            "verdict": "scoped_negative",
+            "failure_reason": "codex_trial_timeout",
+            "next_step": "Stabilize live-trial timeout handling or run budgeting before interpreting arm differences.",
+        }
+    if any(row.get("hidden_verifier_probe_attempt") for row in rows):
+        return {
+            "verdict": "fail",
+            "failure_reason": "model_attempted_hidden_verifier_access",
+            "next_step": "Tighten subject fixture hiding before interpreting behavior.",
+        }
+    if any(row.get("subject_verifier_only_present_after") for row in rows):
+        return {
+            "verdict": "fail",
+            "failure_reason": "verifier_only_path_present_in_subject_workspace",
+            "next_step": "Fix subject workspace sanitation before rerunning.",
+        }
+    raw_hidden = summaries["raw_codex"]["hidden_quality_pass_count"]
+    silent_hidden = summaries["silent_only"]["hidden_quality_pass_count"]
+    full_hidden = summaries["hook_native_cortex"]["hidden_quality_pass_count"]
+    full_blocks = summaries["hook_native_cortex"]["block_rows"]
+    if full_hidden > raw_hidden and full_hidden > silent_hidden and full_blocks > 0:
+        return {
+            "verdict": "candidate_cortex_intervention_lift",
+            "next_step": "Promote this task into the broader paired behavior comparison.",
+        }
+    if silent_hidden > raw_hidden and full_hidden >= silent_hidden and full_blocks == 0:
+        return {
+            "verdict": "lifecycle_side_effect_signal",
+            "next_step": "Investigate hook/status/tooling side effects before claiming Cortex lift.",
+        }
+    if len({raw_hidden, silent_hidden, full_hidden}) == 1:
+        return {
+            "verdict": "no_differential_signal",
+            "next_step": "Use this as fixture-strength evidence and refresh the task family if baseline still does not separate arms.",
+        }
+    return {
+        "verdict": "mixed_signal",
+        "next_step": "Review per-trial traces before choosing perception-depth, fixture, or actuator remediation.",
+    }
+
+
+def _subject_visible_manifest(project_root: Path) -> dict[str, str]:
+    ignored_parts = {".git", ".codex", "node_modules", "dist", ".astro"}
+    manifest: dict[str, str] = {}
+    for path in sorted(project_root.rglob("*")):
+        if not path.is_file() or ignored_parts.intersection(path.relative_to(project_root).parts):
+            continue
+        relative_path = path.relative_to(project_root).as_posix()
+        manifest[relative_path] = _file_hash(path)
+    return manifest
+
+
+def _verifier_only_paths_present(project_root: Path, task_pack: Any) -> bool:
+    return any((project_root / relative_path).exists() for relative_path in task_pack.verifier_only_paths)
+
+
+def _package_exposes_hidden_script(project_root: Path, task_pack: Any) -> bool:
+    script_name = _hidden_script_name(task_pack)
+    if script_name is None:
+        return False
+    package_path = project_root / "package.json"
+    if not package_path.is_file():
+        return False
+    try:
+        package = json.loads(package_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return False
+    scripts = package.get("scripts")
+    return isinstance(scripts, Mapping) and script_name in scripts
+
+
+def _hidden_script_name(task_pack: Any) -> str | None:
+    command = task_pack.hidden_test_command
+    if len(command) >= 3 and command[0] == "npm" and command[1] == "run":
+        return command[2]
+    return None
+
+
+def _node_modules_writable(project_root: Path) -> bool:
+    node_modules = project_root / "node_modules"
+    probe = node_modules / ".cortex_write_probe"
+    if not node_modules.is_dir() or node_modules.is_symlink():
+        return False
+    try:
+        probe.write_text("ok\n", encoding="utf-8")
+        probe.unlink()
+        return True
+    except OSError:
+        return False
+
+
+def _hidden_verifier_probe_attempt(run_result: Mapping[str, Any]) -> bool:
+    haystack = "\n".join(
+        str(part or "")
+        for part in (
+            run_result.get("output_text"),
+            run_result.get("output_excerpt"),
+            Path(str(run_result.get("stdout_path"))).read_text(encoding="utf-8")
+            if run_result.get("stdout_path")
+            and Path(str(run_result.get("stdout_path"))).is_file()
+            else "",
+            Path(str(run_result.get("stderr_path"))).read_text(encoding="utf-8")
+            if run_result.get("stderr_path")
+            and Path(str(run_result.get("stderr_path"))).is_file()
+            else "",
+        )
+    ).lower()
+    return "test-hidden" in haystack or "test:hidden" in haystack
 
 
 def _run_gate0_arm(
@@ -684,19 +1291,15 @@ def _run_codex_with_product_hooks(
         model,
         prompt,
     ]
-    completed = subprocess.run(
-        command,
+    completed = _run_codex_subprocess(
+        command=command,
         cwd=workspace,
-        text=True,
-        capture_output=True,
-        check=False,
-        timeout=600,
         env={**os.environ, "PYTHONPATH": str(REPO_ROOT)},
     )
-    stdout_path.write_text(completed.stdout, encoding="utf-8")
-    stderr_path.write_text(completed.stderr, encoding="utf-8")
-    records, extraction_mode = parse_json_records(completed.stdout)
-    output_text = extract_result_text(records, completed.stdout)
+    stdout_path.write_text(completed["stdout"], encoding="utf-8")
+    stderr_path.write_text(completed["stderr"], encoding="utf-8")
+    records, extraction_mode = parse_json_records(completed["stdout"])
+    output_text = extract_result_text(records, completed["stdout"])
     hook_rows = _jsonl_rows(diagnostics_path)
     trajectory_rows = _live_trajectory_rows(hook_rows)
     _append_rows(trajectory_path, trajectory_rows)
@@ -713,15 +1316,16 @@ def _run_codex_with_product_hooks(
     ]
     return {
         "command": command,
-        "exit_code": completed.returncode,
+        "exit_code": completed["returncode"],
+        "timed_out": completed["timed_out"],
         "records": records,
         "extraction_mode": extraction_mode,
         "output_text": output_text,
         "output_excerpt": _excerpt(output_text, limit=600),
         "stdout_path": str(stdout_path),
-        "stdout_hash": _hash_text(completed.stdout),
+        "stdout_hash": _hash_text(completed["stdout"]),
         "stderr_path": str(stderr_path),
-        "stderr_hash": _hash_text(completed.stderr),
+        "stderr_hash": _hash_text(completed["stderr"]),
         "hook_rows": trajectory_rows,
         "hook_event_counts": _count_values(
             row.get("hook_event_name") for row in trajectory_rows
@@ -743,7 +1347,7 @@ def _run_codex_with_product_hooks(
         ],
         "provider_limit_interference": _provider_limit_interference(
             failure_class=None,
-            output_text=f"{completed.stdout}\n{completed.stderr}",
+            output_text=f"{completed['stdout']}\n{completed['stderr']}",
         ),
         "artifacts": {
             "stdout": str(stdout_path),
@@ -788,6 +1392,7 @@ def _trial_row(
         "block_rows": len(run_result["block_rows"]),
         "exact_block_rows": len(run_result["exact_block_rows"]),
         "runtime_snapshot_loaded": run_result["runtime_snapshot_loaded"],
+        "timed_out": bool(run_result.get("timed_out")),
         "actual_rendered_text_hashes": run_result["actual_rendered_text_hashes"],
         "suppressed_rendered_text_hashes": run_result[
             "suppressed_rendered_text_hashes"
