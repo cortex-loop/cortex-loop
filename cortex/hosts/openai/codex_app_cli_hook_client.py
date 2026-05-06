@@ -117,6 +117,9 @@ def _run_hook_client(
             state_store=OpenAICodexJsonStateStore(state_root),
             runtime_snapshot=runtime_snapshot,
             task_standard_text_enabled=bool(args.enable_task_standard_text),
+            posttooluse_task_standard_context_enabled=bool(
+                args.enable_posttooluse_task_standard_context
+            ),
         )
     except Exception as exc:  # fail-open hook infrastructure path
         return _fail_open(
@@ -141,6 +144,9 @@ def _run_hook_client(
         "fail_open": False,
         "model_visible_blocks_disabled": bool(args.disable_model_visible_blocks),
         "stop_blocks_disabled": bool(args.disable_stop_blocks),
+        "posttooluse_task_standard_context_enabled": bool(
+            args.enable_posttooluse_task_standard_context
+        ),
         "runtime_snapshot_loaded": runtime_snapshot is not None,
         "runtime_snapshot_hash": snapshot_hash,
         "actual_rendered_text_hash": _hash_text(rendered_text) if rendered_text else None,
@@ -228,6 +234,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--disable-model-visible-blocks", action="store_true")
     parser.add_argument("--disable-stop-blocks", action="store_true")
     parser.add_argument("--enable-task-standard-text", action="store_true")
+    parser.add_argument("--enable-posttooluse-task-standard-context", action="store_true")
     args, unknown = parser.parse_known_args(argv)
     if unknown:
         raise ValueError(f"unknown arguments: {' '.join(unknown)}")
