@@ -178,9 +178,7 @@ def _render_current_state(data: dict[str, Any]) -> str:
         "### Current Train",
         "",
         f"- Slug: `{work_today['slug']}`",
-        "",
         "### Next Product Train",
-        "",
     ]
     next_slug = next_train.get("slug")
     if next_slug is None:

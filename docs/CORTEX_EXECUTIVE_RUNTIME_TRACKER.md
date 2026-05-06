@@ -140,22 +140,57 @@ already handling the task correctly.
 The next strategic direction is upstream executive control, not
 renderer-first work.
 
-For the current Codex App/CLI task-standard train, the next evidence seam is
-an offline artifact/readiness gate rather than another live behavior
-comparison. The gate should use the prior three-arm live artifacts to prove
-the clean-control overblock fixes still hold, identify whether replay is exact
-raw-payload replay or only transcript-derived from `codex_stdout.jsonl`, and
-show that active Stop gating has actuator opportunity beyond silent perception
-before spending on another live matrix. For task-standard alignment, the next
-implementation step should be scored lexical matching with precision tests:
-token-class weighting first for identifiers, file paths, numbers, commands,
-and exact literals, then local frequency dampening. Sinkhorn-style transport
-belongs later as the `D_std` mass-conservation operator only if
-one-event-overcredits-many-items remains load-bearing after pairwise scores are
-trustworthy. The same seam should keep the product spine explicit: host
-artifacts stay in the Codex lab/host lane, task-standard law stays host-
-agnostic in SRE, and proven-dead touched code should be removed instead of
-hidden behind new flags.
+For the current Codex App/CLI task-standard train, the scored-lexical offline
+readiness gate was the last substrate-first seam before an actuator reset. The
+no-spend raw-vs-silent artifact readout then found a narrow signal:
+`silent_task_standard` beat `raw_codex` on `task_standard_exactness`
+evidence-recovery in 5/5 paired trials, while output quality was mixed and
+truth-gap had a material goal-continuity regression. That justifies an actuator
+map constrained to exactness/evidence recovery; it does not justify another
+live behavior comparison, broad Cortex lift, or Sinkhorn.
+
+The lifecycle actuator map is now the product architecture baseline: Codex
+lifecycle surfaces are ordered by the control they actually exert over the
+model's next input, output, tool result, or allowed action, not by hook-count
+coverage.
+
+The Codex App/CLI event map should be treated as:
+
+- SessionStart: session/workspace context only.
+- UserPromptSubmit: prospective task-set formation.
+- PreToolUse: hard motor deny/block only; do not design it as coaching text
+  because Codex does not support additionalContext there.
+- PermissionRequest: approval-bound route control.
+- PostToolUse: strongest near-term next-step correction surface because it can
+  replace or annotate completed tool feedback before the next model step.
+- Stop: late closure continuation.
+
+The PostToolUse task-standard next-step correction Gate 0 has now passed
+structurally without live spend. A gated Codex-host path can add
+PostToolUse `additionalContext` when product-visible verification/readback
+evidence leaves a specific captured work-standard or closure-evidence item
+unresolved, while flag-disabled, clean evidenced, blocker/waiting, and
+unrelated-tool controls stay silent. This is still Gate-0 proof only: it does
+not earn live behavior lift, does not activate defaults, and does not justify a
+three-arm live rerun by itself.
+
+The PostToolUse calibration decision accepted a narrow live actuator probe as
+the next product seam, not Sinkhorn and not a three-arm behavior comparison.
+The probe is constrained to `task_standard_exactness` / evidence recovery: a
+specific unresolved standard item after product-visible tool evidence should
+produce PostToolUse `additionalContext`, and the next model step should repair
+that exact evidence gap without over-controlling clean cases. Live execution
+still requires explicit current-turn approval and must not use `--require-pass`
+because negative verdicts are valid evidence. The PostToolUse text must remain
+specific to a product-visible mismatch and obey Cortex output law: no
+third-agent voice, no internal labels, no hidden verifier facts, and no generic
+"verify more" advice.
+PreToolUse motor inhibition should follow only as action blocking, not as a
+model-visible advice surface, and false-deny clean-control risk must be treated
+as a future kill-rule risk. Sinkhorn-style transport belongs later as the
+`D_std` mass-conservation operator only if PostToolUse or PreToolUse actuators
+show signal and one-event-overcredits-many-items remains load-bearing after
+pairwise scores are trustworthy.
 
 The likely missing coupling is a runtime estimate of resolution deficit:
 expected uncertainty reduction owed by recent forward commitments minus
