@@ -57,7 +57,7 @@ Subsystem boundaries: Core owns commitment/provenance/dispatch truth; SRE owns r
 
 Grounding rule: any product claim, plan, or implementation seam must name identity/current truth, a code owner, a proof surface, and the model-I/O path. If the relevant code was not read, say so before taking a position.
 
-Current train: `codex-app-cli-task-standard-evidence-gating-remediation`. Next train: `codex-app-cli-task-standard-behavior-comparison-rerun`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
+Current train: `codex-app-cli-task-standard-evidence-gating-remediation`. Next train: `codex-app-cli-task-standard-offline-replay-readiness-gate`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
 
 ## Live Product Truth
 
@@ -69,7 +69,7 @@ Current train: `codex-app-cli-task-standard-evidence-gating-remediation`. Next t
 
 - Current tracked train: `codex-app-cli-task-standard-evidence-gating-remediation`
 - Active quality/risk focus: This product remediation seam fixed the task-standard evidence/gating relation exposed by the live `failure_overblock`: Stop now consumes captured `TaskStandardSpine` satisfaction directly instead of depending only on the legacy `verification_evidence_count`, likely-miss items become closure debt only under explicit risk-closure language, and compound/range evidence alignment covers the live `65535` code-fix shape. Product tests replay the `simple_success_file` and `clean_verified_work` overblock classes while keeping premature closure gaps blockable. No model-visible text, selector threshold, SRE law, hook config, fixture, scoring, hidden-verifier boundary, or live behavior claim changed.
-- Next product train after the current focus: `codex-app-cli-task-standard-behavior-comparison-rerun`
+- Next product train after the current focus: `codex-app-cli-task-standard-offline-replay-readiness-gate`
 
 ## Bio-To-Code Matrix
 
@@ -214,13 +214,13 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `codex-app-cli-task-standard-behavior-comparison-rerun`
+- Train: `codex-app-cli-task-standard-offline-replay-readiness-gate`
 - Surface: product + lab proof
-- Executive benefit: Rerun the pinned three-arm task-standard comparison only after structural replay proves the clean-control overblock class is remediated.
-- Why now: Task-standard evidence-gating remediation now makes captured TaskStandardSpine state directly satisfy Stop verification-fit when claimed required standard items already have aligned evidence, while deterministic product tests keep premature closure gaps blockable. Behavior lift is still unearned until the pinned live comparison beats raw and silent controls.
-- Primary metric: Active task-standard Cortex must beat raw Codex and silent task-standard perception on at least 4/5 paired trials for at least two primary axes, with captured standard state plus actual Stop block/continuation evidence and no material clean-control overblock.
-- Guardrail: Do not edit signed task-standard text, Stop text, SRE law, selector thresholds, hidden-verifier boundaries, root hook configuration, fixtures, scoring, or hook wiring before or during the rerun. Hidden scoring remains scoring-only.
-- Kill rule: If the rerun produces failure_no_lift, failure_overblock, or baseline_not_reproduced, stop for the corresponding architecture or task-family decision instead of tuning text, thresholds, hooks, fixtures, or scoring.
+- Executive benefit: Add a no-spend transcript-derived artifact replay/readiness gate before any pinned three-arm task-standard live rerun, so clean-control overblock remediation, scored lexical alignment precision, active-vs-silent actuator opportunity, and code-path hygiene are checked before paid model time.
+- Why now: The pre-live audit found that the evidence-gating remediation is structurally correct but behavior lift remains unearned: the prior Astro result was silent-equals-active, truth-gap baseline reproduction was unstable, and current live artifacts support transcript-derived replay from `codex_stdout.jsonl` rather than exact raw hook-payload replay. The product goal is still Cortex's runtime executive loop: model-derived task standard -> host-visible evidence -> SRE verification-fit decision -> lawful model I/O, not a lab score. The current task-standard alignment substrate is binary token-overlap, so the next gate should add dependency-free weighted lexical scoring first: token-class weighting for identifiers, file paths, numbers, commands, and exact literals, then local frequency dampening for terms that appear across many items/events. Sinkhorn-style transport stays reserved for a later `D_std` mass-conservation seam if over-credit remains load-bearing after pairwise scores are trustworthy. A cheap offline readiness gate should now prove the two known clean-control overblocks stay silent, known mismatch rows remain blockable, hidden scoring stays scoring-only, active Cortex has at least one meaningful actuator-opportunity signal beyond silent, and touched harness/alignment code has no stale flags, duplicate paths, or dead branches before live spend.
+- Primary metric: The offline gate must report current-artifact replay fidelity, prove `simple_success_file__active_task_standard__clean_control__004` and `clean_verified_work__active_task_standard__clean_control__001` would stay silent under the remediated code, prove known premature-closure or mismatch rows remain blockable, add compound-token cross-concept and one-event-overcredits-many-items diagnostics for the scored-alignment path, show at least one active-arm actuator-opportunity signal not present in silent, and include a hygiene diff explaining any removed dead code or why no dead touched code exists before queuing the live rerun.
+- Guardrail: Do not edit signed task-standard text, Stop text, selector thresholds, hidden-verifier boundaries, root hook configuration, fixtures, scoring, or hook wiring while adding the readiness gate. Keep task-standard law host-agnostic in SRE and Codex artifact/replay mechanics in lab/host surfaces. Hidden scoring remains scoring-only. Do not add LLM-as-judge, embeddings, or Sinkhorn as an ad hoc matcher in this gate; if future live reruns need exact replay, persist sanitized raw hook payloads instead of treating summary diagnostics as raw payloads. Remove or retire only proven-dead code in touched surfaces, with tests preserving live artifact compatibility.
+- Kill rule: If the offline gate shows no active-vs-silent actuator-opportunity signal, cannot prove the clean-control overblock fixes, finds that available artifacts are too weak for the claimed replay fidelity, shows scored lexical alignment still lets one evidence event over-credit unrelated standard items, or requires host-specific policy inside SRE to pass, stop for an architecture, proof-boundary, or Sinkhorn/transport-deficit decision instead of running the live comparison.
 
 ## Research Lines Under Evaluation
 
@@ -376,4 +376,5 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/recon/cortex_codex_app_cli_task_standard_behavior_comparison_harness.md`
 - `docs/recon/cortex_codex_app_cli_task_standard_behavior_comparison_live_run.md`
 - `docs/recon/cortex_codex_app_cli_task_standard_evidence_gating_remediation.md`
+- `docs/recon/cortex_codex_app_cli_task_standard_pre_live_audit_roadmap_update.md`
 - `docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md`

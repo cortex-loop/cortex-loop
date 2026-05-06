@@ -140,6 +140,23 @@ already handling the task correctly.
 The next strategic direction is upstream executive control, not
 renderer-first work.
 
+For the current Codex App/CLI task-standard train, the next evidence seam is
+an offline artifact/readiness gate rather than another live behavior
+comparison. The gate should use the prior three-arm live artifacts to prove
+the clean-control overblock fixes still hold, identify whether replay is exact
+raw-payload replay or only transcript-derived from `codex_stdout.jsonl`, and
+show that active Stop gating has actuator opportunity beyond silent perception
+before spending on another live matrix. For task-standard alignment, the next
+implementation step should be scored lexical matching with precision tests:
+token-class weighting first for identifiers, file paths, numbers, commands,
+and exact literals, then local frequency dampening. Sinkhorn-style transport
+belongs later as the `D_std` mass-conservation operator only if
+one-event-overcredits-many-items remains load-bearing after pairwise scores are
+trustworthy. The same seam should keep the product spine explicit: host
+artifacts stay in the Codex lab/host lane, task-standard law stays host-
+agnostic in SRE, and proven-dead touched code should be removed instead of
+hidden behind new flags.
+
 The likely missing coupling is a runtime estimate of resolution deficit:
 expected uncertainty reduction owed by recent forward commitments minus
 realized evidence, continuity, certification, retraction, or blocker progress.

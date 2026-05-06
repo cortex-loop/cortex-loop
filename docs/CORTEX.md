@@ -329,9 +329,9 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Next Product Train
 
-- Slug: `codex-app-cli-task-standard-behavior-comparison-rerun`
+- Slug: `codex-app-cli-task-standard-offline-replay-readiness-gate`
 - Surface: `product + lab proof`
-- Why now: Task-standard evidence-gating remediation now makes captured TaskStandardSpine state directly satisfy Stop verification-fit when claimed required standard items already have aligned evidence, while deterministic product tests keep premature closure gaps blockable. Behavior lift is still unearned until the pinned live comparison beats raw and silent controls.
+- Why now: The pre-live audit found that the evidence-gating remediation is structurally correct but behavior lift remains unearned: the prior Astro result was silent-equals-active, truth-gap baseline reproduction was unstable, and current live artifacts support transcript-derived replay from `codex_stdout.jsonl` rather than exact raw hook-payload replay. The product goal is still Cortex's runtime executive loop: model-derived task standard -> host-visible evidence -> SRE verification-fit decision -> lawful model I/O, not a lab score. The current task-standard alignment substrate is binary token-overlap, so the next gate should add dependency-free weighted lexical scoring first: token-class weighting for identifiers, file paths, numbers, commands, and exact literals, then local frequency dampening for terms that appear across many items/events. Sinkhorn-style transport stays reserved for a later `D_std` mass-conservation seam if over-credit remains load-bearing after pairwise scores are trustworthy. A cheap offline readiness gate should now prove the two known clean-control overblocks stay silent, known mismatch rows remain blockable, hidden scoring stays scoring-only, active Cortex has at least one meaningful actuator-opportunity signal beyond silent, and touched harness/alignment code has no stale flags, duplicate paths, or dead branches before live spend.
 
 ### Research Lines Under Evaluation
 
