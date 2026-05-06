@@ -2806,6 +2806,7 @@ def _write_subject_hook_config(
     disable_model_visible_blocks: bool = False,
     disable_stop_blocks: bool = False,
     enable_task_standard_text: bool = False,
+    enable_posttooluse_task_standard_context: bool = False,
 ) -> Path:
     config_dir = subject / ".codex"
     config_dir.mkdir(parents=True, exist_ok=True)
@@ -2826,6 +2827,8 @@ def _write_subject_hook_config(
         command_parts.append("--disable-stop-blocks")
     if enable_task_standard_text:
         command_parts.append("--enable-task-standard-text")
+    if enable_posttooluse_task_standard_context:
+        command_parts.append("--enable-posttooluse-task-standard-context")
     command_parts.extend(("--diagnostics-path", str(diagnostics_path)))
     command = " ".join(
         shlex.quote(part) for part in command_parts

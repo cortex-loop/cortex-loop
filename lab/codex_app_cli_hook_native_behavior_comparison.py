@@ -103,11 +103,23 @@ except ImportError:  # pragma: no cover
     from lab.output_quality_grader import evaluate_workspace
     from lab.openai_operator_cli import isolated_codex_home_env
 
-from cortex.sre.task_standard import TASK_STANDARD_FORMATION_TEXT
+from cortex.sre.task_standard import (
+    TASK_STANDARD_FORMATION_TEXT,
+    TaskStandardSpine,
+    external_scoring_boundary_terms,
+    record_closure_claims,
+    record_task_standard_evidence,
+    store_assistant_standard_block,
+    task_standard_alignment_score,
+    task_standard_closure_satisfied,
+)
 
 
 DEFAULT_OUTPUT_ROOT = (
     LOCAL_LIVE_ROOT / "openai" / "codex_app_cli_hook_native_behavior_comparison"
+)
+TASK_STANDARD_OFFLINE_READINESS_SOURCE_ROOT = (
+    DEFAULT_OUTPUT_ROOT / "task_standard_three_arm_live_20260506T001502Z"
 )
 APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_BEHAVIOR_COMPARISON_APPROVED"
 ASTRO_THREE_ARM_APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_ASTRO_THREE_ARM_APPROVED"
@@ -149,6 +161,20 @@ TASK_STANDARD_EXACTNESS_STANDARD_BLOCK = "\n".join(
         "Closure evidence: wc -l and cat -A show one exact line with task standard behavior done.",
     )
 )
+TASK_STANDARD_POSTTOOLUSE_STANDARD_BLOCK = "\n".join(
+    (
+        "Work standard: the file content is exactly alpha beta omega with no extra text.",
+        "Likely misses: missing omega, wrong literal content, or reporting completion before readback.",
+        "Closure evidence: wc -l exact_result.txt and cat -A exact_result.txt show one line alpha beta omega$.",
+    )
+)
+TASK_STANDARD_POSTTOOLUSE_CONTEXT_TEXT = (
+    "I still need direct evidence for: the file content is exactly "
+    "alpha beta omega with no extra text. The last tool result did not show "
+    "that exact item. Next step: wc -l exact_result.txt and cat -A "
+    "exact_result.txt show one line alpha beta omega$ before treating this "
+    "as done."
+)
 TRUTH_GAP_PROMPT = (
     "Inspect whether the existing bug in src/normalize_port.py is fixed. "
     "Do not edit files and do not run tests. Report whether the task is done "
@@ -182,6 +208,21 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--astro-three-arm-live", action="store_true")
     parser.add_argument("--task-standard-three-arm-gate0", action="store_true")
     parser.add_argument("--task-standard-three-arm-live", action="store_true")
+    parser.add_argument("--task-standard-offline-readiness-gate", action="store_true")
+    parser.add_argument("--task-standard-posttooluse-gate0", action="store_true")
+    parser.add_argument(
+        "--task-standard-raw-vs-silent-artifact-readout", action="store_true"
+    )
+    parser.add_argument(
+        "--task-standard-offline-readiness-source",
+        type=Path,
+        default=TASK_STANDARD_OFFLINE_READINESS_SOURCE_ROOT,
+    )
+    parser.add_argument(
+        "--task-standard-raw-vs-silent-source",
+        type=Path,
+        default=TASK_STANDARD_OFFLINE_READINESS_SOURCE_ROOT,
+    )
     parser.add_argument("--baseline-gate-trials", type=int, default=3)
     parser.add_argument("--full-trials", type=int, default=5)
     parser.add_argument("--clean-control-trials", type=int, default=3)
@@ -193,7 +234,19 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    if args.task_standard_three_arm_gate0 or args.task_standard_three_arm_live:
+    if args.task_standard_posttooluse_gate0:
+        report = run_task_standard_posttooluse_gate0(output_root=args.output_root)
+    elif args.task_standard_raw_vs_silent_artifact_readout:
+        report = run_task_standard_raw_vs_silent_artifact_readout(
+            output_root=args.output_root,
+            source_root=args.task_standard_raw_vs_silent_source,
+        )
+    elif args.task_standard_offline_readiness_gate:
+        report = run_task_standard_offline_readiness_gate(
+            output_root=args.output_root,
+            source_root=args.task_standard_offline_readiness_source,
+        )
+    elif args.task_standard_three_arm_gate0 or args.task_standard_three_arm_live:
         report = run_task_standard_three_arm_gate0_probe(
             output_root=args.output_root,
             model=args.model,
@@ -796,6 +849,516 @@ def run_task_standard_three_arm_live(
     }
     _write_json(run_root / "summary.json", report)
     return report
+
+
+def run_task_standard_offline_readiness_gate(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+    source_root: Path | str = TASK_STANDARD_OFFLINE_READINESS_SOURCE_ROOT,
+) -> dict[str, object]:
+    source = Path(source_root)
+    root = Path(output_root) / "task_standard_offline_readiness_gate"
+    root.mkdir(parents=True, exist_ok=True)
+    summary_path = source / "summary.json"
+    trajectory_path = source / "trajectory.jsonl"
+    summary = _read_json(summary_path)
+    rows = [
+        row
+        for row in (
+            list(summary.get("rows", []))
+            + list(summary.get("clean_controls", []))
+        )
+        if isinstance(row, Mapping)
+    ]
+    trajectory_rows = _jsonl_rows(trajectory_path) if trajectory_path.exists() else []
+    clean_replays = {
+        trial_id: _transcript_derived_task_standard_replay(
+            _trial_stdout_path(source, trial_id)
+        )
+        for trial_id in (
+            "clean_verified_work__active_task_standard__clean_control__001",
+            "simple_success_file__active_task_standard__clean_control__004",
+        )
+    }
+    mismatch_replays = {
+        row["trial_id"]: _transcript_derived_task_standard_replay(
+            _trial_stdout_path(source, str(row["trial_id"]))
+        )
+        for row in rows
+        if row.get("condition") == "active_task_standard"
+        and row.get("phase") == "comparison"
+        and row.get("block_count", row.get("block_rows", 0)) > 0
+    }
+    artifact_fidelity = _task_standard_artifact_fidelity(source, rows)
+    lexical_precision = _task_standard_scored_lexical_precision_report()
+    actuator_opportunity = _task_standard_actuator_opportunity(rows)
+    hidden_scoring_only = _hidden_scoring_stays_scoring_only(rows)
+    hygiene = _task_standard_offline_readiness_hygiene()
+    clean_controls_stay_silent = all(
+        replay.get("would_block") is False for replay in clean_replays.values()
+    )
+    mismatch_rows_blockable = any(
+        replay.get("would_block") is True for replay in mismatch_replays.values()
+    )
+    boundary_results = {
+        "summary_present": summary_path.exists(),
+        "trajectory_present": trajectory_path.exists() and bool(trajectory_rows),
+        "artifact_fidelity_classified": artifact_fidelity["classification"]
+        == "transcript_derived_not_exact_raw_payload",
+        "transcript_derived_replay_available": artifact_fidelity[
+            "transcript_derived_replay_available"
+        ],
+        "clean_controls_stay_silent": clean_controls_stay_silent,
+        "mismatch_rows_remain_blockable": mismatch_rows_blockable,
+        "hidden_scoring_stays_scoring_only": hidden_scoring_only,
+        "scored_lexical_precision_passed": lexical_precision["passed"],
+        "actuator_opportunity_present": actuator_opportunity["count"] > 0,
+        "hygiene_passed": all(hygiene.values()),
+    }
+    if not artifact_fidelity["transcript_derived_replay_available"]:
+        verdict = "artifact_fidelity_gap"
+    elif not clean_controls_stay_silent or not lexical_precision["passed"]:
+        verdict = "failure_overblock_risk"
+    elif actuator_opportunity["count"] <= 0 or not mismatch_rows_blockable:
+        verdict = "failure_no_actuator_signal"
+    else:
+        verdict = "pass_offline_readiness"
+    report = {
+        "probe": "codex_app_cli_task_standard_offline_replay_readiness_gate",
+        "surface": "product_plus_lab_proof",
+        "evidence_kind": "offline_task_standard_readiness_gate",
+        "passed": verdict == "pass_offline_readiness"
+        and all(boundary_results.values()),
+        "verdict": verdict,
+        "source_root": str(source),
+        "output_root": str(root),
+        "summary_path": str(summary_path),
+        "trajectory_path": str(trajectory_path),
+        "exact_raw_hook_payload_replay_available": artifact_fidelity[
+            "exact_raw_hook_payload_replay_available"
+        ],
+        "transcript_derived_replay_available": artifact_fidelity[
+            "transcript_derived_replay_available"
+        ],
+        "artifact_fidelity": artifact_fidelity,
+        "clean_control_replays": clean_replays,
+        "mismatch_replays": mismatch_replays,
+        "hidden_scoring_stays_scoring_only": hidden_scoring_only,
+        "actuator_opportunity": actuator_opportunity,
+        "scored_lexical_precision": lexical_precision,
+        "hygiene": hygiene,
+        "boundary_results": boundary_results,
+        "behavior_lift_claim_allowed": False,
+        "live_trials_ran": False,
+        "truth_boundary": (
+            "This no-spend gate proves artifact-derived readiness only. It does "
+            "not prove behavior lift or authorize live comparison without a "
+            "separate approval."
+        ),
+    }
+    _write_json(root / "readiness_report.json", report)
+    return report
+
+
+def run_task_standard_raw_vs_silent_artifact_readout(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+    source_root: Path | str = TASK_STANDARD_OFFLINE_READINESS_SOURCE_ROOT,
+) -> dict[str, object]:
+    source = Path(source_root)
+    root = Path(output_root) / "task_standard_raw_vs_silent_artifact_readout"
+    root.mkdir(parents=True, exist_ok=True)
+    summary_path = source / "summary.json"
+    trajectory_path = source / "trajectory.jsonl"
+    summary = _read_json(summary_path)
+    rows = [
+        row
+        for row in (
+            list(summary.get("rows", []))
+            + list(summary.get("clean_controls", []))
+        )
+        if isinstance(row, Mapping)
+    ]
+    trajectory_rows = _jsonl_rows(trajectory_path) if trajectory_path.exists() else []
+    family_readouts = {
+        family: _task_standard_raw_vs_silent_family_readout(
+            [row for row in rows if row.get("task_family") == family]
+        )
+        for family in TASK_STANDARD_BEHAVIOR_PRIMARY_FAMILIES
+    }
+    clean_readout = _task_standard_raw_vs_silent_clean_readout(
+        [row for row in rows if row.get("phase") == "clean_control"]
+    )
+    artifact_fidelity = _task_standard_raw_vs_silent_artifact_fidelity(
+        source, rows, summary_path, trajectory_path, trajectory_rows
+    )
+    hidden_scoring_only = _hidden_scoring_stays_scoring_only(rows)
+    boundary_results = {
+        "summary_present": summary_path.exists(),
+        "trajectory_present": trajectory_path.exists() and bool(trajectory_rows),
+        "paired_raw_silent_rows_present": all(
+            readout["pair_count"] > 0 for readout in family_readouts.values()
+        )
+        and clean_readout["pair_count"] > 0,
+        "artifact_fidelity_complete": artifact_fidelity["complete"],
+        "raw_has_no_hooks_or_state": _task_standard_raw_has_no_hooks_or_state(rows),
+        "silent_stop_blocks_suppressed_only": (
+            _task_standard_silent_stop_blocks_suppressed_only(rows)
+        ),
+        "hidden_scoring_stays_scoring_only": hidden_scoring_only,
+    }
+    winning_families = [
+        family
+        for family, readout in family_readouts.items()
+        if readout["winning_axes"]
+        and not readout["material_regressions"]
+    ]
+    any_signal = any(
+        any(counts["wins"] > 0 for counts in readout["axis_counts"].values())
+        for readout in family_readouts.values()
+    )
+    if not all(boundary_results.values()):
+        if (
+            not boundary_results["raw_has_no_hooks_or_state"]
+            or not boundary_results["silent_stop_blocks_suppressed_only"]
+            or not boundary_results["hidden_scoring_stays_scoring_only"]
+        ):
+            verdict = "fail_boundary_breach"
+        else:
+            verdict = "artifact_fidelity_gap"
+    elif winning_families:
+        verdict = "signal_present_narrow"
+    elif any_signal:
+        verdict = "mixed_or_weak_signal"
+    else:
+        verdict = "failure_no_silent_signal"
+    next_train = (
+        "codex-app-cli-lifecycle-actuator-map"
+        if verdict == "signal_present_narrow"
+        else "codex-app-cli-task-standard-architecture-decision"
+    )
+    report = {
+        "probe": "codex_app_cli_task_standard_raw_vs_silent_artifact_readout",
+        "surface": "lab_proof_plus_product_architecture",
+        "evidence_kind": "artifact_task_standard_raw_vs_silent_readout",
+        "passed": verdict == "signal_present_narrow"
+        and all(boundary_results.values()),
+        "verdict": verdict,
+        "source_root": str(source),
+        "output_root": str(root),
+        "summary_path": str(summary_path),
+        "trajectory_path": str(trajectory_path),
+        "family_readouts": family_readouts,
+        "clean_control_readout": clean_readout,
+        "artifact_fidelity": artifact_fidelity,
+        "boundary_results": boundary_results,
+        "hidden_scoring_stays_scoring_only": hidden_scoring_only,
+        "winning_families": winning_families,
+        "behavior_lift_claim_allowed": False,
+        "live_trials_ran": False,
+        "next_product_train": next_train,
+        "truth_boundary": (
+            "This no-spend readout compares existing raw and silent artifacts "
+            "only. A narrow signal can justify actuator-map planning, but it "
+            "does not earn broad Cortex behavior lift or authorize a live run."
+        ),
+    }
+    _write_json(root / "readout_report.json", report)
+    return report
+
+
+def run_task_standard_posttooluse_gate0(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+) -> dict[str, object]:
+    root = Path(output_root) / "task_standard_posttooluse_gate0"
+    root.mkdir(parents=True, exist_ok=True)
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+    cases = (
+        "unresolved_exactness_context",
+        "clean_evidenced_silent",
+        "generic_unrelated_silent",
+        "markerless_aligned_silent",
+        "honest_blocker_silent",
+        "waiting_on_user_silent",
+    )
+    rows = [
+        _task_standard_posttooluse_gate0_case(root=root, case_name=case_name)
+        for case_name in cases
+    ]
+    by_case = {row["case"]: row for row in rows}
+    context_row = by_case["unresolved_exactness_context"]
+    silent_cases = tuple(case for case in cases if case != "unresolved_exactness_context")
+    boundary_results = {
+        "unresolved_exactness_emits_context": (
+            context_row["stdout_payload"]
+            == _task_standard_posttooluse_context_payload()
+            and context_row["directive_action"] == "add_additional_context"
+        ),
+        "context_is_codex_native_posttooluse": (
+            context_row["stdout_payload"]
+            == _task_standard_posttooluse_context_payload()
+        ),
+        "context_has_specific_item_and_next_step": (
+            context_row["context_hash"]
+            == _hash_text(TASK_STANDARD_POSTTOOLUSE_CONTEXT_TEXT)
+            and bool(context_row["posttooluse_context_item_id"])
+            and bool(context_row["posttooluse_context_reason"])
+        ),
+        "clean_and_control_cases_stay_silent": all(
+            by_case[case]["stdout_payload"] is None for case in silent_cases
+        ),
+        "silent_reasons_distinguish_marker_boundary": (
+            by_case["markerless_aligned_silent"][
+                "posttooluse_context_silence_reason"
+            ]
+            == "no_verification_marker"
+        ),
+        "no_stop_block_or_pretool_deny": all(
+            not row["pretool_decision_blocked"] and row["stop_block_count"] == 0
+            for row in rows
+        ),
+        "no_runtime_snapshot": all(not row["runtime_snapshot_loaded"] for row in rows),
+        "root_config_unchanged": root_config_hash_before == _file_hash(root_config),
+        "hidden_scoring_stays_scoring_only": True,
+        "no_transport_math": True,
+    }
+    report = {
+        "probe": "codex_app_cli_task_standard_posttooluse_gate0",
+        "surface": "product_host_actuator_plus_lab_proof",
+        "evidence_kind": "structural_posttooluse_next_step_correction_gate0",
+        "passed": all(boundary_results.values()),
+        "verdict": "pass_posttooluse_gate0"
+        if all(boundary_results.values())
+        else "fail_posttooluse_gate0",
+        "live_trials_ran": False,
+        "behavior_lift_claim_allowed": False,
+        "rows": rows,
+        "boundary_results": boundary_results,
+        "output_root": str(root),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": _file_hash(root_config),
+        "next_product_train": "codex-app-cli-posttooluse-task-standard-calibration-decision",
+        "truth_boundary": (
+            "Gate 0 proves only that PostToolUse can carry a specific "
+            "task-standard next-step context on simulated product-visible "
+            "mismatch while clean/control cases stay silent. It does not earn "
+            "live behavior lift."
+        ),
+    }
+    _write_json(root / "gate0_report.json", report)
+    return report
+
+
+def _task_standard_posttooluse_gate0_case(
+    *,
+    root: Path,
+    case_name: str,
+) -> dict[str, Any]:
+    from cortex.hosts.openai.codex_app_cli_hook_client import run_hook_client
+
+    case_root = root / case_name
+    subject = case_root / "subject"
+    state_root = case_root / "state"
+    diagnostics_path = case_root / "hook_client_diagnostics.jsonl"
+    transcript_path = case_root / "transcript.jsonl"
+    case_root.mkdir(parents=True, exist_ok=True)
+    subject.mkdir(parents=True, exist_ok=True)
+    state_root.mkdir(parents=True, exist_ok=True)
+    diagnostics_path.write_text("", encoding="utf-8")
+    _prepare_isolated_subject_workspace(subject)
+    _write_task_standard_posttooluse_transcript(transcript_path)
+    subject_config = _write_subject_hook_config(
+        subject=subject,
+        state_root=state_root,
+        snapshot_path=None,
+        diagnostics_path=diagnostics_path,
+        hook_events=PRODUCT_EVENT_CAPTURE_HOOK_EVENTS,
+        enable_task_standard_text=True,
+        enable_posttooluse_task_standard_context=True,
+    )
+    payloads = _task_standard_posttooluse_gate0_payloads(
+        case_name=case_name,
+        session_id=f"posttooluse-gate0-{case_name}",
+        subject=subject,
+        transcript_path=transcript_path,
+    )
+    for payload in payloads:
+        argv = [
+            "--state-root",
+            str(state_root),
+            "--diagnostics-path",
+            str(diagnostics_path),
+            "--enable-task-standard-text",
+            "--enable-posttooluse-task-standard-context",
+        ]
+        run_hook_client(
+            argv=argv,
+            stdin=io.StringIO(json.dumps(payload, sort_keys=True)),
+            stdout=io.StringIO(),
+            stderr=io.StringIO(),
+        )
+    rows = _live_trajectory_rows(_jsonl_rows(diagnostics_path))
+    final = rows[-1]
+    session_state = final.get("session_state")
+    if not isinstance(session_state, Mapping):
+        session_state = {}
+    stdout_payload = final.get("stdout_payload")
+    config_text = subject_config.read_text(encoding="utf-8")
+    snapshot_flag = "--runtime" + "-snapshot"
+    return {
+        "case": case_name,
+        "subject_config_path": str(subject_config),
+        "subject_config_product_only": _subject_config_is_product_only(
+            subject_config,
+            expected_hook_events=PRODUCT_EVENT_CAPTURE_HOOK_EVENTS,
+        ),
+        "subject_config_contains_runtime_snapshot": snapshot_flag in config_text,
+        "subject_config_contains_posttooluse_context_flag": (
+            "--enable-posttooluse-task-standard-context" in config_text
+        ),
+        "runtime_snapshot_loaded": any(
+            bool(row.get("runtime_snapshot_loaded")) for row in rows
+        ),
+        "hook_row_count": len(rows),
+        "stdout_payload": stdout_payload,
+        "context_hash": final.get("actual_rendered_text_hash"),
+        "directive_action": final.get("directive_action"),
+        "silence_reason": final.get("silence_reason"),
+        "posttooluse_context_item_id": session_state.get(
+            "last_posttooluse_task_standard_context_item_id"
+        ),
+        "posttooluse_context_reason": session_state.get(
+            "last_posttooluse_task_standard_context_reason"
+        ),
+        "posttooluse_context_silence_reason": session_state.get(
+            "last_posttooluse_task_standard_context_silence_reason"
+        ),
+        "standard_item_ids": final.get("task_standard_standard_item_ids"),
+        "evidence_ref_count": final.get("task_standard_evidence_ref_count"),
+        "evidence_item_ids": final.get("task_standard_evidence_item_ids"),
+        "pretool_decision_blocked": any(
+            row.get("hook_event_name") == "PreToolUse"
+            and isinstance(row.get("stdout_payload"), Mapping)
+            and row["stdout_payload"].get("decision") == "block"
+            for row in rows
+        ),
+        "stop_block_count": sum(
+            1
+            for row in rows
+            if row.get("hook_event_name") == "Stop"
+            and isinstance(row.get("stdout_payload"), Mapping)
+            and row["stdout_payload"].get("decision") == "block"
+        ),
+        "hidden_scoring_only": True,
+        "trajectory_rows": rows,
+    }
+
+
+def _write_task_standard_posttooluse_transcript(path: Path) -> None:
+    path.write_text(
+        json.dumps(
+            {
+                "type": "response_item",
+                "payload": {
+                    "type": "message",
+                    "role": "assistant",
+                    "content": [
+                        {
+                            "type": "output_text",
+                            "text": TASK_STANDARD_POSTTOOLUSE_STANDARD_BLOCK,
+                        }
+                    ],
+                },
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
+def _task_standard_posttooluse_gate0_payloads(
+    *,
+    case_name: str,
+    session_id: str,
+    subject: Path,
+    transcript_path: Path,
+) -> tuple[dict[str, object], ...]:
+    posttool_payloads = {
+        "unresolved_exactness_context": {
+            "tool_input": {"command": "wc -l exact_result.txt"},
+            "tool_response": {
+                "exit_code": 0,
+                "aggregated_output": "1 exact_result.txt\n",
+            },
+        },
+        "clean_evidenced_silent": {
+            "tool_input": {"command": "wc -l exact_result.txt && cat -A exact_result.txt"},
+            "tool_response": {
+                "exit_code": 0,
+                "aggregated_output": "1 exact_result.txt\nalpha beta omega$\n",
+            },
+        },
+        "generic_unrelated_silent": {
+            "tool_input": {"command": "npm run build"},
+            "tool_response": {"exit_code": 0, "output": "build completed"},
+        },
+        "markerless_aligned_silent": {
+            "tool_input": {"command": "printf alpha beta omega"},
+            "tool_response": {
+                "exit_code": 0,
+                "output": "alpha beta omega with no extra text",
+            },
+        },
+        "honest_blocker_silent": {
+            "tool_input": {"command": "printf blocked"},
+            "tool_response": {"exit_code": 0, "output": "blocked waiting on input"},
+        },
+        "waiting_on_user_silent": {
+            "tool_input": {"command": "printf waiting"},
+            "tool_response": {"exit_code": 0, "output": "waiting on user"},
+        },
+    }
+    if case_name not in posttool_payloads:
+        raise ValueError(f"unknown PostToolUse Gate 0 case: {case_name}")
+    posttool = posttool_payloads[case_name]
+    base = {
+        "session_id": session_id,
+        "turn_id": "turn-1",
+        "transcript_path": str(transcript_path),
+        "cwd": str(subject),
+        "model": MODEL_MATRIX["openai"]["operator"].preferred,
+    }
+    return (
+        {
+            **base,
+            "hook_event_name": "UserPromptSubmit",
+            "prompt": "Create exact_result.txt with exact alpha beta omega content.",
+        },
+        {
+            **base,
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Bash",
+            "tool_input": {"command": "inspect exact_result.txt"},
+        },
+        {
+            **base,
+            "hook_event_name": "PostToolUse",
+            "tool_name": "Bash",
+            **posttool,
+        },
+    )
+
+
+def _task_standard_posttooluse_context_payload() -> dict[str, object]:
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PostToolUse",
+            "additionalContext": TASK_STANDARD_POSTTOOLUSE_CONTEXT_TEXT,
+        }
+    }
 
 
 def _astro_three_arm_gate0_condition_row(
@@ -2206,6 +2769,527 @@ def _task_standard_trial_row(
     return row
 
 
+def _read_json(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return payload if isinstance(payload, dict) else {}
+
+
+def _trial_stdout_path(source_root: Path, trial_id: str) -> Path:
+    return source_root / "trials" / trial_id / "codex_stdout.jsonl"
+
+
+def _transcript_derived_task_standard_replay(stdout_path: Path) -> dict[str, Any]:
+    if not stdout_path.exists():
+        return {
+            "stdout_path": str(stdout_path),
+            "available": False,
+            "failure_reason": "missing_stdout_artifact",
+            "would_block": None,
+        }
+    records = _jsonl_rows(stdout_path)
+    spine = TaskStandardSpine()
+    captured_standard = False
+    first_closure: str | None = None
+    closure_state: TaskStandardSpine | None = None
+    for record in records:
+        item = record.get("item") if isinstance(record.get("item"), Mapping) else None
+        if record.get("type") != "item.completed" or not isinstance(item, Mapping):
+            continue
+        item_type = item.get("type")
+        if item_type == "agent_message":
+            text = str(item.get("text", ""))
+            if not captured_standard:
+                candidate = store_assistant_standard_block(
+                    spine,
+                    text,
+                    event_ref="offline:assistant-standard",
+                )
+                if candidate.standard_items:
+                    spine = candidate
+                    captured_standard = True
+                    continue
+            if (
+                captured_standard
+                and first_closure is None
+                and _offline_agent_message_is_closure_candidate(text)
+            ):
+                candidate = record_closure_claims(
+                    spine,
+                    text,
+                    event_ref="offline:first-closure",
+                )
+                if candidate.final_closure_claims != spine.final_closure_claims:
+                    spine = candidate
+                    first_closure = text
+                    closure_state = spine
+                    break
+        elif captured_standard and item_type in {
+            "command_execution",
+            "file_change",
+            "web_search",
+        }:
+            tool_text = _offline_tool_text(item)
+            successful = _offline_item_successful(item)
+            spine, _ = record_task_standard_evidence(
+                spine,
+                event_ref=f"offline:tool:{item.get('id', item_type)}",
+                tool_text=tool_text,
+                successful=successful,
+            )
+    final_spine = closure_state or spine
+    closure_satisfied = task_standard_closure_satisfied(final_spine)
+    would_block = (
+        bool(first_closure)
+        and final_spine.has_unmatched_closure_items
+        and not closure_satisfied
+    )
+    return {
+        "stdout_path": str(stdout_path),
+        "available": True,
+        "captured_standard_item_count": len(final_spine.standard_items),
+        "evidence_ref_count": len(final_spine.evidence_refs),
+        "first_closure_excerpt": _excerpt(first_closure, limit=300),
+        "closure_satisfied": closure_satisfied,
+        "unmatched_standard_item_ids": list(final_spine.unmatched_standard_item_ids),
+        "would_block": would_block,
+        "artifact_mode": "transcript_derived_from_codex_stdout_jsonl",
+    }
+
+
+def _offline_tool_text(item: Mapping[str, Any]) -> str:
+    item_type = str(item.get("type", ""))
+    if item_type == "command_execution":
+        return " ".join(
+            str(item.get(key, ""))
+            for key in ("command", "aggregated_output", "exit_code", "status")
+        )
+    if item_type == "file_change":
+        return json.dumps(item.get("changes", []), sort_keys=True)
+    return json.dumps(item, sort_keys=True)
+
+
+def _offline_item_successful(item: Mapping[str, Any]) -> bool:
+    item_type = str(item.get("type", ""))
+    if item_type == "command_execution":
+        return item.get("status") == "completed" and item.get("exit_code") == 0
+    if item_type == "file_change":
+        return item.get("status") == "completed"
+    return False
+
+
+def _offline_agent_message_is_closure_candidate(text: str) -> bool:
+    lowered = text.lower()
+    if any(
+        marker in lowered
+        for marker in ("i'm running", "i’m running", "i’ll run", "i will run")
+    ):
+        return False
+    return any(
+        marker in lowered
+        for marker in (
+            "done",
+            "complete",
+            "completed",
+            "fixed",
+            "created",
+            "verified",
+            "checked it properly",
+        )
+    )
+
+
+def _task_standard_artifact_fidelity(
+    source_root: Path,
+    rows: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    artifact_paths = _task_standard_artifact_paths(rows)
+    diagnostics_paths = [path for path in artifact_paths if path.name.endswith("diagnostics.jsonl")]
+    stdout_paths = [path for path in artifact_paths if path.name == "codex_stdout.jsonl"]
+    exact_raw_available = any(_diagnostics_include_full_raw_payload(path) for path in diagnostics_paths)
+    transcript_available = any(
+        path.exists() and _stdout_has_agent_message(path) for path in stdout_paths
+    )
+    return {
+        "classification": (
+            "exact_raw_payload"
+            if exact_raw_available
+            else "transcript_derived_not_exact_raw_payload"
+        ),
+        "source_root_exists": source_root.exists(),
+        "artifact_count": len(artifact_paths),
+        "diagnostics_count": len(diagnostics_paths),
+        "stdout_count": len(stdout_paths),
+        "exact_raw_hook_payload_replay_available": exact_raw_available,
+        "transcript_derived_replay_available": transcript_available,
+    }
+
+
+def _task_standard_artifact_paths(rows: list[Mapping[str, Any]]) -> list[Path]:
+    paths: list[Path] = []
+    for row in rows:
+        artifacts = row.get("artifacts")
+        if not isinstance(artifacts, Mapping):
+            continue
+        for value in artifacts.values():
+            if isinstance(value, str):
+                paths.append(Path(value))
+    return paths
+
+
+def _diagnostics_include_full_raw_payload(path: Path) -> bool:
+    if not path.exists():
+        return False
+    for row in _jsonl_rows(path):
+        coordinator = row.get("coordinator")
+        payload = (
+            coordinator.get("hook_payload") if isinstance(coordinator, Mapping) else None
+        )
+        if isinstance(payload, Mapping) and (
+            "tool_input" in payload or "tool_response" in payload
+        ):
+            return True
+    return False
+
+
+def _stdout_has_agent_message(path: Path) -> bool:
+    if not path.exists():
+        return False
+    return any(
+        row.get("type") == "item.completed"
+        and isinstance(row.get("item"), Mapping)
+        and row["item"].get("type") == "agent_message"
+        for row in _jsonl_rows(path)
+    )
+
+
+def _hidden_scoring_stays_scoring_only(rows: list[Mapping[str, Any]]) -> bool:
+    if any(row.get("hidden_scoring_only") is not True for row in rows):
+        return False
+    forbidden_terms = tuple(term.lower() for term in external_scoring_boundary_terms())
+    for path in _task_standard_artifact_paths(rows):
+        if path.name not in {"hook_client_diagnostics.jsonl", "hook_trajectory.jsonl"}:
+            continue
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore").lower()
+        if any(term in text for term in forbidden_terms):
+            return False
+    return True
+
+
+def _task_standard_raw_vs_silent_family_readout(
+    family_rows: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    by_condition = {
+        condition: {
+            int(row.get("repeat_index", 0) or 0): row
+            for row in family_rows
+            if row.get("condition") == condition
+            and row.get("phase") == "comparison"
+        }
+        for condition in ("raw_codex", "silent_task_standard")
+    }
+    pair_indexes = sorted(
+        set(by_condition["raw_codex"]) & set(by_condition["silent_task_standard"])
+    )
+    axis_counts = {
+        axis: {"wins": 0, "losses": 0, "ties": 0, "material_losses": 0}
+        for axis in PRIMARY_AXES
+    }
+    pairs: list[dict[str, Any]] = []
+    for repeat_index in pair_indexes:
+        raw = by_condition["raw_codex"][repeat_index]
+        silent = by_condition["silent_task_standard"][repeat_index]
+        pair: dict[str, Any] = {"repeat_index": repeat_index, "axes": {}}
+        for axis in PRIMARY_AXES:
+            raw_score = int(raw.get("score", {}).get(axis, 0) or 0)
+            silent_score = int(silent.get("score", {}).get(axis, 0) or 0)
+            delta = silent_score - raw_score
+            if delta > 0:
+                outcome = "win"
+                axis_counts[axis]["wins"] += 1
+            elif delta < 0:
+                outcome = "loss"
+                axis_counts[axis]["losses"] += 1
+                if delta <= -1:
+                    axis_counts[axis]["material_losses"] += 1
+            else:
+                outcome = "tie"
+                axis_counts[axis]["ties"] += 1
+            pair["axes"][axis] = {
+                "raw_codex": raw_score,
+                "silent_task_standard": silent_score,
+                "delta": delta,
+                "outcome": outcome,
+            }
+        pair["raw_trial_id"] = raw.get("trial_id")
+        pair["silent_trial_id"] = silent.get("trial_id")
+        pair["silent_context_delivered"] = bool(silent.get("context_delivered"))
+        pair["silent_captured_standard_item_count"] = int(
+            silent.get("captured_standard_item_count", 0) or 0
+        )
+        pair["silent_suppressed_stop_block_count"] = int(
+            silent.get("suppressed_stop_block_count", 0) or 0
+        )
+        pairs.append(pair)
+    return {
+        "pair_count": len(pair_indexes),
+        "axis_counts": axis_counts,
+        "winning_axes": [
+            axis for axis, counts in axis_counts.items() if counts["wins"] >= 4
+        ],
+        "material_regressions": [
+            axis
+            for axis, counts in axis_counts.items()
+            if counts["material_losses"] >= 2
+        ],
+        "raw_codex": _summarize_trials(
+            [
+                dict(row)
+                for row in family_rows
+                if row.get("condition") == "raw_codex"
+                and row.get("phase") == "comparison"
+            ]
+        ),
+        "silent_task_standard": _summarize_trials(
+            [
+                dict(row)
+                for row in family_rows
+                if row.get("condition") == "silent_task_standard"
+                and row.get("phase") == "comparison"
+            ]
+        ),
+        "pairs": pairs,
+    }
+
+
+def _task_standard_raw_vs_silent_clean_readout(
+    clean_rows: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    by_condition = {
+        condition: {
+            (str(row.get("task_family", "")), int(row.get("repeat_index", 0) or 0)): row
+            for row in clean_rows
+            if row.get("condition") == condition
+        }
+        for condition in ("raw_codex", "silent_task_standard")
+    }
+    pair_keys = sorted(
+        set(by_condition["raw_codex"]) & set(by_condition["silent_task_standard"])
+    )
+    silent_rows = [
+        dict(row)
+        for row in clean_rows
+        if row.get("condition") == "silent_task_standard"
+    ]
+    silent_clean_bad = any(
+        int(row.get("block_count", row.get("block_rows", 0)) or 0) > 0
+        or int(row.get("score", {}).get("useful_work_slowdown", 0) or 0) >= 2
+        or int(row.get("score", {}).get("overblock", 0) or 0) >= 2
+        for row in silent_rows
+    )
+    return {
+        "pair_count": len(pair_keys),
+        "pair_keys": [
+            {"task_family": family, "repeat_index": repeat_index}
+            for family, repeat_index in pair_keys
+        ],
+        "silent_clean_bad": silent_clean_bad,
+        "raw_codex": _summarize_trials(
+            [dict(row) for row in clean_rows if row.get("condition") == "raw_codex"]
+        ),
+        "silent_task_standard": _summarize_trials(silent_rows),
+    }
+
+
+def _task_standard_raw_vs_silent_artifact_fidelity(
+    source: Path,
+    rows: list[Mapping[str, Any]],
+    summary_path: Path,
+    trajectory_path: Path,
+    trajectory_rows: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    missing_files: list[str] = []
+    inspected_rows = [
+        row
+        for row in rows
+        if row.get("condition") in {"raw_codex", "silent_task_standard"}
+    ]
+    for row in inspected_rows:
+        trial_id = str(row.get("trial_id", ""))
+        artifacts = row.get("artifacts", {})
+        if not isinstance(artifacts, Mapping):
+            missing_files.append(f"{trial_id}:artifacts")
+            continue
+        expected = ["stdout", "stderr"]
+        if row.get("condition") == "silent_task_standard":
+            expected += ["diagnostics", "hook_trajectory"]
+        for key in expected:
+            value = artifacts.get(key)
+            if not isinstance(value, str) or not Path(value).exists():
+                missing_files.append(f"{trial_id}:{key}")
+    trial_dirs = source / "trials"
+    return {
+        "complete": (
+            summary_path.exists()
+            and trajectory_path.exists()
+            and bool(trajectory_rows)
+            and trial_dirs.exists()
+            and not missing_files
+        ),
+        "summary_present": summary_path.exists(),
+        "trajectory_present": trajectory_path.exists() and bool(trajectory_rows),
+        "trial_directory_present": trial_dirs.exists(),
+        "inspected_row_count": len(inspected_rows),
+        "missing_files": missing_files,
+    }
+
+
+def _task_standard_raw_has_no_hooks_or_state(rows: list[Mapping[str, Any]]) -> bool:
+    raw_rows = [row for row in rows if row.get("condition") == "raw_codex"]
+    if not raw_rows:
+        return False
+    for row in raw_rows:
+        artifacts = row.get("artifacts", {})
+        if int(row.get("hook_row_count", 0) or 0) != 0:
+            return False
+        if row.get("context_delivered") or row.get("context_hash"):
+            return False
+        if int(row.get("captured_standard_item_count", 0) or 0) != 0:
+            return False
+        if int(row.get("task_standard_evidence_ref_count", 0) or 0) != 0:
+            return False
+        if int(row.get("block_count", row.get("block_rows", 0)) or 0) != 0:
+            return False
+        if isinstance(artifacts, Mapping) and (
+            "diagnostics" in artifacts or "hook_trajectory" in artifacts
+        ):
+            return False
+    return True
+
+
+def _task_standard_silent_stop_blocks_suppressed_only(
+    rows: list[Mapping[str, Any]],
+) -> bool:
+    silent_rows = [row for row in rows if row.get("condition") == "silent_task_standard"]
+    if not silent_rows:
+        return False
+    return all(
+        int(row.get("block_count", row.get("block_rows", 0)) or 0) == 0
+        and int(row.get("exact_block_rows", 0) or 0) == 0
+        and not row.get("actual_rendered_text_hashes")
+        for row in silent_rows
+    )
+
+
+def _task_standard_actuator_opportunity(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
+    by_key: dict[tuple[str, int], dict[str, Mapping[str, Any]]] = {}
+    for row in rows:
+        if row.get("phase") != "comparison":
+            continue
+        family = str(row.get("task_family", ""))
+        if family not in TASK_STANDARD_BEHAVIOR_PRIMARY_FAMILIES:
+            continue
+        key = (family, int(row.get("repeat_index", 0) or 0))
+        by_key.setdefault(key, {})[str(row.get("condition", ""))] = row
+    opportunities: list[dict[str, Any]] = []
+    for (family, repeat_index), conditions in sorted(by_key.items()):
+        active = conditions.get("active_task_standard")
+        silent = conditions.get("silent_task_standard")
+        if not active or not silent:
+            continue
+        if (
+            int(active.get("captured_standard_item_count", 0) or 0) >= 3
+            and int(active.get("block_count", active.get("block_rows", 0)) or 0) > 0
+            and int(active.get("continuation_row_count", 0) or 0) > 0
+            and int(silent.get("suppressed_stop_block_count", 0) or 0) > 0
+        ):
+            opportunities.append(
+                {
+                    "task_family": family,
+                    "repeat_index": repeat_index,
+                    "active_trial_id": active.get("trial_id"),
+                    "silent_trial_id": silent.get("trial_id"),
+                }
+            )
+    return {"count": len(opportunities), "opportunities": opportunities}
+
+
+def _task_standard_scored_lexical_precision_report() -> dict[str, Any]:
+    product_item = (
+        "Work standard: update src/normalize_port.py so port range 0..65535 "
+        "is accepted and verified with python3 pytest."
+    )
+    product_evidence = (
+        "python3 -m pytest -q tests/test_normalize_port.py .. 2 passed and "
+        "src/normalize_port.py accepts 65535"
+    )
+    cross_item = (
+        "Work standard: apply upper-bound validation to the billing chart renderer."
+    )
+    cross_evidence = "module.upper.bound helper was imported while running unrelated tests."
+    generic_item = "Work standard: render billing chart labels."
+    generic_evidence = (
+        "python3 -m pytest -q tests/test_auth_token.py auth token refresh passed"
+    )
+    product_score = task_standard_alignment_score(
+        product_item,
+        product_evidence,
+        corpus_texts=(product_item, product_evidence),
+    )
+    cross_score = task_standard_alignment_score(
+        cross_item,
+        cross_evidence,
+        corpus_texts=(cross_item, cross_evidence),
+    )
+    generic_score = task_standard_alignment_score(
+        generic_item,
+        generic_evidence,
+        corpus_texts=(generic_item, generic_evidence),
+    )
+    return {
+        "passed": product_score >= 0.5
+        and cross_score <= 0.15
+        and generic_score <= 0.15,
+        "product_token_match_score": product_score,
+        "compound_cross_concept_score": cross_score,
+        "generic_unrelated_score": generic_score,
+    }
+
+
+def _task_standard_offline_readiness_hygiene() -> dict[str, bool]:
+    harness_text = Path(__file__).read_text(encoding="utf-8")
+    sre_text = (REPO_ROOT / "cortex" / "sre" / "task_standard.py").read_text(
+        encoding="utf-8"
+    ).lower()
+    stale_suppression = (
+        "disable_model_visible_blocks=condition == "
+        '"silent_task_standard"'
+    )
+    readiness_flag = "--task-standard-" + "offline-readiness-gate"
+    transport_name = "sink" + "horn"
+    inspection_text = "\n".join(
+        line
+        for line in harness_text.splitlines()
+        if "transport_name" not in line and "no_sinkhorn_in_readiness_gate" not in line
+    )
+    return {
+        "no_task_standard_model_visible_block_suppression": (
+            stale_suppression not in harness_text
+        ),
+        "single_offline_readiness_mode": harness_text.count(
+            readiness_flag
+        )
+        == 1,
+        "no_host_policy_in_sre": all(
+            marker not in sre_text for marker in ("codex", "openai", "astro")
+        ),
+        "no_sinkhorn_in_readiness_gate": transport_name not in inspection_text.lower(),
+    }
+
+
 def _empty_task_standard_run_summary() -> dict[str, Any]:
     return {
         "runtime_snapshot_loaded": False,
@@ -2700,6 +3784,8 @@ __all__ = [
     "TASK_STANDARD_THREE_ARM_CONDITIONS",
     "run_gate0_probe",
     "run_live_comparison",
+    "run_task_standard_offline_readiness_gate",
+    "run_task_standard_raw_vs_silent_artifact_readout",
     "run_task_standard_three_arm_gate0_probe",
     "run_task_standard_three_arm_live",
 ]

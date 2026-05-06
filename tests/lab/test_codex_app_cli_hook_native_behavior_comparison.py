@@ -16,6 +16,9 @@ from lab.codex_app_cli_hook_native_behavior_comparison import (
     run_astro_three_arm_live,
     run_gate0_probe,
     run_live_comparison,
+    run_task_standard_offline_readiness_gate,
+    run_task_standard_posttooluse_gate0,
+    run_task_standard_raw_vs_silent_artifact_readout,
     run_task_standard_three_arm_gate0_probe,
     run_task_standard_three_arm_live,
 )
@@ -125,6 +128,89 @@ def test_task_standard_three_arm_live_refuses_without_explicit_approval(
     assert report["verdict"] == "not_run"
     assert report["live_trials_ran"] is False
     assert report["approval_env"] == TASK_STANDARD_BEHAVIOR_APPROVAL_ENV
+
+
+def test_task_standard_offline_readiness_gate_reads_existing_artifacts(
+    tmp_path: Path,
+) -> None:
+    report = run_task_standard_offline_readiness_gate(output_root=tmp_path)
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_offline_readiness"
+    assert report["live_trials_ran"] is False
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["exact_raw_hook_payload_replay_available"] is False
+    assert report["transcript_derived_replay_available"] is True
+    assert report["boundary_results"]["clean_controls_stay_silent"] is True
+    assert report["boundary_results"]["mismatch_rows_remain_blockable"] is True
+    assert report["boundary_results"]["scored_lexical_precision_passed"] is True
+    assert report["boundary_results"]["actuator_opportunity_present"] is True
+    assert report["hidden_scoring_stays_scoring_only"] is True
+    assert report["hygiene"]["no_sinkhorn_in_readiness_gate"] is True
+    assert report["clean_control_replays"][
+        "clean_verified_work__active_task_standard__clean_control__001"
+    ]["would_block"] is False
+    assert report["clean_control_replays"][
+        "simple_success_file__active_task_standard__clean_control__004"
+    ]["would_block"] is False
+
+
+def test_task_standard_raw_vs_silent_artifact_readout_reads_existing_artifacts(
+    tmp_path: Path,
+) -> None:
+    report = run_task_standard_raw_vs_silent_artifact_readout(output_root=tmp_path)
+
+    assert report["passed"] is True
+    assert report["verdict"] == "signal_present_narrow"
+    assert report["live_trials_ran"] is False
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["next_product_train"] == "codex-app-cli-lifecycle-actuator-map"
+    assert report["boundary_results"]["artifact_fidelity_complete"] is True
+    assert report["boundary_results"]["raw_has_no_hooks_or_state"] is True
+    assert report["boundary_results"]["silent_stop_blocks_suppressed_only"] is True
+    assert report["boundary_results"]["hidden_scoring_stays_scoring_only"] is True
+    assert report["clean_control_readout"]["silent_clean_bad"] is False
+    assert report["winning_families"] == ["task_standard_exactness"]
+    exactness = report["family_readouts"]["task_standard_exactness"]
+    assert exactness["winning_axes"] == ["evidence_recovery"]
+    assert exactness["axis_counts"]["evidence_recovery"]["wins"] == 5
+    truth_gap = report["family_readouts"]["truth_gap_false_completion"]
+    assert "goal_continuity" in truth_gap["material_regressions"]
+
+
+def test_task_standard_posttooluse_gate0_emits_only_specific_context(
+    tmp_path: Path,
+) -> None:
+    report = run_task_standard_posttooluse_gate0(output_root=tmp_path)
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_posttooluse_gate0"
+    assert report["live_trials_ran"] is False
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["boundary_results"]["unresolved_exactness_emits_context"] is True
+    assert report["boundary_results"]["context_is_codex_native_posttooluse"] is True
+    assert report["boundary_results"]["context_has_specific_item_and_next_step"] is True
+    assert report["boundary_results"]["clean_and_control_cases_stay_silent"] is True
+    assert report["boundary_results"]["no_stop_block_or_pretool_deny"] is True
+    assert report["boundary_results"]["no_runtime_snapshot"] is True
+    by_case = {row["case"]: row for row in report["rows"]}
+    context_payload = by_case["unresolved_exactness_context"]["stdout_payload"]
+    assert context_payload["hookSpecificOutput"]["hookEventName"] == "PostToolUse"
+    text = context_payload["hookSpecificOutput"]["additionalContext"]
+    assert "direct evidence for:" in text
+    assert "product-visible" not in text
+    assert "alpha beta omega" in text
+    assert "verify more" not in text.lower()
+    assert "Cortex" not in text
+    assert by_case["clean_evidenced_silent"]["stdout_payload"] is None
+    assert by_case["generic_unrelated_silent"]["stdout_payload"] is None
+    assert by_case["markerless_aligned_silent"]["stdout_payload"] is None
+    assert (
+        by_case["markerless_aligned_silent"]["posttooluse_context_silence_reason"]
+        == "no_verification_marker"
+    )
+    assert by_case["honest_blocker_silent"]["stdout_payload"] is None
+    assert by_case["waiting_on_user_silent"]["stdout_payload"] is None
 
 
 def test_astro_three_arm_verdict_catches_hook_side_effect_signal() -> None:
@@ -399,6 +485,7 @@ def test_behavior_comparison_harness_does_not_use_forbidden_sources() -> None:
     assert "--disable-model-visible-blocks" in source
     assert "silent_task_standard" in source
     assert "--disable-stop-blocks" in source
+    assert "--task-standard-raw-vs-silent-artifact-readout" in source
 
 
 def _trial(
