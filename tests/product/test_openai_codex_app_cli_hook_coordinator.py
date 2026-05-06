@@ -631,6 +631,164 @@ def test_task_standard_clean_readback_stop_stays_silent() -> None:
     assert len(result.session_state.expectation_ledger.resolved) == 1
 
 
+def test_task_standard_live_clean_file_replay_consumes_spine_without_old_counter() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    transcript_path = Path("/tmp/codex-task-standard-live-clean-file-replay.jsonl")
+    _write_transcript(
+        transcript_path,
+        _assistant_message_row(
+            "\n".join(
+                (
+                    "Work standard: Create `cortex_behavior_clean.txt` via shell with exactly one line `behavior comparison clean done`, then read it back with `cat` to verify content.",
+                    "Likely misses: Wrong filename/location, extra or missing words, or skipping readback verification.",
+                    "Closure evidence: Successful `cat` output matches exactly, then I report `done`.",
+                )
+            )
+        ),
+    )
+
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt=(
+                "Create cortex_behavior_clean.txt with exactly one line "
+                "behavior comparison clean done, read it back, and report done."
+            ),
+            transcript_path=str(transcript_path),
+        ),
+        state_store=store,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PreToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={
+                "command": (
+                    "printf 'behavior comparison clean done\\n' > "
+                    "cortex_behavior_clean.txt && cat cortex_behavior_clean.txt"
+                )
+            },
+            last_assistant_message=None,
+        ),
+        state_store=store,
+    )
+    post = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={
+                "command": (
+                    "printf 'behavior comparison clean done\\n' > "
+                    "cortex_behavior_clean.txt && cat cortex_behavior_clean.txt"
+                )
+            },
+            tool_response={"aggregated_output": "behavior comparison clean done\n"},
+            last_assistant_message=None,
+        ),
+        state_store=store,
+    )
+
+    assert post.session_state.verification_evidence_count == 0
+    assert post.session_state.task_standard_spine.evidence_refs[-1].item_ids
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path=str(transcript_path),
+            last_assistant_message=(
+                "Read back from cortex_behavior_clean.txt: "
+                "behavior comparison clean done.\n\ndone"
+            ),
+        ),
+        state_store=store,
+    )
+
+    assert result.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
+    assert result.directive.silence_reason == "pressure_below_visible_threshold"
+    assert result.session_state.verification_evidence_count == 0
+    assert not result.session_state.task_standard_spine.has_unmatched_closure_items
+    assert len(result.session_state.expectation_ledger.active) == 0
+    assert len(result.session_state.expectation_ledger.resolved) == 1
+
+
+def test_task_standard_clean_code_fix_replay_stays_silent() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    transcript_path = Path("/tmp/codex-task-standard-clean-code-fix-replay.jsonl")
+    _write_transcript(
+        transcript_path,
+        _assistant_message_row(
+            "\n".join(
+                (
+                    "Work standard: make the smallest correct code change so valid TCP/UDP port bounds are exactly `0..65535`, with no behavior regression for non-numeric or out-of-range inputs.",
+                    "Likely misses: off-by-one checks (`< 65535` vs `<= 65535`), changing error behavior unintentionally, or updating code without proving it against the targeted test.",
+                    "Closure evidence: `tests/test_normalize_port.py` passes via `python -m pytest -q tests/test_normalize_port.py` and report diff scope.",
+                )
+            )
+        ),
+    )
+
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Fix normalize_port so 65535 is accepted and verify the targeted test.",
+            transcript_path=str(transcript_path),
+        ),
+        state_store=store,
+    )
+    for tool_text, response in (
+        (
+            "sed -n '1,220p' src/normalize_port.py",
+            "if port >= 65535:\n    raise ValueError('port must be <= 65535')",
+        ),
+        (
+            "*** Begin Patch\n*** Update File: src/normalize_port.py\n@@\n"
+            "- if port >= 65535:\n+ if port > 65535:\n"
+            "    raise ValueError('port must be <= 65535')\n*** End Patch",
+            "{\"output\":\"Success. Updated the following files\"}",
+        ),
+        (
+            "python -m pytest -q tests/test_normalize_port.py",
+            "zsh:1: command not found: python\n",
+        ),
+        (
+            "python3 -m pytest -q tests/test_normalize_port.py",
+            ".. [100%]\n2 passed in 0.01s\n",
+        ),
+    ):
+        handle_openai_codex_hook_payload(
+            _base_payload(
+                hook_event_name="PostToolUse",
+                transcript_path=str(transcript_path),
+                tool_name="Bash",
+                tool_input={"command": tool_text},
+                tool_response={"output": response, "exit_code": 0}
+                if "python -m" not in tool_text
+                else {"output": response, "exit_code": 127},
+                last_assistant_message=None,
+            ),
+            state_store=store,
+        )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="Stop",
+            transcript_path=str(transcript_path),
+            last_assistant_message=(
+                "Bug fixed by changing the upper-bound check to allow `65535`."
+            ),
+        ),
+        state_store=store,
+    )
+
+    assert result.directive.action is OpenAICodexLifecycleDirectiveAction.STAY_SILENT
+    assert result.directive.silence_reason == "pressure_below_visible_threshold"
+    assert not result.session_state.task_standard_spine.has_unmatched_closure_items
+    assert len(result.session_state.expectation_ledger.active) == 0
+    assert len(result.session_state.expectation_ledger.resolved) == 1
+
+
 def test_task_standard_gap_stop_blocks_with_captured_standard() -> None:
     store = OpenAICodexInMemoryStateStore()
     transcript_path = Path("/tmp/codex-task-standard-gap.jsonl")

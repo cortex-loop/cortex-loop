@@ -39,6 +39,7 @@ from cortex.sre.task_standard import (
     record_closure_claims,
     record_task_standard_evidence,
     store_assistant_standard_block,
+    task_standard_closure_satisfied,
 )
 
 from .codex_app_cli_lifecycle import (
@@ -862,7 +863,10 @@ def _updated_state(
                     commitment,
                 )
                 if (
-                    verification_evidence_count > 0
+                    (
+                        verification_evidence_count > 0
+                        or task_standard_closure_satisfied(task_standard_spine)
+                    )
                     and not task_standard_spine.has_unmatched_closure_items
                 ):
                     expectation_ledger = expectation_ledger.apply_progress(

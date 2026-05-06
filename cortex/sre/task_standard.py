@@ -456,6 +456,29 @@ def record_closure_claims(
     )
 
 
+def task_standard_closure_satisfied(spine: TaskStandardSpine) -> bool:
+    """Return whether claimed task-standard closure is already evidenced."""
+
+    if not isinstance(spine, TaskStandardSpine):
+        actual_type = type(spine).__name__
+        raise TypeError(
+            "task_standard_closure_satisfied.spine must be TaskStandardSpine, "
+            f"got {actual_type}."
+        )
+    if not spine.has_standard or not spine.final_closure_claims:
+        return False
+    if spine.has_unmatched_closure_items:
+        return False
+    claimed_required_items = tuple(
+        item
+        for item in spine.standard_items
+        if item.claimed and item.kind is not TaskStandardItemKind.LIKELY_MISS
+    )
+    return bool(claimed_required_items) and all(
+        item.has_aligned_evidence for item in claimed_required_items
+    )
+
+
 def external_scoring_boundary_terms() -> tuple[str, ...]:
     """External scoring markers that are never semantic product inputs."""
 
@@ -590,10 +613,12 @@ def _closure_claims_item(
     item: TaskStandardItem,
     normalized_claim_text: str,
 ) -> bool:
+    if item.kind is TaskStandardItemKind.LIKELY_MISS:
+        return _texts_align(item.text, normalized_claim_text) and (
+            _likely_miss_closure_markers_present(normalized_claim_text)
+        )
     if _texts_align(item.text, normalized_claim_text):
         return True
-    if item.kind is TaskStandardItemKind.LIKELY_MISS:
-        return False
     return _general_closure_claim(normalized_claim_text)
 
 
@@ -671,6 +696,23 @@ def _closure_claim_markers_present(text: str) -> bool:
     )
 
 
+def _likely_miss_closure_markers_present(text: str) -> bool:
+    return any(
+        marker in text
+        for marker in (
+            " no ",
+            " not ",
+            " without ",
+            " avoided ",
+            " avoid ",
+            " prevents ",
+            " prevented ",
+            " verified ",
+            " confirmed ",
+        )
+    )
+
+
 def _general_closure_claim(text: str) -> bool:
     return _closure_claim_markers_present(f" {text} ")
 
@@ -723,6 +765,14 @@ def _meaningful_tokens(text: str) -> tuple[str, ...]:
         cleaned = token.strip("._/-")
         if len(cleaned) >= 3 and cleaned not in stopwords:
             tokens.append(cleaned)
+        for part in re.split(r"[^a-z0-9]+", cleaned):
+            if (
+                part
+                and part != cleaned
+                and len(part) >= 3
+                and part not in stopwords
+            ):
+                tokens.append(part)
     return tuple(tokens)
 
 
@@ -797,4 +847,5 @@ __all__ = [
     "record_closure_claims",
     "record_task_standard_evidence",
     "store_assistant_standard_block",
+    "task_standard_closure_satisfied",
 ]

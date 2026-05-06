@@ -12,6 +12,7 @@ from cortex.sre.task_standard import (
     record_closure_claims,
     record_task_standard_evidence,
     store_assistant_standard_block,
+    task_standard_closure_satisfied,
 )
 
 
@@ -133,6 +134,57 @@ def test_likely_miss_is_not_required_by_generic_done_claim() -> None:
     assert likely_miss.claimed is False
 
 
+def test_likely_miss_is_not_claimed_by_incidental_overlap() -> None:
+    spine = initialize_task_standard_spine(
+        "Fix normalize_port so 65535 is accepted and verify the targeted test.",
+        event_ref="event:prompt",
+    )
+    spine = store_assistant_standard_block(
+        spine,
+        "\n".join(
+            (
+                "Work standard: make the smallest correct code change so valid TCP/UDP port bounds are exactly `0..65535`, with no behavior regression for non-numeric or out-of-range inputs.",
+                "Likely misses: off-by-one checks (`< 65535` vs `<= 65535`), changing error behavior unintentionally, or updating code without proving it against the targeted test.",
+                "Closure evidence: `tests/test_normalize_port.py` passes via `python -m pytest -q tests/test_normalize_port.py` and report diff scope.",
+            )
+        ),
+        event_ref="event:standard",
+    )
+    spine, patch_evidence = record_task_standard_evidence(
+        spine,
+        event_ref="event:patch",
+        tool_text=(
+            "apply_patch *** Update File: src/normalize_port.py "
+            "- if port >= 65535: + if port > 65535: "
+            "ValueError port must be <= 65535 Success"
+        ),
+        successful=True,
+    )
+    spine, test_evidence = record_task_standard_evidence(
+        spine,
+        event_ref="event:test",
+        tool_text=(
+            "python3 -m pytest -q tests/test_normalize_port.py "
+            ".. [100%] 2 passed"
+        ),
+        successful=True,
+    )
+    spine = record_closure_claims(
+        spine,
+        "Bug fixed by changing the upper-bound check to allow `65535`.",
+        event_ref="event:stop",
+    )
+
+    assert patch_evidence.evidence_class is TaskStandardEvidenceClass.STANDARD_ALIGNED
+    assert test_evidence.evidence_class is TaskStandardEvidenceClass.STANDARD_ALIGNED
+    assert not spine.has_unmatched_closure_items
+    assert task_standard_closure_satisfied(spine)
+    likely_miss = [
+        item for item in spine.standard_items if item.kind.value == "likely_miss"
+    ][0]
+    assert likely_miss.claimed is False
+
+
 def test_likely_miss_explicit_claim_still_requires_evidence() -> None:
     spine = initialize_task_standard_spine(
         "Create a one-line file, read it back, and report done.",
@@ -160,6 +212,7 @@ def test_likely_miss_explicit_claim_still_requires_evidence() -> None:
         item.kind.value == "likely_miss" and item.item_id in spine.unmatched_standard_item_ids
         for item in spine.standard_items
     )
+    assert not task_standard_closure_satisfied(spine)
 
 
 def test_external_scoring_boundary_terms_are_stripped_from_product_state() -> None:
