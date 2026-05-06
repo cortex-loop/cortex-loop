@@ -12,6 +12,7 @@ from cortex.sre.task_standard import (
     record_closure_claims,
     record_task_standard_evidence,
     store_assistant_standard_block,
+    task_standard_alignment_score,
     task_standard_closure_satisfied,
 )
 
@@ -93,6 +94,58 @@ def test_generic_check_is_not_standard_aligned() -> None:
 
     assert evidence.evidence_class is TaskStandardEvidenceClass.GENERIC_CHECK
     assert spine.has_unmatched_closure_items
+
+
+def test_scored_alignment_weights_product_specific_tokens() -> None:
+    item = (
+        "Work standard: update src/normalize_port.py so port range 0..65535 "
+        "is accepted and verified with python3 pytest."
+    )
+    evidence = (
+        "python3 -m pytest -q tests/test_normalize_port.py .. 2 passed and "
+        "src/normalize_port.py accepts 65535"
+    )
+    unrelated = "module.upper.bound helper was imported in unrelated payment tests"
+
+    assert task_standard_alignment_score(item, evidence, corpus_texts=(item, evidence)) >= 0.5
+    assert task_standard_alignment_score(item, unrelated, corpus_texts=(item, unrelated)) <= 0.15
+
+
+def test_compound_cross_concept_overlap_does_not_overmatch() -> None:
+    item = "Work standard: apply upper-bound validation to the billing chart renderer."
+    evidence = "module.upper.bound helper was imported while running unrelated tests."
+
+    assert task_standard_alignment_score(item, evidence, corpus_texts=(item, evidence)) <= 0.15
+
+
+def test_one_generic_event_does_not_overcredit_unrelated_standard_items() -> None:
+    spine = initialize_task_standard_spine(
+        "Verify auth token refresh and render the billing chart.",
+        event_ref="event:prompt",
+    )
+    spine = store_assistant_standard_block(
+        spine,
+        "\n".join(
+            (
+                "Work standard: auth token refresh is verified with targeted tests.",
+                "Likely misses: billing chart labels are left unchecked.",
+                "Closure evidence: inspect billing chart labels in the rendered output.",
+            )
+        ),
+        event_ref="event:standard",
+    )
+    spine, evidence = record_task_standard_evidence(
+        spine,
+        event_ref="event:tool",
+        tool_text="python3 -m pytest -q tests/test_auth_token.py auth token refresh passed",
+        successful=True,
+    )
+
+    assert evidence.evidence_class is TaskStandardEvidenceClass.STANDARD_ALIGNED
+    standard_item_ids = {
+        item.item_id: item for item in spine.standard_items if item.item_id in evidence.item_ids
+    }
+    assert {item.kind.value for item in standard_item_ids.values()} == {"work_standard"}
 
 
 def test_likely_miss_is_not_required_by_generic_done_claim() -> None:
