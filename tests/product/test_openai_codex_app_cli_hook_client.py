@@ -367,6 +367,36 @@ def test_non_stop_event_allows_without_stdout(tmp_path: Path) -> None:
     assert stderr.getvalue() == ""
 
 
+def test_posttooluse_task_standard_context_flag_reaches_coordinator(
+    tmp_path: Path,
+) -> None:
+    diagnostics_path = tmp_path / "diagnostics.jsonl"
+    captured_kwargs: dict[str, object] = {}
+
+    def fake_coordinator(*args, **kwargs):
+        captured_kwargs.update(kwargs)
+        return _fake_silent_result()
+
+    exit_code = run_hook_client(
+        argv=[
+            "--state-root",
+            str(tmp_path / "state"),
+            "--diagnostics-path",
+            str(diagnostics_path),
+            "--enable-posttooluse-task-standard-context",
+        ],
+        stdin=io.StringIO(json.dumps(_stop_payload(hook_event_name="PostToolUse"))),
+        stdout=io.StringIO(),
+        stderr=io.StringIO(),
+        coordinator=fake_coordinator,
+    )
+
+    assert exit_code == 0
+    assert captured_kwargs["posttooluse_task_standard_context_enabled"] is True
+    row = _only_jsonl_row(diagnostics_path)
+    assert row["posttooluse_task_standard_context_enabled"] is True
+
+
 def test_non_stop_lifecycle_events_update_private_state_without_stdout(
     tmp_path: Path,
 ) -> None:
@@ -550,6 +580,16 @@ def _fake_forbidden_result():
         host_response=SimpleNamespace(stdout_payload=None),
         as_diagnostics=lambda: {
             "directive": {"silence_reason": "model_visible_forbidden_terms"},
+            "host_response": {"decision": "allow", "reason_present": False},
+        },
+    )
+
+
+def _fake_silent_result():
+    return SimpleNamespace(
+        host_response=SimpleNamespace(stdout_payload=None),
+        as_diagnostics=lambda: {
+            "directive": {"action": "allow", "silence_reason": "test"},
             "host_response": {"decision": "allow", "reason_present": False},
         },
     )
