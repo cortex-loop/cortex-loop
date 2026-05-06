@@ -294,6 +294,12 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_CALIBRATION_DECISION_PATH = (
     / "recon"
     / "cortex_codex_app_cli_posttooluse_task_standard_calibration_decision.md"
 )
+CODEX_APP_CLI_TASK_STANDARD_STACK_PUBLICATION_HYGIENE_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_task_standard_stack_publication_hygiene.md"
+)
 TASK_STANDARD_SRE_CORRESPONDENCE_RECON_PATH = (
     REPO_ROOT
     / "docs"
@@ -1039,6 +1045,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_codex_app_cli_task_standard_pretool_transcript_capture.md",
         "cortex_codex_app_cli_task_standard_raw_vs_silent_artifact_readout.md",
         "cortex_codex_app_cli_task_standard_spine.md",
+        "cortex_codex_app_cli_task_standard_stack_publication_hygiene.md",
         "cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md",
         "cortex_codex_app_cli_task_standard_stop_gating_live_run.md",
         "cortex_codex_app_cli_value_ablation_audit.md",
@@ -1882,7 +1889,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1908,7 +1915,7 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
 
 
@@ -1934,7 +1941,7 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
 
 
@@ -1959,7 +1966,7 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
 
 
@@ -1983,7 +1990,7 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
 
 
@@ -2007,7 +2014,7 @@ def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
 
 
@@ -2032,7 +2039,7 @@ def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
 
 
 def test_codex_app_cli_product_perception_loop_records_structural_gate0() -> None:
@@ -2096,7 +2103,7 @@ def test_codex_app_cli_product_event_capture_remediation_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-calibration-decision"
+        "codex-app-cli-task-standard-stack-publication-hygiene"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
@@ -2123,7 +2130,7 @@ def test_codex_app_cli_stop_continuation_resolution_loop_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-calibration-decision"
+        "codex-app-cli-task-standard-stack-publication-hygiene"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
@@ -2152,7 +2159,7 @@ def test_codex_app_cli_hook_native_behavior_comparison_records_live_baseline_gat
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-calibration-decision"
+        "codex-app-cli-task-standard-stack-publication-hygiene"
     )
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
@@ -2180,7 +2187,7 @@ def test_codex_app_cli_astro_three_arm_fixture_refresh_records_mixed_signal() ->
         "docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
     )
@@ -2208,7 +2215,7 @@ def test_codex_app_cli_value_ablation_audit_records_requirement_perception_decis
         "docs/recon/cortex_codex_app_cli_value_ablation_audit.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
 
 
@@ -2235,7 +2242,7 @@ def test_codex_app_cli_task_standard_spine_records_structural_product_spine() ->
         "docs/recon/cortex_codex_app_cli_task_standard_spine.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     assert status["next_product_train"]["slug"] == (
         "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
     )
@@ -2265,7 +2272,7 @@ def test_codex_app_cli_task_standard_live_probe_records_structural_gate0() -> No
         "docs/recon/cortex_codex_app_cli_task_standard_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
 
 
@@ -2296,7 +2303,7 @@ def test_codex_app_cli_task_standard_live_run_records_capture_failure() -> None:
         "docs/recon/cortex_codex_app_cli_task_standard_live_run.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     assert (
         status["next_product_train"]["slug"]
         == "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
@@ -2325,7 +2332,7 @@ def test_codex_app_cli_hook_contract_capture_boundary_remediation_records_struct
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+        status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     )
     assert (
         status["next_product_train"]["slug"]
@@ -2364,7 +2371,7 @@ def test_codex_app_cli_task_standard_context_live_rerun_records_partial_delivery
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+        status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     )
     assert (
         status["next_product_train"]["slug"]
@@ -2404,12 +2411,12 @@ def test_codex_app_cli_communication_boundary_audit_records_proof_ladder() -> No
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+        status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     )
     work_note = status["work_today"]["note"].lower()
-    assert "accepted the passed posttooluse gate 0" in work_note
+    assert "packages the completed task-standard" in work_note
     assert "task_standard_exactness" in work_note
-    assert "narrow live posttooluse actuator probe" in work_note
+    assert "narrow posttooluse live probe remains queued" in work_note
     assert "no-spend" in work_note
     assert (
         status["next_product_train"]["slug"]
@@ -2445,12 +2452,12 @@ def test_codex_app_cli_task_standard_pretool_transcript_capture_records_state_ca
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+        status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     )
     work_note = status["work_today"]["note"].lower()
-    assert "accepted the passed posttooluse gate 0" in work_note
+    assert "packages the completed task-standard" in work_note
     assert "task_standard_exactness" in work_note
-    assert "narrow live posttooluse actuator probe" in work_note
+    assert "narrow posttooluse live probe remains queued" in work_note
     assert (
         status["next_product_train"]["slug"]
         == "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
@@ -2486,11 +2493,11 @@ def test_codex_app_cli_task_standard_live_capture_rerun_records_pass() -> None:
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+        status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     )
     work_note = status["work_today"]["note"].lower()
-    assert "accepted the passed posttooluse gate 0" in work_note
-    assert "narrow live posttooluse actuator probe" in work_note
+    assert "packages the completed task-standard" in work_note
+    assert "narrow posttooluse live probe remains queued" in work_note
     assert "no-spend" in work_note
     assert (
         status["next_product_train"]["slug"]
@@ -2521,10 +2528,10 @@ def test_codex_app_cli_task_standard_stop_gating_calibration_records_pass() -> N
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+        status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     )
     work_note = status["work_today"]["note"].lower()
-    assert "accepted the passed posttooluse gate 0" in work_note
+    assert "packages the completed task-standard" in work_note
     assert "task_standard_exactness" in work_note
     assert "no-spend" in work_note
     assert (
@@ -2556,11 +2563,11 @@ def test_codex_app_cli_task_standard_stop_gating_live_run_records_gate_use() -> 
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+        status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     )
     work_note = status["work_today"]["note"].lower()
-    assert "accepted the passed posttooluse gate 0" in work_note
-    assert "narrow live posttooluse actuator probe" in work_note
+    assert "packages the completed task-standard" in work_note
+    assert "narrow posttooluse live probe remains queued" in work_note
     assert "no-spend" in work_note
     assert (
         status["next_product_train"]["slug"]
@@ -2591,12 +2598,12 @@ def test_codex_app_cli_task_standard_behavior_comparison_harness_records_gate0()
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+        status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     )
     work_note = status["work_today"]["note"].lower()
-    assert "accepted the passed posttooluse gate 0" in work_note
+    assert "packages the completed task-standard" in work_note
     assert "task_standard_exactness" in work_note
-    assert "narrow live posttooluse actuator probe" in work_note
+    assert "narrow posttooluse live probe remains queued" in work_note
     assert "no-spend" in work_note
     assert (
         status["next_product_train"]["slug"]
@@ -2637,20 +2644,23 @@ def test_codex_app_cli_lifecycle_actuator_map_records_event_control_order() -> N
         "docs/recon/cortex_codex_app_cli_lifecycle_actuator_map.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     assert (
         status["next_product_train"]["slug"]
         == "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
     )
     assert "product live proof" == status["next_product_train"]["surface"]
-    assert "calibration decision accepted a narrow live probe" in status["next_product_train"][
+    assert "stack-publication hygiene seam split the completed" in status["next_product_train"][
         "why_now"
     ].lower()
     assert "three-arm behavior comparison remains paused" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "PostToolUse calibration decision accepted a narrow live actuator probe" in tracker
-    assert "must not use `--require-pass`" in tracker
+    assert (
+        "PostToolUse live probe remains queued but blocked until stack publication hygiene is clean"
+        in tracker.replace("\n", " ")
+    )
+    assert "not approved until the stack is published or merged" in tracker
     assert "PreToolUse motor inhibition should follow only as action blocking" in tracker
     assert "Sinkhorn-style transport belongs later" in tracker
 
@@ -2684,11 +2694,11 @@ def test_codex_app_cli_posttooluse_task_standard_next_step_correction_records_ga
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+        == "codex-app-cli-task-standard-stack-publication-hygiene"
     )
     work_note = status["work_today"]["note"].lower()
-    assert "accepted the passed posttooluse gate 0" in work_note
-    assert "narrow live posttooluse actuator probe" in work_note
+    assert "packages the completed task-standard" in work_note
+    assert "narrow posttooluse live probe remains queued" in work_note
     assert "not a three-arm behavior comparison" in work_note
     assert "no-text-change" in work_note
     assert (
@@ -2696,7 +2706,7 @@ def test_codex_app_cli_posttooluse_task_standard_next_step_correction_records_ga
         == "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
     )
     assert "product live proof" == status["next_product_train"]["surface"]
-    assert "must not use `--require-pass`" in status["next_product_train"][
+    assert "not approved until the stack is published or merged" in status["next_product_train"][
         "primary_metric"
     ].lower()
     assert "negative verdicts are valid evidence" in status["next_product_train"][
@@ -2708,7 +2718,10 @@ def test_codex_app_cli_posttooluse_task_standard_next_step_correction_records_ga
     assert "context is ignored" in status["next_product_train"][
         "kill_rule"
     ].lower()
-    assert "PostToolUse calibration decision accepted a narrow live actuator probe" in tracker
+    assert (
+        "PostToolUse live probe remains queued but blocked until stack publication hygiene is clean"
+        in tracker.replace("\n", " ")
+    )
     assert "not a three-arm behavior comparison" in tracker
 
 
@@ -2726,7 +2739,7 @@ def test_codex_app_cli_posttooluse_task_standard_calibration_decision_queues_nar
     assert "hookSpecificOutput.additionalContext" in text
     assert "Clean-evidenced, blocker, waiting-on-user, unrelated-tool" in text
     assert "Live execution remains approval-gated" in text
-    assert "must not use `--require-pass`" in text
+    assert "not approved until the stack is published or merged" in text
     assert "Not earned: live behavior lift" in text
     assert "PreToolUse motor inhibition" in text
     assert (
@@ -2739,7 +2752,7 @@ def test_codex_app_cli_posttooluse_task_standard_calibration_decision_queues_nar
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+        == "codex-app-cli-task-standard-stack-publication-hygiene"
     )
     assert (
         status["next_product_train"]["slug"]
@@ -2748,7 +2761,7 @@ def test_codex_app_cli_posttooluse_task_standard_calibration_decision_queues_nar
     assert "product live proof" == status["next_product_train"]["surface"]
     assert "task_standard_exactness" in status["next_product_train"]["executive_benefit"]
     assert "current-turn approved" in status["next_product_train"]["primary_metric"].lower()
-    assert "must not use `--require-pass`" in status["next_product_train"][
+    assert "not approved until the stack is published or merged" in status["next_product_train"][
         "primary_metric"
     ].lower()
     assert "negative verdicts are valid evidence" in status["next_product_train"][
@@ -2757,7 +2770,39 @@ def test_codex_app_cli_posttooluse_task_standard_calibration_decision_queues_nar
     assert "three-arm behavior comparison remains paused" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "PostToolUse calibration decision accepted a narrow live actuator probe" in tracker
+    assert "PostToolUse live probe remains queued but blocked until stack publication hygiene is clean" in tracker
+
+
+def test_codex_app_cli_task_standard_stack_publication_hygiene_blocks_live_until_clean() -> None:
+    text = _read(CODEX_APP_CLI_TASK_STANDARD_STACK_PUBLICATION_HYGIENE_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: workflow / product-proof hygiene" in text
+    assert "Verdict: `stack_publication_hygiene_required_before_live_probe`." in text
+    assert "codex/20260506-020000-task-standard-stack-publication-hygiene" in text
+    assert "narrow PostToolUse live probe remains queued but not approved" in text
+    assert "must not use `--require-pass`" in text
+    assert (
+        "recon/cortex_codex_app_cli_task_standard_stack_publication_hygiene.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_task_standard_stack_publication_hygiene.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"]
+        == "codex-app-cli-task-standard-stack-publication-hygiene"
+    )
+    work_note = status["work_today"]["note"].lower()
+    assert "packages the completed task-standard" in work_note
+    assert "not approved until the stack is published or merged" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
+    )
+    assert "dirty or unpublished" in status["next_product_train"]["guardrail"].lower()
 
 
 def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
@@ -2834,7 +2879,7 @@ def test_task_standard_executive_doctrine_math_refinement_is_recorded() -> None:
     )
     assert "recon/cortex_task_standard_executive_doctrine_math_refinement.md" in docs_index
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-calibration-decision"
+        "codex-app-cli-task-standard-stack-publication-hygiene"
     )
 
 
@@ -3162,15 +3207,15 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
     assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-calibration-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-stack-publication-hygiene"
     work_note = status["work_today"]["note"].lower()
-    assert "accepted the passed posttooluse gate 0" in work_note
+    assert "packages the completed task-standard" in work_note
     assert "task_standard_exactness" in work_note
-    assert "narrow live posttooluse actuator probe" in work_note
+    assert "narrow posttooluse live probe remains queued" in work_note
     assert "not a three-arm behavior comparison" in work_note
-    assert "explicit current-turn live approval" in work_note
-    assert "must not use `--require-pass`" in work_note
-    assert "no-sinkhorn/transport" in work_note
+    assert "not approved until the stack is published or merged" in work_note
+    assert "not approved until the stack is published or merged" in work_note
+    assert "no live run" in work_note
     assert (
         status["next_product_train"]["slug"]
         == "codex-app-cli-posttooluse-task-standard-narrow-live-probe"
@@ -3184,13 +3229,13 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "task_standard_exactness" in status["next_product_train"][
         "executive_benefit"
     ]
-    assert "calibration decision accepted a narrow live probe" in status["next_product_train"][
+    assert "stack-publication hygiene seam split the completed" in status["next_product_train"][
         "why_now"
     ].lower()
     assert "three-arm behavior comparison remains paused" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "must not use `--require-pass`" in status["next_product_train"][
+    assert "not approved until the stack is published or merged" in status["next_product_train"][
         "primary_metric"
     ].lower()
     assert "negative verdicts are valid evidence" in status["next_product_train"][

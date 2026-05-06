@@ -198,6 +198,9 @@ Active docs:
 - [Cortex Codex App/CLI Raw-vs-Silent Artifact Readout Roadmap Update](recon/cortex_codex_app_cli_raw_vs_silent_artifact_readout_roadmap_update.md) —
   roadmap update queuing the raw-vs-silent artifact readout before implementing
   PostToolUse or PreToolUse actuators
+- [Cortex Codex App/CLI Task-Standard Stack Publication Hygiene](recon/cortex_codex_app_cli_task_standard_stack_publication_hygiene.md) —
+  workflow/product-proof hygiene record keeping the narrow PostToolUse live
+  probe queued but unapproved until the task-standard stack is cleanly landed
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch

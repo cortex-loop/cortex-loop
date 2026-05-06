@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-task-standard-calibration-decision`
+- Slug: `codex-app-cli-task-standard-stack-publication-hygiene`
 ### Next Product Train
 - Slug: `codex-app-cli-posttooluse-task-standard-narrow-live-probe`
 - Surface: `product live proof`
-- Why now: The calibration decision accepted a narrow live probe because Gate 0 passed cleanly: one exactness/evidence-recovery mismatch emitted specific PostToolUse additionalContext, clean-evidenced, blocker, waiting-on-user, unrelated-tool, and flag-disabled controls stayed silent, hidden scoring stayed scoring-only, root config stayed unchanged, and no Stop/PreToolUse/PermissionRequest/Sinkhorn path was used. Three-arm behavior comparison remains paused.
+- Why now: The calibration decision accepted a narrow live probe because Gate 0 passed cleanly, and the stack-publication hygiene seam split the completed scored-alignment, offline-readiness, lifecycle-map, PostToolUse actuator, and pre-live hardening work into a reviewable branch. Three-arm behavior comparison remains paused, and the live probe is blocked until this stack is published or merged and cleanup no longer reports dirty worktree state.
 
 ### Research Lines Under Evaluation
 

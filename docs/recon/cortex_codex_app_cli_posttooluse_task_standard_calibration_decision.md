@@ -40,6 +40,8 @@ not whether Cortex earns broad behavior lift.
 
 Live execution remains approval-gated in the implementation turn. The live
 command must not use `--require-pass`; negative verdicts are valid evidence.
+The probe is not approved until the stack is published or merged and cleanup
+no longer reports dirty worktree state.
 
 ## Forbidden Claims
 

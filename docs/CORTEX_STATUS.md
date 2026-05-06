@@ -57,7 +57,7 @@ Subsystem boundaries: Core owns commitment/provenance/dispatch truth; SRE owns r
 
 Grounding rule: any product claim, plan, or implementation seam must name identity/current truth, a code owner, a proof surface, and the model-I/O path. If the relevant code was not read, say so before taking a position.
 
-Current train: `codex-app-cli-posttooluse-task-standard-calibration-decision`. Next train: `codex-app-cli-posttooluse-task-standard-narrow-live-probe`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
+Current train: `codex-app-cli-task-standard-stack-publication-hygiene`. Next train: `codex-app-cli-posttooluse-task-standard-narrow-live-probe`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
 
 ## Live Product Truth
 
@@ -67,8 +67,8 @@ Current train: `codex-app-cli-posttooluse-task-standard-calibration-decision`. N
 
 ## Current Focus
 
-- Current tracked train: `codex-app-cli-posttooluse-task-standard-calibration-decision`
-- Active quality/risk focus: This no-spend product architecture + lab proof review seam accepted the passed PostToolUse Gate 0 as sufficient to queue a narrow live PostToolUse actuator probe, not a three-arm behavior comparison. The next train is constrained to `task_standard_exactness` / evidence recovery, requires explicit current-turn live approval, must not use `--require-pass`, and preserves the no-text-change, no-Stop-text-change, no-SRE-law-change, no-scored-matcher-change, no-fixture/scoring/root-hook/hidden-verifier-change, no-Sinkhorn/transport, no-PreToolUse-denial, no-PermissionRequest-policy, and no-broad-lift boundary.
+- Current tracked train: `codex-app-cli-task-standard-stack-publication-hygiene`
+- Active quality/risk focus: This no-spend publication-hygiene seam packages the completed task-standard scored-alignment, offline-readiness, raw-vs-silent, lifecycle-actuator-map, PostToolUse Gate 0, calibration-decision, and pre-live hardening work into a clean reviewable stack. The narrow PostToolUse live probe remains queued for `task_standard_exactness` / evidence recovery, not a three-arm behavior comparison, but is not approved until the stack is published or merged and cleanup no longer reports dirty worktree state; it must not use `--require-pass` when separately approved. Boundary: no live run, no-text-change, no-Stop-text-change, no-SRE-law-change, no-threshold/fixture/scoring/root-hook/hidden-verifier/Sinkhorn/PreToolUse/PermissionRequest change is part of this seam.
 - Next product train after the current focus: `codex-app-cli-posttooluse-task-standard-narrow-live-probe`
 
 ## Bio-To-Code Matrix
@@ -217,9 +217,9 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - Train: `codex-app-cli-posttooluse-task-standard-narrow-live-probe`
 - Surface: product live proof
 - Executive benefit: Test whether the Gate-0-proven PostToolUse task-standard actuator improves the next model step on the earned `task_standard_exactness` / evidence-recovery surface, using Codex-native PostToolUse additionalContext after product-visible evidence leaves one captured standard item unresolved.
-- Why now: The calibration decision accepted a narrow live probe because Gate 0 passed cleanly: one exactness/evidence-recovery mismatch emitted specific PostToolUse additionalContext, clean-evidenced, blocker, waiting-on-user, unrelated-tool, and flag-disabled controls stayed silent, hidden scoring stayed scoring-only, root config stayed unchanged, and no Stop/PreToolUse/PermissionRequest/Sinkhorn path was used. Three-arm behavior comparison remains paused.
-- Primary metric: A live probe may claim only narrow actuator evidence if the active PostToolUse arm emits one specific context on the mismatch, the next model step performs the named product-visible check or otherwise repairs the exact evidence gap, clean controls stay silent, and hidden scoring remains scoring-only. The live command must be explicit current-turn approved and must not use `--require-pass`; negative verdicts are valid evidence.
-- Guardrail: Do not broaden to output-quality/truth-gap lift, run a three-arm behavior comparison, tune signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport, PreToolUse denial, or PermissionRequest policy.
+- Why now: The calibration decision accepted a narrow live probe because Gate 0 passed cleanly, and the stack-publication hygiene seam split the completed scored-alignment, offline-readiness, lifecycle-map, PostToolUse actuator, and pre-live hardening work into a reviewable branch. Three-arm behavior comparison remains paused, and the live probe is blocked until this stack is published or merged and cleanup no longer reports dirty worktree state.
+- Primary metric: The live probe is not approved until the stack is published or merged and cleanup no longer reports dirty worktree state. After the stack is landed cleanly, a live probe may claim only narrow actuator evidence if the active PostToolUse arm emits one specific context on the mismatch, the next model step performs the named product-visible check or otherwise repairs the exact evidence gap, clean controls stay silent, and hidden scoring remains scoring-only. The live command must be explicit current-turn approved and must not use `--require-pass`; negative verdicts are valid evidence.
+- Guardrail: Do not run the live probe while the stack is dirty or unpublished. Do not broaden to output-quality/truth-gap lift, run a three-arm behavior comparison, tune signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport, PreToolUse denial, or PermissionRequest policy.
 - Kill rule: If live PostToolUse context is ignored, produces generic verification behavior, over-controls clean cases, repeats context loops, or requires text/policy tuning after seeing results, record the negative verdict and stop for architecture decision rather than repairing fixtures or broadening claims.
 
 ## Research Lines Under Evaluation
@@ -289,6 +289,8 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 - `E23 preservation-state evidence` -> `archive/e23-preservation-state-machine`
   Purpose: Preserved review evidence for the landed preservation-state kernel extract and later provenance checks.
+- `Codex App/CLI task-standard stack publication hygiene` -> `docs/recon/cortex_codex_app_cli_task_standard_stack_publication_hygiene.md`
+  Purpose: Records that the narrow PostToolUse live probe is queued but blocked until the task-standard stack is published or merged cleanly.
 
 ## Blocked Moves
 
@@ -389,4 +391,5 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/recon/cortex_codex_app_cli_posttooluse_task_standard_next_step_correction.md`
 - `docs/recon/cortex_codex_app_cli_posttooluse_task_standard_calibration_decision.md`
 - `docs/recon/cortex_codex_app_cli_raw_vs_silent_artifact_readout_roadmap_update.md`
+- `docs/recon/cortex_codex_app_cli_task_standard_stack_publication_hygiene.md`
 - `docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md`

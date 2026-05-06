@@ -184,7 +184,12 @@ still requires explicit current-turn approval and must not use `--require-pass`
 because negative verdicts are valid evidence. The PostToolUse text must remain
 specific to a product-visible mismatch and obey Cortex output law: no
 third-agent voice, no internal labels, no hidden verifier facts, and no generic
-"verify more" advice.
+"verify more" advice. The PostToolUse live probe remains queued but blocked until stack
+publication hygiene is clean: the task-standard stack must be published or
+merged and the worktree must no longer be dirty before live approval is
+considered.
+PostToolUse live probe remains queued but blocked until stack publication hygiene is clean.
+The probe is not approved until the stack is published or merged.
 PreToolUse motor inhibition should follow only as action blocking, not as a
 model-visible advice surface, and false-deny clean-control risk must be treated
 as a future kill-rule risk. Sinkhorn-style transport belongs later as the
