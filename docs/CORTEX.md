@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun`
-### Next Product Train
 - Slug: `codex-app-cli-posttooluse-task-standard-closure-reporting-architecture-decision`
-- Surface: `product architecture decision`
-- Why now: The latest approved live rerun removed the previous structural blockers: exactly one PostToolUse context was emitted, the trace joined by unique `tool_event_fingerprint`, the next terminal action matched the requested direct check, clean/control cases stayed silent, root config stayed unchanged, and no runtime snapshot loaded. The only failing criterion was final closure reporting, so the next seam should be a no-live architecture decision rather than another live run or policy/text edit.
+### Next Product Train
+- Slug: `codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0`
+- Surface: `lab proof remediation`
+- Why now: The architecture decision localized the latest failure to readout underfit: context delivery, repeated-context prevention, causal trace joining, next tool action, clean controls, and hidden/root/runtime boundaries all passed, while the harness predicate missed a final output that semantically reported the direct evidence.
 
 ### Research Lines Under Evaluation
 
