@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from pathlib import Path
@@ -36,8 +35,6 @@ from cortex.sre.task_standard import (
     TASK_STANDARD_FORMATION_TEXT,
     TaskStandardEvidence,
     TaskStandardEvidenceClass,
-    TaskStandardItem,
-    TaskStandardItemKind,
     TaskStandardSpine,
     initialize_task_standard_spine,
     record_closure_claims,
@@ -53,6 +50,12 @@ from .codex_app_cli_lifecycle import (
     OpenAICodexLifecycleFacts,
     build_openai_codex_app_cli_lifecycle_directive,
 )
+from .posttooluse_task_standard_actuator import (
+    posttooluse_task_standard_context_decision,
+    tool_event_has_verification_evidence,
+    tool_event_looks_failed,
+    tool_event_text,
+)
 
 
 class OpenAICodexHookHostDecision(str, Enum):
@@ -67,65 +70,6 @@ _CODEX_ADDITIONAL_CONTEXT_EVENTS = frozenset(
         "PostToolUse",
     }
 )
-_POSTTOOLUSE_TASK_STANDARD_CONTEXT_TEMPLATE = (
-    "I still need direct evidence for: {standard_item}. The last tool "
-    "result did not show that exact item. Next step: {next_step} before treating "
-    "this as done."
-)
-_POSTTOOLUSE_TASK_STANDARD_CONTEXT_SPAN_LIMIT = 180
-_POSTTOOLUSE_TASK_STANDARD_CONTEXT_SESSION_LIMIT = 2
-_POSTTOOLUSE_MISSING_ARTIFACT_MARKERS = (
-    "no such file or directory",
-    "cannot stat",
-    "does not exist",
-    "open: no such file",
-    "open: no such file or directory",
-    "no such file",
-)
-_POSTTOOLUSE_PHASE_FAILED_CHECK_MARKERS = (
-    "illegal option",
-    "invalid option",
-    "unrecognized option",
-    "unknown option",
-    "usage:",
-)
-_TOOL_VERIFICATION_MARKERS = (
-    " test",
-    "tests",
-    "pytest",
-    "unittest",
-    "vitest",
-    "jest",
-    "build",
-    "lint",
-    "typecheck",
-    "tsc",
-    "mypy",
-    "ruff",
-    "cargo test",
-    "go test",
-    "check",
-    "verify",
-    "cat ",
-    "$(cat",
-    "\\\"cat",
-    " wc ",
-    "wc -l",
-    "\\\"wc",
-    "grep",
-    "stat ",
-    "\\\"stat",
-    "[ -f",
-    "test -f",
-    "file_ok",
-    "content_ok",
-    "content=",
-    "lines=",
-    "exists",
-    "matches exactly",
-)
-
-
 @dataclass(frozen=True, slots=True)
 class OpenAICodexHookPayload:
     session_id: str
@@ -426,13 +370,6 @@ class OpenAICodexSessionState:
                 payload.get("last_posttooluse_task_standard_context_silence_reason")
             ),
         )
-
-
-@dataclass(frozen=True, slots=True)
-class _PostToolUseTaskStandardContextDecision:
-    item_id: str | None
-    context_text: str | None
-    reason: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -894,7 +831,7 @@ def _updated_state(
         tool_event_count += 1
     if (
         payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE
-        and _tool_event_has_verification_evidence(
+        and tool_event_has_verification_evidence(
             payload,
             active_verification_expectation=_has_active_expectation_kind(
                 expectation_ledger,
@@ -906,10 +843,10 @@ def _updated_state(
         task_standard_spine, task_standard_evidence = record_task_standard_evidence(
             task_standard_spine,
             event_ref=tool_event_ref,
-            tool_text=_tool_event_text(payload),
-            successful=not _tool_event_looks_failed(
+            tool_text=tool_event_text(payload),
+            successful=not tool_event_looks_failed(
                 payload,
-                _tool_event_text(payload).lower(),
+                tool_event_text(payload).lower(),
             ),
         )
         standard_gated = task_standard_spine.has_standard
@@ -941,10 +878,10 @@ def _updated_state(
         task_standard_spine, task_standard_evidence = record_task_standard_evidence(
             task_standard_spine,
             event_ref=tool_event_ref,
-            tool_text=_tool_event_text(payload),
-            successful=not _tool_event_looks_failed(
+            tool_text=tool_event_text(payload),
+            successful=not tool_event_looks_failed(
                 payload,
-                _tool_event_text(payload).lower(),
+                tool_event_text(payload).lower(),
             ),
         )
     if (
@@ -954,7 +891,7 @@ def _updated_state(
         if task_standard_evidence is None:
             last_posttooluse_context_silence_reason = "no_task_standard_evidence"
         else:
-            posttooluse_context = _posttooluse_task_standard_context_decision(
+            posttooluse_context = posttooluse_task_standard_context_decision(
                 task_standard_spine,
                 evidence=task_standard_evidence,
                 payload=payload,
@@ -1384,354 +1321,6 @@ def _posttooluse_task_standard_context_directive(
     )
 
 
-def _posttooluse_task_standard_context_decision(
-    spine: TaskStandardSpine,
-    *,
-    evidence: TaskStandardEvidence,
-    payload: OpenAICodexHookPayload,
-    already_context_item_ids: tuple[str, ...],
-) -> _PostToolUseTaskStandardContextDecision:
-    if not spine.has_standard:
-        return _PostToolUseTaskStandardContextDecision(
-            item_id=None,
-            context_text=None,
-            reason="no_model_derived_standard",
-        )
-    if task_standard_closure_satisfied(spine):
-        return _PostToolUseTaskStandardContextDecision(
-            item_id=None,
-            context_text=None,
-            reason="task_standard_closure_satisfied",
-        )
-    if evidence.evidence_class not in {
-        TaskStandardEvidenceClass.CLAIM_ALIGNED,
-        TaskStandardEvidenceClass.STANDARD_ALIGNED,
-    }:
-        return _PostToolUseTaskStandardContextDecision(
-            item_id=None,
-            context_text=None,
-            reason="evidence_not_standard_aligned",
-        )
-    if (
-        len(already_context_item_ids)
-        >= _POSTTOOLUSE_TASK_STANDARD_CONTEXT_SESSION_LIMIT
-    ):
-        return _PostToolUseTaskStandardContextDecision(
-            item_id=None,
-            context_text=None,
-            reason="posttooluse_context_session_cap_reached",
-        )
-    tool_text = _tool_event_text(payload).lower()
-    if not tool_text:
-        return _PostToolUseTaskStandardContextDecision(
-            item_id=None,
-            context_text=None,
-            reason="no_tool_event_text",
-        )
-    has_verification_marker = _tool_event_has_verification_marker(tool_text)
-    candidate_artifact_created = _posttooluse_candidate_artifact_created(
-        spine,
-        payload,
-        tool_text,
-    )
-    if not has_verification_marker and not candidate_artifact_created:
-        return _PostToolUseTaskStandardContextDecision(
-            item_id=None,
-            context_text=None,
-            reason="no_verification_marker",
-        )
-    if has_verification_marker and _posttooluse_missing_candidate_artifact(tool_text):
-        return _PostToolUseTaskStandardContextDecision(
-            item_id=None,
-            context_text=None,
-            reason="pre_artifact_candidate_missing",
-        )
-    if _posttooluse_phase_check_failed(tool_text):
-        return _PostToolUseTaskStandardContextDecision(
-            item_id=None,
-            context_text=None,
-            reason="phase_check_failed",
-        )
-    if _tool_event_looks_failed(payload, tool_text):
-        return _PostToolUseTaskStandardContextDecision(
-            item_id=None,
-            context_text=None,
-            reason="tool_event_failed",
-        )
-    if not (
-        candidate_artifact_created
-        or (
-            has_verification_marker
-            and _posttooluse_phase_tool_response_completed(payload, tool_text)
-        )
-    ):
-        return _PostToolUseTaskStandardContextDecision(
-            item_id=None,
-            context_text=None,
-            reason="no_candidate_artifact_or_readback",
-        )
-    item = _first_unresolved_required_standard_item(
-        spine,
-        already_context_item_ids=already_context_item_ids,
-    )
-    if item is None and candidate_artifact_created and not has_verification_marker:
-        item = _first_required_standard_item_by_kind(
-            spine,
-            kind=TaskStandardItemKind.CLOSURE_EVIDENCE,
-            already_context_item_ids=already_context_item_ids,
-        )
-    if item is None:
-        return _PostToolUseTaskStandardContextDecision(
-            item_id=None,
-            context_text=None,
-            reason="no_unresolved_required_item",
-        )
-    context_text = _render_posttooluse_task_standard_context(spine, item)
-    return _PostToolUseTaskStandardContextDecision(
-        item_id=item.item_id,
-        context_text=context_text,
-        reason="unresolved_task_standard_item_after_tool",
-    )
-
-
-def _posttooluse_missing_candidate_artifact(tool_text: str) -> bool:
-    return any(marker in tool_text for marker in _POSTTOOLUSE_MISSING_ARTIFACT_MARKERS)
-
-
-def _posttooluse_phase_check_failed(tool_text: str) -> bool:
-    return any(marker in tool_text for marker in _POSTTOOLUSE_PHASE_FAILED_CHECK_MARKERS)
-
-
-def _posttooluse_candidate_artifact_created(
-    spine: TaskStandardSpine,
-    payload: OpenAICodexHookPayload,
-    tool_text: str,
-) -> bool:
-    if not _posttooluse_phase_tool_response_completed(payload, tool_text):
-        return False
-    path_anchors = _posttooluse_standard_path_anchors(spine)
-    if not path_anchors:
-        return False
-    return any(
-        _posttooluse_tool_creates_path_anchor(tool_text, path_anchor)
-        for path_anchor in path_anchors
-    )
-
-
-def _posttooluse_phase_tool_response_completed(
-    payload: OpenAICodexHookPayload,
-    tool_text: str,
-) -> bool:
-    if _tool_event_looks_failed(payload, tool_text):
-        return False
-    if _posttooluse_missing_candidate_artifact(tool_text):
-        return False
-    if _posttooluse_phase_check_failed(tool_text):
-        return False
-    return _tool_event_looks_successful(
-        payload,
-        tool_text,
-    ) or (
-        payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE
-        and payload.tool_response is not None
-    )
-
-
-def _posttooluse_standard_path_anchors(spine: TaskStandardSpine) -> tuple[str, ...]:
-    anchors: list[str] = []
-    for item in spine.all_items:
-        anchors.extend(
-            anchor.lower()
-            for anchor in _posttooluse_path_anchors(item.text)
-            if anchor.strip()
-        )
-    return tuple(dict.fromkeys(anchors))
-
-
-def _posttooluse_path_anchors(text: str) -> tuple[str, ...]:
-    return tuple(
-        dict.fromkeys(
-            anchor.strip()
-            for anchor in re.findall(r"[A-Za-z0-9_./-]+\.[A-Za-z0-9_./-]+", text)
-            if anchor.strip()
-        )
-    )
-
-
-def _posttooluse_tool_creates_path_anchor(tool_text: str, path_anchor: str) -> bool:
-    escaped = re.escape(path_anchor)
-    creation_patterns = (
-        rf">\s*{escaped}\b",
-        rf"tee\s+(?:-[A-Za-z]+\s+)*{escaped}\b",
-        rf"touch\s+{escaped}\b",
-        rf"cat\s+>\s*{escaped}\b",
-        rf"cp\s+\S+\s+{escaped}\b",
-        rf"mv\s+\S+\s+{escaped}\b",
-    )
-    return any(re.search(pattern, tool_text) for pattern in creation_patterns)
-
-
-def _first_unresolved_required_standard_item(
-    spine: TaskStandardSpine,
-    *,
-    already_context_item_ids: tuple[str, ...],
-) -> TaskStandardItem | None:
-    already = set(already_context_item_ids)
-    for kind in (
-        TaskStandardItemKind.WORK_STANDARD,
-        TaskStandardItemKind.CLOSURE_EVIDENCE,
-    ):
-        for item in spine.standard_items:
-            if item.kind is kind and not item.has_aligned_evidence and item.item_id not in already:
-                return item
-    return None
-
-
-def _first_required_standard_item_by_kind(
-    spine: TaskStandardSpine,
-    *,
-    kind: TaskStandardItemKind,
-    already_context_item_ids: tuple[str, ...],
-) -> TaskStandardItem | None:
-    already = set(already_context_item_ids)
-    for item in spine.standard_items:
-        if item.kind is kind and item.item_id not in already:
-            return item
-    return None
-
-
-def _render_posttooluse_task_standard_context(
-    spine: TaskStandardSpine,
-    item: TaskStandardItem,
-) -> str:
-    closure_evidence = next(
-        (
-            standard_item.text
-            for standard_item in spine.standard_items
-            if standard_item.kind is TaskStandardItemKind.CLOSURE_EVIDENCE
-        ),
-        "",
-    )
-    next_step = (
-        _posttooluse_context_span(closure_evidence)
-        if closure_evidence
-        else "a direct check for that item"
-    )
-    return _POSTTOOLUSE_TASK_STANDARD_CONTEXT_TEMPLATE.format(
-        standard_item=_posttooluse_context_span(item.text),
-        next_step=next_step,
-    )
-
-
-def _posttooluse_context_span(text: str) -> str:
-    compacted = re.sub(r"\s+", " ", str(text)).strip()
-    compacted = re.sub(r"\bCortex\b", "this work", compacted)
-    for term in ("hidden verifier", "hidden_quality", "test-hidden", "verifier_only"):
-        compacted = re.sub(re.escape(term), "", compacted, flags=re.IGNORECASE)
-    compacted = re.sub(r"\s+", " ", compacted).strip(" .;:")
-    if len(compacted) <= _POSTTOOLUSE_TASK_STANDARD_CONTEXT_SPAN_LIMIT:
-        return compacted or "a direct check for that item"
-    shortened = compacted[: _POSTTOOLUSE_TASK_STANDARD_CONTEXT_SPAN_LIMIT].rsplit(
-        " ",
-        1,
-    )[0]
-    anchors = tuple(
-        anchor
-        for anchor in _posttooluse_product_anchors(compacted)
-        if anchor not in shortened
-    )
-    if anchors:
-        anchor_text = " ".join(anchors[:3])
-        if len(anchor_text) > 80:
-            anchor_text = anchor_text[:80].rsplit(" ", 1)[0].strip()
-        prefix_room = (
-            _POSTTOOLUSE_TASK_STANDARD_CONTEXT_SPAN_LIMIT - len(anchor_text) - 5
-        )
-        if prefix_room >= 40:
-            shortened = compacted[:prefix_room].rsplit(" ", 1)[0]
-            return f"{shortened.strip()}... {anchor_text}".strip()
-    return f"{shortened.strip()}..."
-
-
-def _posttooluse_product_anchors(text: str) -> tuple[str, ...]:
-    quoted = re.findall(r"`[^`]+`|\"[^\"]+\"|'[^']+'", text)
-    paths = re.findall(r"[A-Za-z0-9_./-]+\.[A-Za-z0-9_./-]+", text)
-    numeric = re.findall(r"[A-Za-z0-9_./-]*\d[A-Za-z0-9_./-]*", text)
-    anchors = (*quoted, *paths, *numeric)
-    return tuple(dict.fromkeys(anchor.strip() for anchor in anchors if anchor.strip()))
-
-
-def _tool_event_has_verification_evidence(
-    payload: OpenAICodexHookPayload,
-    *,
-    active_verification_expectation: bool = False,
-) -> bool:
-    text = _tool_event_text(payload).lower()
-    if not text:
-        return False
-    if not _tool_event_has_verification_marker(text):
-        return False
-    if _tool_event_looks_failed(payload, text):
-        return False
-    return active_verification_expectation or _tool_event_looks_successful(payload, text)
-
-
-def _tool_event_has_verification_marker(normalized_tool_text: str) -> bool:
-    return any(marker in normalized_tool_text for marker in _TOOL_VERIFICATION_MARKERS)
-
-
-def _tool_event_text(payload: OpenAICodexHookPayload) -> str:
-    return " ".join(
-        value
-        for value in (
-            payload.tool_name or "",
-            _json_value_text(payload.tool_input),
-            _json_value_text(payload.tool_response),
-        )
-        if value
-    )
-
-
-def _tool_event_looks_successful(payload: OpenAICodexHookPayload, text: str) -> bool:
-    if payload.hook_event_name is not OpenAICodexLifecycleEvent.POST_TOOL_USE:
-        return False
-    if "\"exit_code\":0" in text or "\"exit_code\": 0" in text:
-        return True
-    if "\"status\":\"completed\"" in text or "\"status\": \"completed\"" in text:
-        return True
-    return any(
-        marker in text
-        for marker in (
-            "file_ok",
-            "content_ok",
-            " passed",
-            "success",
-            "ok",
-            "matches exactly",
-        )
-    )
-
-
-def _tool_event_looks_failed(payload: OpenAICodexHookPayload, text: str) -> bool:
-    if payload.error:
-        return True
-    return any(
-        marker in text
-        for marker in (
-            "\"exit_code\":1",
-            "\"exit_code\": 1",
-            "\"exit_code\":2",
-            "\"exit_code\": 2",
-            "failed",
-            "failure",
-            "traceback",
-            "error:",
-            "content_mismatch",
-            "not found",
-        )
-    )
-
-
 def _assistant_surfaces_blocker_or_waiting(message: str) -> bool:
     lowered = message.lower()
     return any(
@@ -1803,12 +1392,6 @@ def _event_ref(
         )
     ).hexdigest()[:12]
     return f"codex-app-cli:{current_step}:{payload.hook_event_name.value}:{suffix}:{digest}"
-
-
-def _json_value_text(value: Any) -> str:
-    if value is None:
-        return ""
-    return json.dumps(value, sort_keys=True, separators=(",", ":"))
 
 
 def _host_text_from_stdout_payload(payload: dict[str, object] | None) -> str:

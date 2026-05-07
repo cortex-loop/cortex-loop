@@ -8,6 +8,11 @@ from dataclasses import replace
 from pathlib import Path
 
 from cortex.hosts.openai import codex_app_cli_hook_coordinator
+from cortex.hosts.openai.posttooluse_task_standard_actuator import (
+    PostToolUseTaskStandardPhase,
+    classify_posttooluse_task_standard_phase,
+    posttooluse_context_span,
+)
 from cortex.hosts.openai.codex_app_cli_hook_coordinator import (
     OpenAICodexHookHostResponse,
     OpenAICodexHookHostDecision,
@@ -1089,6 +1094,48 @@ def test_posttooluse_task_standard_context_stays_silent_on_failed_phase_check() 
     )
 
 
+def test_posttooluse_phase_check_requires_diagnostic_shape() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    transcript_path = Path("/tmp/codex-task-standard-posttooluse-phase-shape.jsonl")
+    _write_transcript(
+        transcript_path,
+        _assistant_message_row(_posttooluse_exactness_standard_block()),
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Create exact_result.txt with exact alpha beta omega content.",
+        ),
+        state_store=store,
+        task_standard_text_enabled=True,
+    )
+    pretool = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PreToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={"command": "wc -l exact_result.txt"},
+        ),
+        state_store=store,
+    )
+    payload = normalize_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={"command": "wc -l exact_result.txt"},
+            tool_response="note: usage: appears in prose only\n1 exact_result.txt\n",
+        )
+    )
+
+    phase = classify_posttooluse_task_standard_phase(
+        pretool.session_state.task_standard_spine,
+        payload,
+    )
+
+    assert phase.phase is PostToolUseTaskStandardPhase.READBACK_COMPLETED
+
+
 def test_posttooluse_task_standard_context_reports_marker_miss_privately() -> None:
     store = OpenAICodexInMemoryStateStore()
     transcript_path = Path("/tmp/codex-task-standard-posttooluse-markerless.jsonl")
@@ -1272,7 +1319,7 @@ def test_posttooluse_context_span_preserves_product_anchor_when_truncated() -> N
         + " final check must inspect `exact_result.txt` and confirm alpha beta omega$"
     )
 
-    span = codex_app_cli_hook_coordinator._posttooluse_context_span(long_text)
+    span = posttooluse_context_span(long_text)
 
     assert len(span) <= 180
     assert "`exact_result.txt`" in span
@@ -1853,6 +1900,16 @@ def test_hook_coordinator_does_not_reuse_repo_guardrails_or_old_speech_paths() -
     )
     for fragment in forbidden:
         assert fragment not in source
+
+
+def test_hook_coordinator_delegates_posttooluse_task_standard_policy() -> None:
+    source = inspect.getsource(codex_app_cli_hook_coordinator)
+
+    assert "posttooluse_task_standard_context_decision" in source
+    assert "posttooluse_task_standard_actuator" in source
+    assert "_POSTTOOLUSE_TASK_STANDARD_CONTEXT_TEMPLATE" not in source
+    assert "def _posttooluse_task_standard_context_decision" not in source
+    assert "def _posttooluse_phase_check_failed" not in source
 
 
 def test_hook_coordinator_does_not_activate_project_hook_config() -> None:
