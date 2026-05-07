@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-task-standard-narrow-live-run`
-### Next Product Train
 - Slug: `codex-app-cli-posttooluse-task-standard-actuator-architecture-decision`
-- Surface: `product architecture decision`
-- Why now: The narrow live run emitted Codex-native PostToolUse additionalContext without overcontrolling controls, but the mismatch next tool did not run the named direct check and later repair happened through Stop continuation. The precommitted verdict rule for `failure_context_ignored` requires an architecture decision before text or policy tuning.
+### Next Product Train
+- Slug: `codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0`
+- Surface: `product host actuator + lab proof`
+- Why now: The architecture decision classified the `failure_context_ignored` live result as timing/selection failure: PostToolUse context fired after a failed missing-artifact precondition, so the next legitimate model action was artifact creation rather than the named direct check. Phase-aware Gate 0 is the smallest no-live proof before another live run.
 
 ### Research Lines Under Evaluation
 

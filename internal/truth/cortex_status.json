@@ -82,6 +82,7 @@
     "docs/recon/cortex_codex_app_cli_task_standard_stack_publication_hygiene.md",
     "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md",
     "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md",
+    "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md",
     "docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md"
   ],
   "bio_to_code_matrix": [
@@ -729,13 +730,13 @@
     ]
   },
   "next_product_train": {
-    "slug": "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision",
-    "surface": "product architecture decision",
-    "executive_benefit": "Decide whether the PostToolUse actuator timing/selection is the right next model-I/O lever for `task_standard_exactness` after live evidence showed context delivery but no immediate next-action effect.",
-    "why_now": "The narrow live run emitted Codex-native PostToolUse additionalContext without overcontrolling controls, but the mismatch next tool did not run the named direct check and later repair happened through Stop continuation. The precommitted verdict rule for `failure_context_ignored` requires an architecture decision before text or policy tuning.",
-    "primary_metric": "Read the `failure_context_ignored` live run artifacts under `.cortex/live_validation/openai/codex_app_cli_hook_native_behavior_comparison/task_standard_posttooluse_live_20260507T100836Z/`, classify whether the failure is actuator timing, context content, model assimilation, harness measurement, or Stop-dominance, and choose exactly one next implementation path without changing runtime behavior in the decision seam.",
-    "guardrail": "Do not tune signed UserPromptSubmit text, PostToolUse text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport, PreToolUse denial, or PermissionRequest policy in the decision seam. Three-arm behavior comparison remains paused.",
-    "kill_rule": "If the architecture decision cannot identify a model-I/O path likely to improve next-action behavior beyond Stop continuation, stop PostToolUse live probing and return to lifecycle-actuator design rather than forcing another run.",
+    "slug": "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0",
+    "surface": "product host actuator + lab proof",
+    "executive_benefit": "Calibrate the PostToolUse actuator so context is reserved until a product-visible artifact or candidate output exists and a required task-standard item remains unresolved.",
+    "why_now": "The architecture decision classified the `failure_context_ignored` live result as timing/selection failure: PostToolUse context fired after a failed missing-artifact precondition, so the next legitimate model action was artifact creation rather than the named direct check. Phase-aware Gate 0 is the smallest no-live proof before another live run.",
+    "primary_metric": "Prove without live spend that PostToolUse stays silent after failed pre-artifact checks, emits only after candidate output exists and a required `WORK_STANDARD` / `CLOSURE_EVIDENCE` item remains unresolved, and that the harness decision window treats artifact creation as a prerequisite while still failing closure before the named direct check.",
+    "guardrail": "Do not tune signed UserPromptSubmit text, PostToolUse text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport, PreToolUse denial, or PermissionRequest policy. No live Codex run or three-arm behavior comparison.",
+    "kill_rule": "If phase-aware structural proof cannot prevent pre-artifact context spend while preserving clean-control silence and mismatch context, stop PostToolUse live probing and return to lifecycle-actuator design.",
     "last_reviewed_at": "2026-05-07T00:00:00+00:00"
   },
   "packet_to_code_anchors": [
@@ -878,6 +879,11 @@
       "label": "Codex App/CLI PostToolUse task-standard narrow live run",
       "purpose": "Records the approved narrow live PostToolUse actuator result: context emitted in the mismatch case, controls stayed free of PostToolUse context, but the next model tool did not perform the named direct check before closure.",
       "ref": "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md"
+    },
+    {
+      "label": "Codex App/CLI PostToolUse task-standard architecture decision",
+      "purpose": "Classifies the `failure_context_ignored` live result as PostToolUse timing/selection failure and queues phase-aware no-live calibration before another live run.",
+      "ref": "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md"
     }
   ],
   "subsystems": [
@@ -1374,10 +1380,11 @@
     "The Codex App/CLI PostToolUse task-standard narrow live probe harness seam then added `--task-standard-posttooluse-live`, approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running a live Codex command. The live probe remains unearned until explicitly approved and run; this seam earns harness readiness only and preserves signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport deferral, PreToolUse denial deferral, and PermissionRequest policy."
   ],
   "work_today": {
-    "slug": "codex-app-cli-posttooluse-task-standard-narrow-live-run",
-    "note": "The approved narrow live PostToolUse task-standard probe, not a three-arm behavior comparison, ran on `task_standard_exactness` / evidence recovery and produced `failure_context_ignored`: one specific PostToolUse additionalContext was emitted in the mismatch case, controls received zero PostToolUse contexts, but the next model tool did not perform the named direct check before closure. Later exactness checks came through the existing Stop continuation loop. Boundary: no broad behavior lift, output-quality lift, truth-gap lift, exactness-only value lift, signed text, Stop text, SRE law, scored matcher, threshold, fixture, scoring, root-hook, hidden-verifier, Sinkhorn/transport, PreToolUse, or PermissionRequest change is earned or allowed by this seam."
+    "slug": "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision",
+    "note": "This no-runtime-change decision seam classifies the `failure_context_ignored` live result on `task_standard_exactness` as PostToolUse timing/selection failure: host delivery passed, task-standard capture passed in the mismatch case, clean/control overcontrol passed, hidden/root/runtime boundaries passed, and immediate next-action effect failed because context fired after a failed missing-artifact precondition; the next model tool did not perform the named direct check. Later exactness checks came through the existing Stop continuation loop, and Stop continuation remains the only live-proven corrective actuator for this exactness shape. Queue phase-aware no-live PostToolUse calibration Gate 0 before any further live run; this is not a three-arm behavior comparison, earns no broad behavior lift, and no signed text, PostToolUse text, Stop text, SRE law, scored matcher, threshold, fixture, scoring, root-hook, hidden-verifier, Sinkhorn/transport, PreToolUse, PermissionRequest, live Codex run, or three-arm comparison changes are part of this seam."
   },
   "recent_history": [
+    "The Codex App/CLI PostToolUse task-standard architecture decision then classified the `failure_context_ignored` live result as a PostToolUse timing/selection failure rather than host delivery, task-standard state, clean-control overcontrol, or boundary failure: context fired after a failed missing-artifact precondition, so the next legitimate model action was artifact creation rather than the named direct check. Stop continuation remains the only live-proven corrective actuator for this exactness shape. The next train is no-live phase-aware PostToolUse calibration Gate 0, not text tuning, policy tuning, live rerun, three-arm behavior comparison, Sinkhorn/transport, PreToolUse denial, or PermissionRequest work.",
     "The approved Codex App/CLI PostToolUse task-standard narrow live run then produced `failure_context_ignored`: the real Codex CLI subject received signed UserPromptSubmit context, captured three task-standard items, and emitted one Codex-native PostToolUse additionalContext in the mismatch case while clean/blocker/waiting/unrelated controls received zero PostToolUse contexts. The next model tool did not perform the named direct check before closure; later exactness checks happened after the existing Stop continuation loop, not as earned PostToolUse next-action evidence. Root config stayed unchanged, no runtime snapshot loaded, hidden scoring stayed absent/scoring-only, and `behavior_lift_claim_allowed` remained false. This queues an architecture decision before any text, policy, fixture, scoring, matcher, hook, Sinkhorn/transport, PreToolUse, or PermissionRequest tuning."
   ]
 }

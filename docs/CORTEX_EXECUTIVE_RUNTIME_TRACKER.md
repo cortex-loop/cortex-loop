@@ -184,6 +184,13 @@ closure. Later exactness checks came through the existing Stop continuation
 loop, so PostToolUse next-action effect remains unearned. The next product seam
 is an architecture decision about actuator timing and model-I/O leverage, not a
 text, fixture, matcher, or policy remediation seam.
+The architecture decision classifies that result as PostToolUse
+timing/selection failure: the context fired after a failed missing-artifact
+precondition, so the next legitimate model action was artifact creation rather
+than direct verification. The next product seam is no-live phase-aware
+PostToolUse calibration Gate 0: reserve context until a product-visible
+artifact or candidate output exists and a required standard item remains
+unresolved, while keeping closure-before-direct-check as a failure.
 PreToolUse motor inhibition should follow only as action blocking, not as a
 model-visible advice surface, and false-deny clean-control risk must be treated
 as a future kill-rule risk. Sinkhorn-style transport belongs later as the

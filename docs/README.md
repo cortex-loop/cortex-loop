@@ -207,6 +207,9 @@ Active docs:
 - [Cortex Codex App/CLI PostToolUse Task-Standard Narrow Live Run](recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md) —
   live negative evidence that PostToolUse context was delivered without
   earning immediate next-action repair, queuing an architecture decision
+- [Cortex Codex App/CLI PostToolUse Task-Standard Actuator Architecture Decision](recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md) —
+  decision classifying the negative live result as PostToolUse timing/selection
+  failure and queuing no-live phase-aware calibration
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch
