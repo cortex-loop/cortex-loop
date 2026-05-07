@@ -93,7 +93,8 @@
     "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_trace_repair.md",
     "docs/recon/cortex_codex_app_cli_posttooluse_causal_trace_ids.md",
     "docs/recon/cortex_codex_app_cli_posttooluse_shared_tool_evidence_classification.md",
-    "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun_after_shared_tool_evidence.md"
+    "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun_after_shared_tool_evidence.md",
+    "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_context_loop_trace_remediation.md"
   ],
   "bio_to_code_matrix": [
     {
@@ -237,7 +238,7 @@
     "Do not let stale branch or redirect replay survive fresh contradiction or degradation on the same active resume context.",
     "Do not let host/tool reliability priors harden into host-wide superstition, cross-host projected reuse, default-on memory behavior, hidden policy forks, or route/posture/brake law drift; reliability must stay explicit, host-matched, capability-scoped, contradiction-first, and removable, biasing score pricing only.",
     "Do not let asymmetric error cost widen beyond CHECK and SEEK_CONTEXT activation thresholds, shift outside the `[0.05, 0.60]` clip band, default caution on cold/fresh sessions, or route/posture/selection/certification/blockedness law drift through `RiskWeight`; risk-sensitive pricing must stay bounded, profile-derived, dead-band-protected, and backward-compat to zero-shift on balanced snapshots.",
-    "Do not let brake tonic hysteresis become sticky guardedness under sustained calm, drift the locked `rho = 0.60` EMA coefficient, gate phasic contradiction/latching/missing-anchor/repeated-failure spikes behind tonic smoothing, or introduce a host-specific brake policy fork; the tonic must stay a bounded damping of single-tick `quiescent`/`guarded` flips on `tonic_pressure` only, and a parallel rest-side EMA carrier (`tonic_quiescence`) must not be reintroduced under SRE_2 \u00a77.5 path B.",
+    "Do not let brake tonic hysteresis become sticky guardedness under sustained calm, drift the locked `rho = 0.60` EMA coefficient, gate phasic contradiction/latching/missing-anchor/repeated-failure spikes behind tonic smoothing, or introduce a host-specific brake policy fork; the tonic must stay a bounded damping of single-tick `quiescent`/`guarded` flips on `tonic_pressure` only, and a parallel rest-side EMA carrier (`tonic_quiescence`) must not be reintroduced under SRE_2 §7.5 path B.",
     "Do not let brain-capability adaptation become hidden inference (capability must come from an explicit `OperatorBrainCapabilityEnvelope`, not an undocumented model heuristic), a host-specific routing fork (the SRE-side assessment and threshold ladder must be host-agnostic; only per-host band registries may differ), a commitment-relaxation surface (the assessment biases routing and budget only; it must never lower commitment certification standards or admit a soft route that should have been hard-blocked), or a stale-band stickiness (when dynamic inference earns its seam, fresh contradictory evidence must be able to widen or narrow the envelope)."
   ],
   "bootstrap": [
@@ -272,6 +273,169 @@
   "conformance_summary": {
     "accepted_next_decision": "promote",
     "shipping_default": "openai.codex_app_cli"
+  },
+  "doc_roles": {
+    "roles": [
+      {
+        "id": "front_door",
+        "meaning": "Human entrypoint and document inventory.",
+        "paths": [
+          "docs/README.md"
+        ],
+        "update_rule": "Keep links current when any non-archive doc is added, moved, or role-changed."
+      },
+      {
+        "id": "identity_authority",
+        "meaning": "Canonical Cortex identity, mission fit, and product-fit rejection authority.",
+        "paths": [
+          "docs/CORTEX.md"
+        ],
+        "update_rule": "Update only when Cortex identity or generated status sections need correction; generated sections must come from the registry."
+      },
+      {
+        "id": "packet_law",
+        "meaning": "Formal V2 packet law and math.",
+        "paths": [
+          "docs/CORTEX_V2_CORE_2.md",
+          "docs/CORTEX_V2_SRE_2.md",
+          "docs/CORTEX_V2_AUX_2.md"
+        ],
+        "update_rule": "Revise explicitly when packet law changes; implementation seams must cite the relevant packet terms."
+      },
+      {
+        "id": "generated_operational_view",
+        "meaning": "Human-readable generated view of the status registry.",
+        "paths": [
+          "docs/CORTEX_STATUS.md"
+        ],
+        "update_rule": "Do not edit directly; regenerate from internal/truth/cortex_status.json."
+      },
+      {
+        "id": "planning_scoreboard",
+        "meaning": "Long-horizon product planning scoreboard and evidence-gap tracker; subordinate to the status registry.",
+        "paths": [
+          "docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md"
+        ],
+        "update_rule": "May hold candidate backlog and scoreboard guidance, but a seam becomes current only when promoted into next_product_train."
+      },
+      {
+        "id": "retained_context",
+        "meaning": "Retained prior program specs and readiness notes; useful context but not current roadmap authority.",
+        "paths": [
+          "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md",
+          "docs/CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md"
+        ],
+        "update_rule": "Do not queue work from these docs directly; extract current decisions into the tracker or status registry first."
+      },
+      {
+        "id": "workflow_authority",
+        "meaning": "Repo workflow, chat-boundary reflection, and anti-drift rules.",
+        "paths": [
+          "docs/internal/REPO_WORKFLOW.md",
+          "docs/internal/MISSION_REFLECTION_CONTRACT.md",
+          "docs/internal/ANTI_DRIFT_RULES.md"
+        ],
+        "update_rule": "Update with matching workflow/internal tests when branch, closeout, reflection, or anti-drift rules change."
+      },
+      {
+        "id": "support_context",
+        "meaning": "Support dossiers, plugin sketches, runtime-context examples, and audits that inform but do not define current product truth.",
+        "paths": [
+          "docs/audit/runtime_context_vs_grounded_intervention.md",
+          "docs/cortex_plugin/DESIGN.md",
+          "docs/cortex_plugin/ADAPTER.md",
+          "docs/cortex_plugin/EVIDENCE_SYNTHESIS.md",
+          "docs/cortex_plugin/communication_problem/01_problem_statement.md",
+          "docs/cortex_plugin/communication_problem/02_cortex_identity_and_doctrine.md",
+          "docs/cortex_plugin/communication_problem/03_maths_to_code.md",
+          "docs/cortex_plugin/communication_problem/04_cortex_internal_state.md",
+          "docs/cortex_plugin/communication_problem/05_claude_communication_surface.md",
+          "docs/cortex_plugin/communication_problem/06_hook_surface_and_evidence.md",
+          "docs/cortex_plugin/communication_problem/07_strange_loop_frame.md",
+          "docs/cortex_plugin/communication_problem/08_anti_patterns_and_failed_solutions.md",
+          "docs/runtime_context/EVAL_RUBRIC.md",
+          "docs/runtime_context/BASELINE_SHAPED_EXAMPLES.md",
+          "docs/runtime_context/CROSS_HOST_SKETCH.md",
+          "docs/recon/cortex_codex_app_cli_hook_contract_capture_boundary_remediation.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_context_live_rerun.md",
+          "docs/recon/cortex_codex_app_cli_communication_boundary_audit_and_hardening.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_pretool_transcript_capture.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_live_capture_rerun.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_stop_gating_live_run.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_behavior_comparison_harness.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_behavior_comparison_live_run.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_evidence_gating_remediation.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_pre_live_audit_roadmap_update.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_offline_replay_readiness_gate.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_raw_vs_silent_artifact_readout.md",
+          "docs/recon/cortex_codex_app_cli_lifecycle_actuator_map_roadmap_update.md",
+          "docs/recon/cortex_codex_app_cli_lifecycle_actuator_map.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_next_step_correction.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_calibration_decision.md",
+          "docs/recon/cortex_codex_app_cli_raw_vs_silent_artifact_readout_roadmap_update.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_stack_publication_hygiene.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_calibration_gate0.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_run.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_firing_boundary_remediation.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_overcontrol_remediation.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_trace_repair.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_causal_trace_ids.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_shared_tool_evidence_classification.md"
+        ],
+        "update_rule": "Use as evidence or design context only; product truth still requires a status/recon/code/proof seam."
+      },
+      {
+        "id": "recon_evidence",
+        "meaning": "Recon evidence records and live/lab findings.",
+        "paths": [
+          "docs/recon/lifecycle_first_surface_matrix.md",
+          "docs/recon/codex_app_hook_probe.md",
+          "docs/recon/claude_code_desktop_pretooluse_probe.md",
+          "docs/recon/claude_code_user_scope_plugin_pretooluse_probe.md",
+          "docs/recon/claude_code_user_scope_plugin_managed_worktree_probe.md",
+          "docs/recon/claude_code_cortex_runtime_context_connectivity_probe.md",
+          "docs/recon/claude_code_cortex_stop_closure_connectivity_probe.md",
+          "docs/recon/claude_code_cortex_headless_cli_equivalence_probe.md",
+          "docs/recon/claude_code_cortex_bridge_translation_headless_probe.md",
+          "docs/recon/claude_code_cortex_mac_pending_goal_divergence_retest.md",
+          "docs/recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md",
+          "docs/recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md",
+          "docs/recon/cortex_openai_operator_silent_control_live_probe.md",
+          "docs/recon/cortex_openai_operator_debt_control_enactment.md",
+          "docs/recon/cortex_openai_operator_silent_control_live_probe_retry.md",
+          "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md",
+          "docs/recon/cortex_openai_operator_verification_debt_continuation.md",
+          "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md",
+          "docs/recon/cortex_visible_intervention_product_perception_hardening.md",
+          "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md",
+          "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md",
+          "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md",
+          "docs/recon/cortex_codex_app_cli_product_perception_loop.md",
+          "docs/recon/cortex_codex_app_cli_product_perception_live_probe.md",
+          "docs/recon/cortex_codex_app_cli_product_event_capture_remediation.md",
+          "docs/recon/cortex_codex_app_cli_stop_continuation_resolution_loop.md",
+          "docs/recon/cortex_codex_app_cli_hook_native_behavior_comparison.md",
+          "docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md",
+          "docs/recon/cortex_codex_app_cli_value_ablation_audit.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_spine.md",
+          "docs/recon/cortex_task_standard_sre_correspondence_reconciliation.md",
+          "docs/recon/cortex_task_standard_executive_doctrine_math_refinement.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_live_probe.md",
+          "docs/recon/cortex_codex_app_cli_task_standard_live_run.md",
+          "docs/recon/cortex_semantic_contraction_audit.md",
+          "docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun_after_shared_tool_evidence.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_context_loop_trace_remediation.md"
+        ],
+        "update_rule": "Add a recon when a proof or decision is earned; do not treat recon alone as shipping truth without status promotion."
+      }
+    ],
+    "summary": "Document roles keep Cortex planning surfaces from drifting into one another. The status registry remains the operational roadmap authority; generated views are read-only; scoreboards and retained specs may inform planning but cannot queue work by themselves."
   },
   "executive_completion": {
     "answer_contract": [
@@ -443,7 +607,7 @@
       ],
       "id": "lifecycle_event_envelope",
       "label": "Lifecycle event envelope",
-      "packet_ref": "CORE_2 \u00a74.1",
+      "packet_ref": "CORE_2 §4.1",
       "proof_refs": [
         "tests/product/test_core_substrate.py"
       ],
@@ -455,7 +619,7 @@
       ],
       "id": "observation_bundle",
       "label": "Event-local observation bundle",
-      "packet_ref": "CORE_2 \u00a76.1",
+      "packet_ref": "CORE_2 §6.1",
       "proof_refs": [
         "tests/product/test_core_substrate.py"
       ],
@@ -467,7 +631,7 @@
       ],
       "id": "split_environment_handles",
       "label": "Executive vs commitment environment handles",
-      "packet_ref": "CORE_2 \u00a76.2",
+      "packet_ref": "CORE_2 §6.2",
       "proof_refs": [
         "tests/product/test_core_substrate.py"
       ],
@@ -479,7 +643,7 @@
       ],
       "id": "environment_query",
       "label": "Generalized environment query",
-      "packet_ref": "CORE_2 \u00a76.3",
+      "packet_ref": "CORE_2 §6.3",
       "proof_refs": [
         "tests/product/test_core_substrate.py"
       ],
@@ -491,7 +655,7 @@
       ],
       "id": "commitment_candidate",
       "label": "Commitment candidate and status lattice",
-      "packet_ref": "CORE_2 \u00a77.1, \u00a77.2",
+      "packet_ref": "CORE_2 §7.1, §7.2",
       "proof_refs": [
         "tests/product/test_certification_artifacts.py"
       ],
@@ -503,7 +667,7 @@
       ],
       "id": "provenance_manifest",
       "label": "Downward provenance dominance manifest",
-      "packet_ref": "CORE_2 \u00a77.3",
+      "packet_ref": "CORE_2 §7.3",
       "proof_refs": [
         "tests/product/test_certification_artifacts.py"
       ],
@@ -515,7 +679,7 @@
       ],
       "id": "wake_decision",
       "label": "Commitment wake decision and dispatch",
-      "packet_ref": "CORE_2 \u00a75, \u00a77.4",
+      "packet_ref": "CORE_2 §5, §7.4",
       "proof_refs": [
         "tests/product/test_dispatch.py"
       ],
@@ -527,7 +691,7 @@
       ],
       "id": "boundary_assessment",
       "label": "Event-local certification firewall assessment",
-      "packet_ref": "CORE_2 \u00a78.1, \u00a711.1",
+      "packet_ref": "CORE_2 §8.1, §11.1",
       "proof_refs": [
         "tests/product/test_certification_artifacts.py"
       ],
@@ -539,7 +703,7 @@
       ],
       "id": "support_state",
       "label": "Recoverable executive role / support state",
-      "packet_ref": "CORE_2 \u00a78.2",
+      "packet_ref": "CORE_2 §8.2",
       "proof_refs": [
         "tests/product/test_core_substrate.py"
       ],
@@ -551,7 +715,7 @@
       ],
       "id": "executive_signal_summary",
       "label": "Minimal software-shaped executive role view",
-      "packet_ref": "SRE_2 \u00a73.1",
+      "packet_ref": "SRE_2 §3.1",
       "proof_refs": [
         "tests/product/test_sre_uncertainty_brake.py"
       ],
@@ -563,7 +727,7 @@
       ],
       "id": "neutral_dominance_decision",
       "label": "Neutral-dominance arbitration",
-      "packet_ref": "SRE_2 \u00a76.6",
+      "packet_ref": "SRE_2 §6.6",
       "proof_refs": [
         "tests/product/test_sre_neutral_hinge.py"
       ],
@@ -575,7 +739,7 @@
       ],
       "id": "risk_weight",
       "label": "Asymmetric error-cost RiskWeight carrier",
-      "packet_ref": "SRE_2 \u00a76.6.1",
+      "packet_ref": "SRE_2 §6.6.1",
       "proof_refs": [
         "tests/product/test_sre_neutral_hinge.py"
       ],
@@ -588,7 +752,7 @@
       ],
       "id": "operator_brain_capability_envelope",
       "label": "Operator brain capability envelope",
-      "packet_ref": "SRE_2 \u00a76.9",
+      "packet_ref": "SRE_2 §6.9",
       "proof_refs": [
         "tests/product/test_brain_capability.py",
         "tests/conformance/test_brain_capability_parity.py"
@@ -603,7 +767,7 @@
       ],
       "id": "executive_modulator_state",
       "label": "Brake tonic EMA executive modulator state",
-      "packet_ref": "SRE_2 \u00a77.4, \u00a77.5",
+      "packet_ref": "SRE_2 §7.4, §7.5",
       "proof_refs": [
         "tests/product/test_sre_uncertainty_brake.py",
         "tests/conformance/test_claude_code_desktop_runtime_session_io.py"
@@ -618,7 +782,7 @@
       ],
       "id": "goal_debt_state",
       "label": "Typed goal-debt and closure-pressure state",
-      "packet_ref": "SRE_2 \u00a78.1",
+      "packet_ref": "SRE_2 §8.1",
       "proof_refs": [
         "tests/product/test_sre_goals_branching.py",
         "tests/product/test_sre_goal_branch.py",
@@ -632,7 +796,7 @@
       ],
       "id": "task_standard_spine",
       "label": "Task-local standard and evidence alignment state",
-      "packet_ref": "SRE_2 \u00a78.2",
+      "packet_ref": "SRE_2 §8.2",
       "proof_refs": [
         "tests/product/test_sre_task_standard_spine.py",
         "tests/product/test_openai_codex_app_cli_hook_coordinator.py"
@@ -646,7 +810,7 @@
       ],
       "id": "preservation_state",
       "label": "Verified-work preservation and intervention budget",
-      "packet_ref": "SRE_2 \u00a76.7 (budget); CORE recovery firewall",
+      "packet_ref": "SRE_2 §6.7 (budget); CORE recovery firewall",
       "proof_refs": [
         "tests/product/test_preservation_state.py",
         "tests/conformance/test_claude_code_desktop_runtime_session_io.py"
@@ -660,7 +824,7 @@
       ],
       "id": "host_reliability_prior",
       "label": "Bounded host/tool reliability prior",
-      "packet_ref": "AUX_2 \u00a74 (geometry/eval support); SRE_2 score-pricing",
+      "packet_ref": "AUX_2 §4 (geometry/eval support); SRE_2 score-pricing",
       "proof_refs": [
         "tests/experimental/test_aux_support_priors.py",
         "tests/experimental/test_aux_publication.py"
@@ -673,7 +837,7 @@
       ],
       "id": "support_memory_episode",
       "label": "Durable AUX support-memory episode",
-      "packet_ref": "AUX_2 \u00a73 offline support memory",
+      "packet_ref": "AUX_2 §3 offline support memory",
       "proof_refs": [
         "tests/experimental/test_aux_persistence.py"
       ],
@@ -686,7 +850,7 @@
       ],
       "id": "auxiliary_support_appendix",
       "label": "AUX runtime augmentation appendix and re-entry",
-      "packet_ref": "AUX_2 \u00a75 re-entry / SRE handoff",
+      "packet_ref": "AUX_2 §5 re-entry / SRE handoff",
       "proof_refs": [
         "tests/experimental/test_aux_publication.py"
       ],
@@ -699,7 +863,7 @@
       ],
       "id": "aux_lift_metric",
       "label": "AUX lift metric and evaluation report",
-      "packet_ref": "AUX_2 \u00a74 evaluation-first",
+      "packet_ref": "AUX_2 §4 evaluation-first",
       "proof_refs": [
         "tests/experimental/test_aux_lift.py"
       ],
@@ -711,7 +875,7 @@
       ],
       "id": "aux_burden_report",
       "label": "AUX cost-visible burden report",
-      "packet_ref": "AUX_2 \u00a72.7",
+      "packet_ref": "AUX_2 §2.7",
       "proof_refs": [
         "tests/experimental/test_aux_scaffolds.py"
       ],
@@ -723,7 +887,7 @@
       ],
       "id": "verified_work_profile_spec",
       "label": "Verified-work runtime profile specification",
-      "packet_ref": "SRE_2 \u00a75 / runtime law",
+      "packet_ref": "SRE_2 §5 / runtime law",
       "proof_refs": [
         "tests/product/test_openai_runtime_session_io.py"
       ],
@@ -740,14 +904,14 @@
     ]
   },
   "next_product_train": {
-    "slug": "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation",
-    "surface": "product host actuator plus lab trace no-live remediation",
-    "executive_benefit": "Repair the two blockers surfaced by `task_standard_posttooluse_live_20260507T213732Z`: prevent repeated PostToolUse task-standard context loops under live-equivalent timing and make hook/stdout event-ref joining non-ambiguous before any next-action interpretation. The surface remains `task_standard_exactness` / evidence recovery. This is required before a rerun can be interpreted. It preserves the firing-boundary remediation while fixing the later loop/trace blockers.",
-    "why_now": "The approval-gated phase-aware live rerun reached the mismatch path and kept clean/blocker/waiting/unrelated controls silent, but failed before interpretation because the mismatch case emitted three PostToolUse contexts and the live trace could not join `call_*` hook tool ids to `item_*` stdout command refs. Another live rerun would only repeat an uninterpretable boundary failure until both are proven no-live. This follows the prior firing-boundary Gate 0 and shared-classifier Gate 0; both were structurally necessary but not sufficient for live-loop safety. It also preserves the prior `candidate_artifact_without_posttooluse_context` lesson without treating it as current failure. Prior exit/status marker remediation remains preserved but is not sufficient for this live ref mismatch. The shared tool-evidence Gate 0 remains the immediate structural predecessor. The next proof must restore stable `tool_event_ref` joining for live-shaped rows.",
-    "primary_metric": "A no-live Gate 0 proves that a live-equivalent mismatch can emit at most one PostToolUse context for the same unresolved task-standard obligation, session cap/deduplication hold across consecutive PostToolUse rows, clean/control rows remain silent, and hook rows join to stdout-derived command rows by a stable reference or are marked ambiguous without ordinal inference. Candidate artifact creation and readback rows remain the exact live-equivalent timing surface under test. `behavior_lift_claim_allowed` remains false.",
-    "guardrail": "No live Codex run occurs in this remediation seam. Do not change signed UserPromptSubmit text, PostToolUse text, Stop text, SRE law, scored matcher threshold, fixtures, scoring semantics, root hooks, hidden-verifier boundary, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed intervention pressure, or host-runtime extraction. Under-fire remains preferable to context loops or clean-control overcontrol. Any later live rerun still requires explicit current-turn approval and explicit current-turn live approval, must not use `--require-pass`, and remains not a three-arm behavior comparison. The seam must not change those protected surfaces.",
-    "kill_rule": "If no-live context-loop and trace remediation passes, queue the approval-gated phase-aware narrow live rerun again. If repeated context, ambiguous live-equivalent trace, clean/control context, boundary-breach text, runtime snapshot, root mutation, or policy/text/scoring drift appears, queue the matching architecture/remediation decision and do not run live. Passing proof must preserve clean/control rows silent before any later live rerun. Firing-boundary regressions fail the remediation. Boundary failures queue an architecture decision before more tuning.",
-    "last_reviewed_at": "2026-05-07T00:00:00+00:00"
+    "executive_benefit": "Rerun the narrow Codex App/CLI PostToolUse phase-aware live probe after context-loop and trace remediation. The surface remains `task_standard_exactness` / evidence recovery: determine whether one Codex-native PostToolUse `additionalContext` delivered after candidate/readback work changes the next model action, now that repeated context loops are blocked and hook/stdout trace joining can use exact refs or unique diagnostic fingerprints without ordinal inference.",
+    "guardrail": "Live spend is not authorized by the registry or plan alone; the implementation turn must provide explicit current-turn approval / explicit current-turn live approval for the live run and must not use `--require-pass`. Must not change signed UserPromptSubmit text, PostToolUse text, Stop text, SRE law, matcher thresholds, fixtures, scoring semantics, root hooks, hidden-verifier boundary, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed intervention pressure, or host-runtime extraction. This is not a three-arm behavior comparison and cannot claim broad Cortex lift.",
+    "kill_rule": "A `pass_posttooluse_next_step_observed` verdict queues an exactness-only paired value probe, not broad behavior comparison. `failure_no_context` queues firing-boundary/classifier remediation. `failure_context_ignored` queues architecture decision before text or policy tuning. `failure_overcontrol` queues PostToolUse overcontrol remediation. `scoped_negative` queues lifecycle/capture stability decision. `fail` fixes the boundary breach before interpretation. Any repeated context loop or ambiguous trace is a fail/scoped-negative blocker, not a lift result.",
+    "last_reviewed_at": "2026-05-08T00:00:00+00:00",
+    "primary_metric": "The mismatch row emits exactly one PostToolUse context, the trace is non-ambiguous through exact `tool_event_ref` or unique `tool_event_fingerprint`, the next terminal tool strictly after that context performs the named direct check before closure, final closure reports that evidence, clean/blocker/waiting/unrelated controls emit zero contexts, and `behavior_lift_claim_allowed=false`.",
+    "slug": "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun",
+    "surface": "product live proof",
+    "why_now": "The no-live context-loop trace Gate 0 passed after the prior live rerun failed on repeated PostToolUse contexts and ambiguous `call_*`/`item_*` trace joining; future traces may use exact refs or unique diagnostic fingerprints. Clean/control silence, phase-aware timing, firing-boundary remediation, overcontrol remediation, causal trace IDs, and shared SRE-owned tool-evidence classification are preserved. A live rerun is now the next required evidence step, but only with explicit current-turn live approval."
   },
   "packet_to_code_anchors": [
     {
@@ -831,6 +995,18 @@
       "python3 internal/workflow/repo_workflow.py cleanup-report"
     ]
   },
+  "recent_history": [
+    "The Codex App/CLI PostToolUse task-standard context-loop trace remediation passed no-live Gate 0: one existing-shape context is emitted for the first eligible mismatch row, later eligible PostToolUse rows stay silent with `posttooluse_context_active_context_pending`, file-backed state updates are locked and atomically replaced, exact ref and unique fingerprint trace joins are supported, duplicate/missing fingerprints remain ambiguous, no ordinal fallback is allowed, clean/control rows stay silent, and behavior_lift_claim_allowed remains false. This queues the approval-gated phase-aware narrow live rerun.",
+    "The approved Codex App/CLI PostToolUse phase-aware narrow live rerun after shared tool-evidence classification then produced `fail` with `repeated_posttooluse_context_loop`: the mismatch row emitted three PostToolUse contexts while clean evidenced, blocker, waiting, and unrelated controls stayed at zero contexts. The run also showed `posttooluse_context_trace_ambiguous=true` because hook rows carried `call_*` ids while stdout command records carried `item_*` refs, so no next-action effect can be interpreted. Root config stayed unchanged, no runtime snapshot loaded, hidden scoring stayed absent/scoring-only, and `behavior_lift_claim_allowed=false`. This queues no-live context-loop and live-trace remediation before any further live probe.",
+    "The Codex App/CLI PostToolUse shared tool-evidence classification seam then passed no-live Gate 0: `cortex/sre/tool_evidence.py` now owns typed missing-artifact, failed-check, failed-tool, markerless/generic, candidate-artifact, readback, completion, and explicit path-anchor classification. Both `cortex/sre/task_standard.py` and `cortex/hosts/openai/posttooluse_task_standard_actuator.py` consume it while preserving SRE evidence classes, host phase gating, status-only host/SRE distinction, prior causal-trace Gate 0, and overcontrol/firing-boundary/phase-aware outcomes. No live run occurred and behavior lift remains unearned; this queues the approval-gated phase-aware narrow live rerun.",
+    "The Codex App/CLI PostToolUse causal-trace IDs seam then passed no-live Gate 0: product diagnostics now preserve `tool_use_id`, stdout-derived command records preserve `tool_event_ref`, and the live harness joins context-emitting PostToolUse rows to command records only by that stable reference. A synthetic event-ref trace is non-ambiguous and identifies the direct check after context; the historical `task_standard_posttooluse_live_20260507T153242Z` replay is marked ambiguous because it lacks persisted ids, so the harness no longer infers next action by ordinal position. This keeps live rerun blocked until shared tool-evidence classification lands; behavior lift remains unearned.",
+    "The Codex App/CLI PostToolUse actuator-boundary trace repair then passed no-live Gate 0: PostToolUse task-standard policy moved into `cortex/hosts/openai/posttooluse_task_standard_actuator.py`, the coordinator became wiring-only for that actuator, the failed-check and mismatch candidate/readback controls still behave as before, and replay of `task_standard_posttooluse_live_20260507T153242Z` proves next-action readout now follows hook chronology instead of stdout phase heuristics. This keeps the approval-gated phase-aware narrow live rerun queued; behavior lift remains unearned.",
+    "The Codex App/CLI PostToolUse task-standard overcontrol remediation then passed no-live Gate 0: a local phase-aware failed-check predicate keeps live-equivalent `cat: illegal option -- A` / `usage:` verification diagnostics silent as `phase_check_failed`, preserves the existing mismatch candidate/readback PostToolUse context path, keeps clean/control rows silent, and changes no model-visible text, SRE law, matcher threshold, scoring, Stop, PreToolUse, PermissionRequest, root hook, hidden-verifier, or Sinkhorn/transport surface. This queues an approval-gated phase-aware narrow live rerun; behavior lift remains unearned.",
+    "The approved Codex App/CLI PostToolUse phase-aware narrow live rerun then produced `failure_overcontrol`: the mismatch exactness case now emitted one Codex-native PostToolUse additionalContext, selected unresolved closure evidence, avoided boundary-breach text and repeated context, and the next tool action matched the context. The clean-evidenced control also emitted one PostToolUse context, which violates the clean/control silence kill rule. Honest blocker, waiting-on-user, and unrelated-tool controls stayed silent; root config stayed unchanged; no runtime snapshot loaded; hidden scoring stayed absent/scoring-only; and behavior_lift_claim_allowed remained false. This queues no-live PostToolUse overcontrol remediation before another live run or value probe.",
+    "The Codex App/CLI PostToolUse task-standard firing-boundary remediation then passed no-live Gate 0: a narrowly scoped phase-aware PostToolUse completion predicate now accepts live-equivalent candidate artifact and readback rows when `tool_response` is present, no payload error exists, and failure/missing-artifact markers are absent. Missing-artifact checks stay silent, candidate creation/readback rows without exit/status markers emit the existing context, clean/control rows stay silent, and no text/SRE/matcher/Stop/PreToolUse/PermissionRequest/root/hidden/Sinkhorn surface changed. This queues `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun`; behavior lift remains unearned.",
+    "The approved Codex App/CLI PostToolUse phase-aware narrow live run then produced `failure_no_context`: the mismatch case captured three task-standard items, observed PostToolUse lifecycle rows, candidate artifact prerequisite work, product-only config, unchanged root config, no runtime snapshot, and hidden scoring absent/scoring-only, but emitted zero PostToolUse contexts. The first missing-file check stayed silent as `pre_artifact_candidate_missing`, the artifact creation row as `no_verification_marker`, and later readbacks as `no_candidate_artifact_or_readback`; clean/blocker/waiting/unrelated controls also received zero contexts. Later exactness checks came through the existing Stop continuation loop, so PostToolUse next-action effect, exactness value lift, broad behavior lift, and shipping promotion remain unearned. This queues no-live firing-boundary remediation before any further live run.",
+    "The Codex App/CLI PostToolUse phase-aware calibration Gate 0 then passed without live spend: missing/pre-artifact diagnostics stayed silent with private `pre_artifact_candidate_missing`, successful candidate artifact creation for a captured path-like anchor emitted one existing PostToolUse additionalContext against unresolved closure evidence, clean/blocker/waiting/unrelated/generic/markerless controls stayed silent, and no Stop/PreToolUse/PermissionRequest/runtime-snapshot/root/hidden-scoring/Sinkhorn boundary appeared. This earns structural timing calibration only and queues `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run`; behavior lift and exactness value lift remain unearned."
+  ],
   "research_lines_under_evaluation": [
     {
       "code_refs": [
@@ -1224,7 +1400,7 @@
         "behavior_effect": "can block, route, warn, or require closure before a model call proceeds through host control",
         "gap_or_unearned": "Do not claim commitment diagnostics alone change model behavior unless a host-control path consumes them.",
         "id": "event_dispatch_and_commitments",
-        "model_io_path": "`cortex/core/*` \u2192 host runtime step \u2192 CLI/service records and closure/route decisions; direct prompt text only when downstream host-control uses the decision",
+        "model_io_path": "`cortex/core/*` → host runtime step → CLI/service records and closure/route decisions; direct prompt text only when downstream host-control uses the decision",
         "reaches_model_as": "runtime decision state, warnings, and certification gates; not automatically prompt-visible by itself",
         "visibility_class": "decision_visible"
       },
@@ -1232,7 +1408,7 @@
         "behavior_effect": "keeps resume/closure decisions stable across events and can alter whether the next call is inspect, continuity, or blocked",
         "gap_or_unearned": "Raw branch registry is not model-visible unless converted into host-control input or route behavior.",
         "id": "goal_branch_continuity",
-        "model_io_path": "`cortex/sre/goals.py` + host runtime session \u2192 `operator_route.route_budget.allow_resume` / closure summaries \u2192 subsequent host-control selection",
+        "model_io_path": "`cortex/sre/goals.py` + host runtime session → `operator_route.route_budget.allow_resume` / closure summaries → subsequent host-control selection",
         "reaches_model_as": "route and budget constraints, session continuity state, and closure pressure; not as raw memory text by default",
         "visibility_class": "decision_visible"
       },
@@ -1240,7 +1416,7 @@
         "behavior_effect": "slows or blocks under contradiction and repeated failure, reducing unsupported forward motion before model output is requested",
         "gap_or_unearned": "This is runtime control, not post-training reasoning improvement; live output-lift still requires model-run evidence.",
         "id": "brake_uncertainty_modulators",
-        "model_io_path": "`cortex/sre/brake.py` / `modulators.py` \u2192 executive policy view \u2192 operator route / activation thresholds \u2192 host runtime result",
+        "model_io_path": "`cortex/sre/brake.py` / `modulators.py` → executive policy view → operator route / activation thresholds → host runtime result",
         "reaches_model_as": "route pressure, threshold shifts, blocked/guarded decisions, and diagnostics; not natural-language self-talk",
         "visibility_class": "decision_visible"
       },
@@ -1248,7 +1424,7 @@
         "behavior_effect": "changes whether and how the model is asked to act when model/task capability mismatch is detected",
         "gap_or_unearned": "Static OpenAI-only band registry remains a cold-start prior; observed capability inference is queued, not landed.",
         "id": "operator_routing_and_capability",
-        "model_io_path": "`select_operator_route*` \u2192 host runtime `operator_route_payload` \u2192 host-control route profile / verified-work contract binding",
+        "model_io_path": "`select_operator_route*` → host runtime `operator_route_payload` → host-control route profile / verified-work contract binding",
         "reaches_model_as": "DEGRADE/UNSUPPORTED routing, max retry suppression, lean contract binding, or blocked request",
         "visibility_class": "decision_visible"
       },
@@ -1256,7 +1432,7 @@
         "behavior_effect": "can bias control pricing when explicitly published, host-matched, and fresh; cannot directly route or certify",
         "gap_or_unearned": "Default shipping/conformance lanes keep live `Q_mem = 0`; no default-on memory claim is earned.",
         "id": "aux_support_publications",
-        "model_io_path": "AUX episode stores \u2192 `OfflineSupportPublication` \u2192 explicit publication supplied to host-control/runtime scoring",
+        "model_io_path": "AUX episode stores → `OfflineSupportPublication` → explicit publication supplied to host-control/runtime scoring",
         "reaches_model_as": "score-pricing priors and publication-only support; raw SQLite episodes do not reach the model",
         "visibility_class": "support_only"
       },
@@ -1264,7 +1440,7 @@
         "behavior_effect": "changes model call content and bounded repair behavior directly; preserves trusted structure across one-shot and repair attempts",
         "gap_or_unearned": "OpenAI API host-control remains API/conformance support unless explicitly promoted; the active product target is `openai.codex_app_cli`.",
         "id": "verified_work_preservation",
-        "model_io_path": "`OpenAIHostControlRequest(work_contract=...)` \u2192 fixed verified-work `instructions` + `input_text` \u2192 `execute_openai_response_stream_turn`",
+        "model_io_path": "`OpenAIHostControlRequest(work_contract=...)` → fixed verified-work `instructions` + `input_text` → `execute_openai_response_stream_turn`",
         "reaches_model_as": "explicit model instructions, workspace context, repair prompt, and response verification loop on the OpenAI API host-control support lane",
         "visibility_class": "direct_model_visible"
       },
@@ -1272,7 +1448,7 @@
         "behavior_effect": "shapes the next OpenAI call and, structurally, the next Claude Code Desktop Bash-tool assistant continuation away from premature closure after stream-only, failed-probe, warning, override, or braked realization without accumulating memory across turns; generic friction now stays silent and relies on route/brake gates",
         "gap_or_unearned": "OpenAI API host-control remains support/conformance; `openai.codex_app_cli` is the product target, and Claude Code Desktop still needs live paired output-quality evidence before shipping-lift claims.",
         "id": "feedback_window_realization",
-        "model_io_path": "host output / last `ReferenceRealizationFeedback` \u2192 `runtime_context_from_last_feedback(...)` \u2192 OpenAI host-control `instructions` or verified-work `input_text`; Claude Code Desktop structural path maps prior feedback through `cortex/hosts/claude_code_desktop/runtime.py` to `hookSpecificOutput.additionalContext` for `PreToolUse:Bash`",
+        "model_io_path": "host output / last `ReferenceRealizationFeedback` → `runtime_context_from_last_feedback(...)` → OpenAI host-control `instructions` or verified-work `input_text`; Claude Code Desktop structural path maps prior feedback through `cortex/hosts/claude_code_desktop/runtime.py` to `hookSpecificOutput.additionalContext` for `PreToolUse:Bash`",
         "reaches_model_as": "a single task-local runtime-context constraint sentence derived only from the immediately prior feedback entry; clean or absent feedback emits no block/context",
         "visibility_class": "conditional_model_visible_openai_and_claude_code_desktop_structural"
       },
@@ -1280,7 +1456,7 @@
         "behavior_effect": "maintains continuity across events and hosts without pretending all hosts expose the same transport affordances",
         "gap_or_unearned": "Session state can be perfectly coherent internally while still failing to affect a model if no host-control path consumes it.",
         "id": "host_runtime_sessions",
-        "model_io_path": "host session artifact \u2192 runtime step \u2192 route/closure/policy payload \u2192 host control request, CLI/service response, or Claude Code Desktop hook-control output",
+        "model_io_path": "host session artifact → runtime step → route/closure/policy payload → host control request, CLI/service response, or Claude Code Desktop hook-control output",
         "reaches_model_as": "carried state that influences later route and closure behavior; raw session JSON is not model input",
         "visibility_class": "state_to_decision_visible"
       },
@@ -1288,7 +1464,7 @@
         "behavior_effect": "this is the main bridge where Cortex can change what the model receives or what output is accepted",
         "gap_or_unearned": "Any internal logic not consumed here, or not converted into route/block behavior before here, remains monitoring/scaffolding rather than product Cortex.",
         "id": "host_control_transports",
-        "model_io_path": "`OpenAIHostControlRequest.input_text/instructions`, `ClaudeHostControlRequest.input_text/system`, `GeminiHostControlRequest.input_text/instructions`, and Claude Code Desktop `hookSpecificOutput.additionalContext` \u2192 respective live/fixture transport or hook outputs",
+        "model_io_path": "`OpenAIHostControlRequest.input_text/instructions`, `ClaudeHostControlRequest.input_text/system`, `GeminiHostControlRequest.input_text/instructions`, and Claude Code Desktop `hookSpecificOutput.additionalContext` → respective live/fixture transport or hook outputs",
         "reaches_model_as": "provider request text/system/instructions or Claude Code Desktop hook additional context; metadata and audit intensity are boundary/control fields, not assumed model-visible text",
         "visibility_class": "direct_model_visible"
       }
@@ -1370,7 +1546,7 @@
     "The Codex App/CLI value-ablation audit replayed the Astro, continuation-resolution, behavior-comparison, and hardened visible-intervention evidence without changing product policy. It found threshold tuning non-causal because all final Astro Stop rows had pressure 0.0 and resolved verification expectations; strict paydown ablation would catch 3 hidden failures but overblock 2 passing traces; visible claim/evidence alignment exposed enough product-visible mismatch to queue requirement-level perception before fixture remediation, text tuning, or broad paydown tightening.",
     "The Codex App/CLI task-standard spine then added product state for visible task obligations, the model's compact Work standard / Likely misses / Closure evidence block, aligned evidence refs, final closure claims, and unmatched standard items. The only new model-visible text is the structurally gated UserPromptSubmit standard-formation prompt behind `--enable-task-standard-text`; activation still requires explicit final text signoff. Existing Stop threshold text remains unchanged. Structural tests prove generic checks no longer pay down standard items when a standard exists, aligned evidence can pay down matching standard items, hidden verifier terms stay out of product state, and silent arms suppress the new text. Offline Astro replay caught 3 hidden-failing traces but also flagged 2 hidden-passing overblock risks because the old traces lacked real model-derived standards, so no behavior lift is claimed.",
     "The task-standard SRE correspondence reconciliation then made the spine a first-class SRE math-to-code object instead of a Codex-only adaptor concept: `task_standard_spine` now maps to `cortex/sre/task_standard.py`, SRE packet law names task-local standard formation and maintenance as goal-continuity / verification-fit state, and the Cortex output law distinguishes prior-act self-correction from prospective identity-continuous task-set formation. This seam changed doctrine and registry correspondence only; no model-visible text changed and no live behavior lift is claimed.",
-    "The task-standard executive doctrine/math refinement then made the biology analogy, reference math, tracker, and registry agree: task-set formation, goal maintenance, conflict monitoring, action gating, and prediction-error recalibration are delivery-layer executive capacities rather than biological-equivalence claims; SRE \u00a78.2 now defines `T_t = (O_t, S_t, M_t, C_t, E_t, U_t)` and `D_std(t)` as task-standard verification-fit inputs; and the next product train is split into explicit final text signoff plus structural context delivery and standard-capture proof before any integration or behavior-lift comparison. This seam changed doctrine/math/status only; no runtime behavior, selector law, model-visible text, hook configuration, product activation, or live behavior-lift claim changed.",
+    "The task-standard executive doctrine/math refinement then made the biology analogy, reference math, tracker, and registry agree: task-set formation, goal maintenance, conflict monitoring, action gating, and prediction-error recalibration are delivery-layer executive capacities rather than biological-equivalence claims; SRE §8.2 now defines `T_t = (O_t, S_t, M_t, C_t, E_t, U_t)` and `D_std(t)` as task-standard verification-fit inputs; and the next product train is split into explicit final text signoff plus structural context delivery and standard-capture proof before any integration or behavior-lift comparison. This seam changed doctrine/math/status only; no runtime behavior, selector law, model-visible text, hook configuration, product activation, or live behavior-lift claim changed.",
     "The Codex App/CLI task-standard live probe seam then locked the explicitly signed-off prospective task-set text, added `--task-standard-live-gate0` and `--task-standard-live` harness modes, configured isolated subject hooks for UserPromptSubmit, PreToolUse, PostToolUse, and Stop with `--enable-task-standard-text`, and proved Gate 0 context delivery plus standard-block capture without runtime snapshots or root guardrail mutation. The live `codex exec` run remains unearned until explicit current-turn live/spend approval; behavior lift and downstream gating integration remain later claims.",
     "The approved Codex App/CLI task-standard live run then produced a fail verdict, not a capture success: the isolated Codex CLI subject loaded project hooks, emitted the signed UserPromptSubmit text with hash `9021a0efef77eb6371eecf4996332d7fce31febae8462decf10b48056f6cf1a9` as a flat Cortex-internal `context` payload, recorded 7 hook rows with no runtime snapshot and unchanged root config, but the model skipped the requested Work standard / Likely misses / Closure evidence block and moved directly to tools. The first Stop row then emitted existing overdue-verification text with hash `a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc`, so no prework standard capture, behavior lift, or downstream gating integration is earned; the next product train is capture-boundary remediation rather than behavior comparison.",
     "The Codex App/CLI hook-contract remediation then fixed the structural host mismatch: UserPromptSubmit task-standard context now serializes as Codex-native `hookSpecificOutput.additionalContext` instead of the flat `context` shorthand, Stop blocks keep the proven `decision`/`reason` shape, diagnostics hash nested additionalContext text, and task-standard live subject configs can use `--disable-stop-blocks` to suppress Stop blocks without suppressing the signed UserPromptSubmit context. Structural Gate 0 passed with the same signed context hash, three simulated standard items captured, malformed standard blocks diagnostic-only, no runtime snapshot, and unchanged root guardrails. This earns host-contract structural proof only; no live prework standard capture or behavior lift is claimed.",
@@ -1390,181 +1566,7 @@
     "The Codex App/CLI PostToolUse task-standard narrow live probe harness seam then added `--task-standard-posttooluse-live`, approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running a live Codex command. The live probe remains unearned until explicitly approved and run; this seam earns harness readiness only and preserves signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport deferral, PreToolUse denial deferral, and PermissionRequest policy."
   ],
   "work_today": {
-    "slug": "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun",
-    "note": "The approved Codex App/CLI PostToolUse phase-aware narrow live rerun after shared tool-evidence classification produced `fail` with failure reason `repeated_posttooluse_context_loop`: the mismatch case captured three task-standard items, observed PostToolUse lifecycle rows, and observed candidate artifact prerequisite work, but emitted three Codex-native PostToolUse `additionalContext` rows. Rows 10 and 11 repeated the same `task-standard:work_standard:929237a14cf4d738` item, row 13 emitted `task-standard:closure_evidence:7608236188fd9be6`, and only row 16 stayed silent with `posttooluse_context_session_cap_reached`. Clean evidenced, honest blocker, waiting-on-user, and unrelated-tool controls received zero PostToolUse contexts, root config stayed unchanged, no runtime snapshot loaded, hidden scoring stayed absent/scoring-only, and `behavior_lift_claim_allowed=false`. The mismatch trace was also not interpretable as next-action evidence because `posttooluse_context_trace_ambiguous=true` with `posttooluse_tool_event_ref_not_found_in_stdout`: hook rows carried `call_*` tool ids while stdout-derived command rows carried `item_*` refs, so the harness correctly refused ordinal inference. This earns no behavior lift, no exactness value lift, no PostToolUse next-action effect claim, no clean-control safety promotion beyond this failed run, no Codex App parity, and no shipping promotion. It queues no-live context-loop and live-trace remediation before any further live probe, without changing signed UserPromptSubmit text, PostToolUse text, Stop text, SRE law, matcher thresholds, fixtures, scoring semantics, root hooks, hidden-verifier boundaries, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed intervention pressure, or host-runtime extraction. Historical context retained for boundary checks: the prior shared tool-evidence classification seam used `cortex/sre/tool_evidence.py`, `ToolEvidenceObservation`, and `ToolEvidencePhase`; it preserved status-only handling, prior causal-trace Gate 0, candidate artifact creation, readback, firing-boundary remediation, live-equivalent phase-aware PostToolUse completion predicate, `phase_check_failed`, `cat: illegal option -- A`, `pre_artifact_candidate_missing`, exit/status marker handling, and no-live behavior-lift boundaries. No live Codex run occurred in that prior Gate 0 seam; this current seam did run live and failed. Boundary-test carry-forward terms: PostToolUse task-standard, no broad Cortex lift, no live behavior lift, `failure_overcontrol`, prior pass, signed UserPromptSubmit text. Additional current-run anchors: clean_evidenced control stayed silent in this run, task_standard_exactness remains the only earned surface, and the previous live failures included candidate_artifact_without_posttooluse_context. Missing-artifact timing remains part of the carried phase-aware evidence."
-  },
-  "recent_history": [
-    "The approved Codex App/CLI PostToolUse phase-aware narrow live rerun after shared tool-evidence classification then produced `fail` with `repeated_posttooluse_context_loop`: the mismatch row emitted three PostToolUse contexts while clean evidenced, blocker, waiting, and unrelated controls stayed at zero contexts. The run also showed `posttooluse_context_trace_ambiguous=true` because hook rows carried `call_*` ids while stdout command records carried `item_*` refs, so no next-action effect can be interpreted. Root config stayed unchanged, no runtime snapshot loaded, hidden scoring stayed absent/scoring-only, and `behavior_lift_claim_allowed=false`. This queues no-live context-loop and live-trace remediation before any further live probe.",
-    "The Codex App/CLI PostToolUse shared tool-evidence classification seam then passed no-live Gate 0: `cortex/sre/tool_evidence.py` now owns typed missing-artifact, failed-check, failed-tool, markerless/generic, candidate-artifact, readback, completion, and explicit path-anchor classification. Both `cortex/sre/task_standard.py` and `cortex/hosts/openai/posttooluse_task_standard_actuator.py` consume it while preserving SRE evidence classes, host phase gating, status-only host/SRE distinction, prior causal-trace Gate 0, and overcontrol/firing-boundary/phase-aware outcomes. No live run occurred and behavior lift remains unearned; this queues the approval-gated phase-aware narrow live rerun.",
-    "The Codex App/CLI PostToolUse causal-trace IDs seam then passed no-live Gate 0: product diagnostics now preserve `tool_use_id`, stdout-derived command records preserve `tool_event_ref`, and the live harness joins context-emitting PostToolUse rows to command records only by that stable reference. A synthetic event-ref trace is non-ambiguous and identifies the direct check after context; the historical `task_standard_posttooluse_live_20260507T153242Z` replay is marked ambiguous because it lacks persisted ids, so the harness no longer infers next action by ordinal position. This keeps live rerun blocked until shared tool-evidence classification lands; behavior lift remains unearned.",
-    "The Codex App/CLI PostToolUse actuator-boundary trace repair then passed no-live Gate 0: PostToolUse task-standard policy moved into `cortex/hosts/openai/posttooluse_task_standard_actuator.py`, the coordinator became wiring-only for that actuator, the failed-check and mismatch candidate/readback controls still behave as before, and replay of `task_standard_posttooluse_live_20260507T153242Z` proves next-action readout now follows hook chronology instead of stdout phase heuristics. This keeps the approval-gated phase-aware narrow live rerun queued; behavior lift remains unearned.",
-    "The Codex App/CLI PostToolUse task-standard overcontrol remediation then passed no-live Gate 0: a local phase-aware failed-check predicate keeps live-equivalent `cat: illegal option -- A` / `usage:` verification diagnostics silent as `phase_check_failed`, preserves the existing mismatch candidate/readback PostToolUse context path, keeps clean/control rows silent, and changes no model-visible text, SRE law, matcher threshold, scoring, Stop, PreToolUse, PermissionRequest, root hook, hidden-verifier, or Sinkhorn/transport surface. This queues an approval-gated phase-aware narrow live rerun; behavior lift remains unearned.",
-    "The approved Codex App/CLI PostToolUse phase-aware narrow live rerun then produced `failure_overcontrol`: the mismatch exactness case now emitted one Codex-native PostToolUse additionalContext, selected unresolved closure evidence, avoided boundary-breach text and repeated context, and the next tool action matched the context. The clean-evidenced control also emitted one PostToolUse context, which violates the clean/control silence kill rule. Honest blocker, waiting-on-user, and unrelated-tool controls stayed silent; root config stayed unchanged; no runtime snapshot loaded; hidden scoring stayed absent/scoring-only; and behavior_lift_claim_allowed remained false. This queues no-live PostToolUse overcontrol remediation before another live run or value probe.",
-    "The Codex App/CLI PostToolUse task-standard firing-boundary remediation then passed no-live Gate 0: a narrowly scoped phase-aware PostToolUse completion predicate now accepts live-equivalent candidate artifact and readback rows when `tool_response` is present, no payload error exists, and failure/missing-artifact markers are absent. Missing-artifact checks stay silent, candidate creation/readback rows without exit/status markers emit the existing context, clean/control rows stay silent, and no text/SRE/matcher/Stop/PreToolUse/PermissionRequest/root/hidden/Sinkhorn surface changed. This queues `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun`; behavior lift remains unearned.",
-    "The approved Codex App/CLI PostToolUse phase-aware narrow live run then produced `failure_no_context`: the mismatch case captured three task-standard items, observed PostToolUse lifecycle rows, candidate artifact prerequisite work, product-only config, unchanged root config, no runtime snapshot, and hidden scoring absent/scoring-only, but emitted zero PostToolUse contexts. The first missing-file check stayed silent as `pre_artifact_candidate_missing`, the artifact creation row as `no_verification_marker`, and later readbacks as `no_candidate_artifact_or_readback`; clean/blocker/waiting/unrelated controls also received zero contexts. Later exactness checks came through the existing Stop continuation loop, so PostToolUse next-action effect, exactness value lift, broad behavior lift, and shipping promotion remain unearned. This queues no-live firing-boundary remediation before any further live run.",
-    "The Codex App/CLI PostToolUse phase-aware calibration Gate 0 then passed without live spend: missing/pre-artifact diagnostics stayed silent with private `pre_artifact_candidate_missing`, successful candidate artifact creation for a captured path-like anchor emitted one existing PostToolUse additionalContext against unresolved closure evidence, clean/blocker/waiting/unrelated/generic/markerless controls stayed silent, and no Stop/PreToolUse/PermissionRequest/runtime-snapshot/root/hidden-scoring/Sinkhorn boundary appeared. This earns structural timing calibration only and queues `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run`; behavior lift and exactness value lift remain unearned.",
-    "The Codex App/CLI PostToolUse task-standard architecture decision then classified the `failure_context_ignored` live result as a PostToolUse timing/selection failure rather than host delivery, task-standard state, clean-control overcontrol, or boundary failure: context fired after a failed missing-artifact precondition, so the next legitimate model action was artifact creation rather than the named direct check. Stop continuation remains the only live-proven corrective actuator for this exactness shape. The next train is no-live phase-aware PostToolUse calibration Gate 0, not text tuning, policy tuning, live rerun, three-arm behavior comparison, Sinkhorn/transport, PreToolUse denial, or PermissionRequest work."
-  ],
-  "doc_roles": {
-    "summary": "Document roles keep Cortex planning surfaces from drifting into one another. The status registry remains the operational roadmap authority; generated views are read-only; scoreboards and retained specs may inform planning but cannot queue work by themselves.",
-    "roles": [
-      {
-        "id": "front_door",
-        "meaning": "Human entrypoint and document inventory.",
-        "paths": [
-          "docs/README.md"
-        ],
-        "update_rule": "Keep links current when any non-archive doc is added, moved, or role-changed."
-      },
-      {
-        "id": "identity_authority",
-        "meaning": "Canonical Cortex identity, mission fit, and product-fit rejection authority.",
-        "paths": [
-          "docs/CORTEX.md"
-        ],
-        "update_rule": "Update only when Cortex identity or generated status sections need correction; generated sections must come from the registry."
-      },
-      {
-        "id": "packet_law",
-        "meaning": "Formal V2 packet law and math.",
-        "paths": [
-          "docs/CORTEX_V2_CORE_2.md",
-          "docs/CORTEX_V2_SRE_2.md",
-          "docs/CORTEX_V2_AUX_2.md"
-        ],
-        "update_rule": "Revise explicitly when packet law changes; implementation seams must cite the relevant packet terms."
-      },
-      {
-        "id": "generated_operational_view",
-        "meaning": "Human-readable generated view of the status registry.",
-        "paths": [
-          "docs/CORTEX_STATUS.md"
-        ],
-        "update_rule": "Do not edit directly; regenerate from internal/truth/cortex_status.json."
-      },
-      {
-        "id": "planning_scoreboard",
-        "meaning": "Long-horizon product planning scoreboard and evidence-gap tracker; subordinate to the status registry.",
-        "paths": [
-          "docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md"
-        ],
-        "update_rule": "May hold candidate backlog and scoreboard guidance, but a seam becomes current only when promoted into next_product_train."
-      },
-      {
-        "id": "retained_context",
-        "meaning": "Retained prior program specs and readiness notes; useful context but not current roadmap authority.",
-        "paths": [
-          "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md",
-          "docs/CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md"
-        ],
-        "update_rule": "Do not queue work from these docs directly; extract current decisions into the tracker or status registry first."
-      },
-      {
-        "id": "workflow_authority",
-        "meaning": "Repo workflow, chat-boundary reflection, and anti-drift rules.",
-        "paths": [
-          "docs/internal/REPO_WORKFLOW.md",
-          "docs/internal/MISSION_REFLECTION_CONTRACT.md",
-          "docs/internal/ANTI_DRIFT_RULES.md"
-        ],
-        "update_rule": "Update with matching workflow/internal tests when branch, closeout, reflection, or anti-drift rules change."
-      },
-      {
-        "id": "support_context",
-        "meaning": "Support dossiers, plugin sketches, runtime-context examples, and audits that inform but do not define current product truth.",
-        "paths": [
-          "docs/audit/runtime_context_vs_grounded_intervention.md",
-          "docs/cortex_plugin/DESIGN.md",
-          "docs/cortex_plugin/ADAPTER.md",
-          "docs/cortex_plugin/EVIDENCE_SYNTHESIS.md",
-          "docs/cortex_plugin/communication_problem/01_problem_statement.md",
-          "docs/cortex_plugin/communication_problem/02_cortex_identity_and_doctrine.md",
-          "docs/cortex_plugin/communication_problem/03_maths_to_code.md",
-          "docs/cortex_plugin/communication_problem/04_cortex_internal_state.md",
-          "docs/cortex_plugin/communication_problem/05_claude_communication_surface.md",
-          "docs/cortex_plugin/communication_problem/06_hook_surface_and_evidence.md",
-          "docs/cortex_plugin/communication_problem/07_strange_loop_frame.md",
-          "docs/cortex_plugin/communication_problem/08_anti_patterns_and_failed_solutions.md",
-          "docs/runtime_context/EVAL_RUBRIC.md",
-          "docs/runtime_context/BASELINE_SHAPED_EXAMPLES.md",
-          "docs/runtime_context/CROSS_HOST_SKETCH.md",
-          "docs/recon/cortex_codex_app_cli_hook_contract_capture_boundary_remediation.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_context_live_rerun.md",
-          "docs/recon/cortex_codex_app_cli_communication_boundary_audit_and_hardening.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_pretool_transcript_capture.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_live_capture_rerun.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_stop_gating_live_run.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_behavior_comparison_harness.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_behavior_comparison_live_run.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_evidence_gating_remediation.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_pre_live_audit_roadmap_update.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_offline_replay_readiness_gate.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_raw_vs_silent_artifact_readout.md",
-          "docs/recon/cortex_codex_app_cli_lifecycle_actuator_map_roadmap_update.md",
-          "docs/recon/cortex_codex_app_cli_lifecycle_actuator_map.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_next_step_correction.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_calibration_decision.md",
-          "docs/recon/cortex_codex_app_cli_raw_vs_silent_artifact_readout_roadmap_update.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_stack_publication_hygiene.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_calibration_gate0.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_run.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_firing_boundary_remediation.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_overcontrol_remediation.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_trace_repair.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_causal_trace_ids.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_shared_tool_evidence_classification.md"
-        ],
-        "update_rule": "Use as evidence or design context only; product truth still requires a status/recon/code/proof seam."
-      },
-      {
-        "id": "recon_evidence",
-        "meaning": "Recon evidence records and live/lab findings.",
-        "paths": [
-          "docs/recon/lifecycle_first_surface_matrix.md",
-          "docs/recon/codex_app_hook_probe.md",
-          "docs/recon/claude_code_desktop_pretooluse_probe.md",
-          "docs/recon/claude_code_user_scope_plugin_pretooluse_probe.md",
-          "docs/recon/claude_code_user_scope_plugin_managed_worktree_probe.md",
-          "docs/recon/claude_code_cortex_runtime_context_connectivity_probe.md",
-          "docs/recon/claude_code_cortex_stop_closure_connectivity_probe.md",
-          "docs/recon/claude_code_cortex_headless_cli_equivalence_probe.md",
-          "docs/recon/claude_code_cortex_bridge_translation_headless_probe.md",
-          "docs/recon/claude_code_cortex_mac_pending_goal_divergence_retest.md",
-          "docs/recon/claude_code_cortex_posttool_failure_to_stop_loop_probe.md",
-          "docs/recon/claude_code_cortex_userpromptsubmit_verified_work_probe.md",
-          "docs/recon/cortex_openai_operator_silent_control_live_probe.md",
-          "docs/recon/cortex_openai_operator_debt_control_enactment.md",
-          "docs/recon/cortex_openai_operator_silent_control_live_probe_retry.md",
-          "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md",
-          "docs/recon/cortex_openai_operator_verification_debt_continuation.md",
-          "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md",
-          "docs/recon/cortex_visible_intervention_product_perception_hardening.md",
-          "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md",
-          "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md",
-          "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md",
-          "docs/recon/cortex_codex_app_cli_product_perception_loop.md",
-          "docs/recon/cortex_codex_app_cli_product_perception_live_probe.md",
-          "docs/recon/cortex_codex_app_cli_product_event_capture_remediation.md",
-          "docs/recon/cortex_codex_app_cli_stop_continuation_resolution_loop.md",
-          "docs/recon/cortex_codex_app_cli_hook_native_behavior_comparison.md",
-          "docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md",
-          "docs/recon/cortex_codex_app_cli_value_ablation_audit.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_spine.md",
-          "docs/recon/cortex_task_standard_sre_correspondence_reconciliation.md",
-          "docs/recon/cortex_task_standard_executive_doctrine_math_refinement.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_live_probe.md",
-          "docs/recon/cortex_codex_app_cli_task_standard_live_run.md",
-          "docs/recon/cortex_semantic_contraction_audit.md",
-          "docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun_after_shared_tool_evidence.md"
-        ],
-        "update_rule": "Add a recon when a proof or decision is earned; do not treat recon alone as shipping truth without status promotion."
-      }
-    ]
+    "note": "The Codex App/CLI PostToolUse task-standard context-loop trace remediation passed no-live Gate 0 / context-loop trace Gate 0: `--task-standard-posttooluse-context-loop-trace-gate0 --require-pass` proved that the first live-equivalent eligible mismatch PostToolUse row emits exactly one existing-shape Codex-native `additionalContext`, the next eligible PostToolUse row stays silent with private `posttooluse_context_active_context_pending`, and only one task-standard context item is recorded. The file-backed Codex session store now protects per-session load/update/save with a lock and writes state through atomic replace, so separate live hook processes cannot both spend context from stale state. Future live-shaped traces keep exact `tool_event_ref` joins and can join differing hook `call_*` ids to stdout `item_*` refs by unique diagnostic-only `tool_event_fingerprint`; duplicate or missing fingerprints stay ambiguous and no ordinal fallback is allowed. `clean_evidenced`/clean evidenced, missing-artifact, failed-check, markerless, failed-candidate, blocker, waiting, unrelated, and generic controls stayed silent; no Stop, PreToolUse, PermissionRequest, transport, runtime snapshot, root config, hidden scoring, or boundary-text path appeared. This earns no live behavior lift, no behavior lift, exactness value lift, PostToolUse next-action effect claim, Codex App parity, or shipping promotion, but it removes the two structural blockers from `task_standard_posttooluse_live_20260507T213732Z` and queues another approval-gated phase-aware narrow live rerun.",
+    "slug": "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
   }
 }

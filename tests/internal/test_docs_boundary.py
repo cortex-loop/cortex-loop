@@ -336,6 +336,16 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_PATH = (
     / "recon"
     / "cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun.md"
 )
+
+CURRENT_WORK_SLUG = "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+NEXT_PRODUCT_TRAIN_SLUG = "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+CONTEXT_LOOP_TRACE_REMEDIATION_RECON_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_posttooluse_task_standard_context_loop_trace_remediation.md"
+)
+
 CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_AFTER_SHARED_TOOL_EVIDENCE_PATH = (
     REPO_ROOT
     / "docs"
@@ -800,9 +810,7 @@ def test_semantic_contraction_audit_records_candidates_without_runtime_claim() -
     assert "No behavior lift" in text
     assert "shipping promotion" in text
     assert "status `next_product_train`" in text
-    assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
-    )
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
 
 
 def test_retired_executive_runtime_roadmap_is_not_active_authority() -> None:
@@ -1217,6 +1225,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
             "cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md",
         "cortex_codex_app_cli_posttooluse_task_standard_actuator_trace_repair.md",
         "cortex_codex_app_cli_posttooluse_task_standard_calibration_decision.md",
+        "cortex_codex_app_cli_posttooluse_task_standard_context_loop_trace_remediation.md",
         "cortex_codex_app_cli_posttooluse_task_standard_firing_boundary_remediation.md",
         "cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md",
         "cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md",
@@ -2088,7 +2097,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -2114,8 +2123,8 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
 
 
 def test_openai_operator_visible_intervention_live_probe_records_scoped_success() -> None:
@@ -2140,8 +2149,8 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
 
 
 def test_visible_intervention_product_perception_hardening_records_structural_gate() -> None:
@@ -2165,8 +2174,8 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
 
 
 def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -> None:
@@ -2189,8 +2198,8 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
 
 
 def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
@@ -2213,8 +2222,8 @@ def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
 
 
 def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
@@ -2232,13 +2241,13 @@ def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
     assert "a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc" in text
     assert "No product perception claim" in text
     assert "No model-output behavior-lift claim" in text
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
     assert "recon/cortex_codex_app_cli_hook_native_stop_live_canary.md" in docs_index
     assert (
         "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
 
 
 def test_codex_app_cli_product_perception_loop_records_structural_gate0() -> None:
@@ -2301,12 +2310,8 @@ def test_codex_app_cli_product_event_capture_remediation_records_live_pass() -> 
         "docs/recon/cortex_codex_app_cli_product_event_capture_remediation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
-    )
-    assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
-    )
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
 
 
 def test_codex_app_cli_stop_continuation_resolution_loop_records_live_pass() -> None:
@@ -2328,12 +2333,8 @@ def test_codex_app_cli_stop_continuation_resolution_loop_records_live_pass() -> 
         "docs/recon/cortex_codex_app_cli_stop_continuation_resolution_loop.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
-    )
-    assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
-    )
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
 
 
 def test_codex_app_cli_hook_native_behavior_comparison_records_live_baseline_gate() -> None:
@@ -2357,12 +2358,8 @@ def test_codex_app_cli_hook_native_behavior_comparison_records_live_baseline_gat
         "docs/recon/cortex_codex_app_cli_hook_native_behavior_comparison.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
-    )
-    assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
-    )
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
 
 
 def test_codex_app_cli_astro_three_arm_fixture_refresh_records_mixed_signal() -> None:
@@ -2386,10 +2383,8 @@ def test_codex_app_cli_astro_three_arm_fixture_refresh_records_mixed_signal() ->
         "docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
-    assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
-    )
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
 
 
 def test_codex_app_cli_value_ablation_audit_records_requirement_perception_decision() -> None:
@@ -2414,8 +2409,8 @@ def test_codex_app_cli_value_ablation_audit_records_requirement_perception_decis
         "docs/recon/cortex_codex_app_cli_value_ablation_audit.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
 
 
 def test_codex_app_cli_task_standard_spine_records_structural_product_spine() -> None:
@@ -2441,10 +2436,8 @@ def test_codex_app_cli_task_standard_spine_records_structural_product_spine() ->
         "docs/recon/cortex_codex_app_cli_task_standard_spine.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
-    assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
-    )
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
 
 
 def test_codex_app_cli_task_standard_live_probe_records_structural_gate0() -> None:
@@ -2471,8 +2464,8 @@ def test_codex_app_cli_task_standard_live_probe_records_structural_gate0() -> No
         "docs/recon/cortex_codex_app_cli_task_standard_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
 
 
 def test_codex_app_cli_task_standard_live_run_records_capture_failure() -> None:
@@ -2502,10 +2495,10 @@ def test_codex_app_cli_task_standard_live_run_records_capture_failure() -> None:
         "docs/recon/cortex_codex_app_cli_task_standard_live_run.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
 
 
@@ -2531,11 +2524,11 @@ def test_codex_app_cli_hook_contract_capture_boundary_remediation_records_struct
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        status["work_today"]["slug"] == CURRENT_WORK_SLUG
     )
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
 
 
@@ -2570,11 +2563,11 @@ def test_codex_app_cli_task_standard_context_live_rerun_records_partial_delivery
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        status["work_today"]["slug"] == CURRENT_WORK_SLUG
     )
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
 
 
@@ -2610,16 +2603,16 @@ def test_codex_app_cli_communication_boundary_audit_records_proof_ladder() -> No
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        status["work_today"]["slug"] == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "firing-boundary remediation" in work_note
+    assert "context-loop trace remediation" in work_note
     assert "posttooluse task-standard" in work_note
     assert "live-equivalent" in work_note
-    assert "no broad cortex lift" in work_note
+    assert "no behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
 
 
@@ -2651,15 +2644,15 @@ def test_codex_app_cli_task_standard_pretool_transcript_capture_records_state_ca
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        status["work_today"]["slug"] == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "firing-boundary remediation" in work_note
+    assert "context-loop trace remediation" in work_note
     assert "posttooluse task-standard" in work_note
     assert "live-equivalent" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
 
 
@@ -2692,15 +2685,15 @@ def test_codex_app_cli_task_standard_live_capture_rerun_records_pass() -> None:
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        status["work_today"]["slug"] == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "firing-boundary remediation" in work_note
+    assert "context-loop trace remediation" in work_note
     assert "live-equivalent" in work_note
-    assert "no broad cortex lift" in work_note
+    assert "no behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
 
 
@@ -2727,15 +2720,15 @@ def test_codex_app_cli_task_standard_stop_gating_calibration_records_pass() -> N
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        status["work_today"]["slug"] == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "firing-boundary remediation" in work_note
+    assert "context-loop trace remediation" in work_note
     assert "posttooluse task-standard" in work_note
-    assert "no broad cortex lift" in work_note
+    assert "no behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
 
 
@@ -2762,15 +2755,15 @@ def test_codex_app_cli_task_standard_stop_gating_live_run_records_gate_use() -> 
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        status["work_today"]["slug"] == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "firing-boundary remediation" in work_note
+    assert "context-loop trace remediation" in work_note
     assert "live-equivalent" in work_note
-    assert "no broad cortex lift" in work_note
+    assert "no behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
 
 
@@ -2797,16 +2790,16 @@ def test_codex_app_cli_task_standard_behavior_comparison_harness_records_gate0()
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        status["work_today"]["slug"] == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "firing-boundary remediation" in work_note
+    assert "context-loop trace remediation" in work_note
     assert "posttooluse task-standard" in work_note
     assert "live-equivalent" in work_note
-    assert "no broad cortex lift" in work_note
+    assert "no behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
 
 
@@ -2843,14 +2836,14 @@ def test_codex_app_cli_lifecycle_actuator_map_records_event_control_order() -> N
         "docs/recon/cortex_codex_app_cli_lifecycle_actuator_map.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
-    assert "product host actuator plus lab trace no-live remediation" == status["next_product_train"]["surface"]
-    assert "firing-boundary gate 0" in status["next_product_train"]["why_now"].lower()
-    assert "exit/status" in status["next_product_train"][
+    assert "product live proof" == status["next_product_train"]["surface"]
+    assert "context-loop trace gate 0" in status["next_product_train"]["why_now"].lower()
+    assert "unique diagnostic fingerprints" in status["next_product_train"][
         "why_now"
     ].lower()
     assert "failure_context_ignored" in tracker
@@ -2888,22 +2881,22 @@ def test_codex_app_cli_posttooluse_task_standard_next_step_correction_records_ga
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "firing-boundary remediation" in work_note
+    assert "context-loop trace remediation" in work_note
     assert "live-equivalent" in work_note
     assert "behavior lift" in work_note
-    assert "signed userpromptsubmit text" in work_note
+    assert "no behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
-    assert "product host actuator plus lab trace no-live remediation" == status["next_product_train"]["surface"]
-    assert "candidate artifact creation" in status["next_product_train"][
+    assert "product live proof" == status["next_product_train"]["surface"]
+    assert "tool_event_fingerprint" in status["next_product_train"][
         "primary_metric"
     ].lower()
-    assert "firing-boundary" in status["next_product_train"][
+    assert "ambiguous trace" in status["next_product_train"][
         "kill_rule"
     ].lower()
     assert "three-arm behavior comparison" in status["next_product_train"]["guardrail"].lower()
@@ -2943,20 +2936,20 @@ def test_codex_app_cli_posttooluse_task_standard_calibration_decision_queues_nar
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
-    assert "product host actuator plus lab trace no-live remediation" == status["next_product_train"]["surface"]
-    assert "firing-boundary remediation" in status[
+    assert "product live proof" == status["next_product_train"]["surface"]
+    assert "context-loop and trace remediation" in status[
         "next_product_train"
     ]["executive_benefit"]
-    assert "candidate artifact creation" in status["next_product_train"][
+    assert "tool_event_fingerprint" in status["next_product_train"][
         "primary_metric"
     ].lower()
-    assert "firing-boundary gate 0" in status["next_product_train"]["why_now"].lower()
+    assert "context-loop trace gate 0" in status["next_product_train"]["why_now"].lower()
     assert "failure_context_ignored" in tracker
 
 
@@ -2980,14 +2973,14 @@ def test_codex_app_cli_task_standard_stack_publication_hygiene_blocks_live_until
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "firing-boundary remediation" in work_note
-    assert "posttooluse completion predicate" in work_note
+    assert "context-loop trace remediation" in work_note
+    assert "context-loop trace gate 0" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
 
 
@@ -3011,14 +3004,14 @@ def test_codex_app_cli_posttooluse_task_standard_narrow_live_probe_is_harness_re
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
     assert "live-equivalent" in work_note
-    assert "posttooluse completion predicate" in work_note
+    assert "context-loop trace gate 0" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
     assert "must not change" in status["next_product_train"][
         "guardrail"
@@ -3050,27 +3043,27 @@ def test_codex_app_cli_posttooluse_task_standard_narrow_live_run_records_negativ
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "firing-boundary remediation" in work_note
+    assert "context-loop trace remediation" in work_note
     assert "live-equivalent" in work_note
     assert "behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
-    assert "product host actuator plus lab trace no-live remediation" == status["next_product_train"]["surface"]
-    assert "firing-boundary remediation" in status[
+    assert "product live proof" == status["next_product_train"]["surface"]
+    assert "context-loop and trace remediation" in status[
         "next_product_train"
     ]["executive_benefit"].lower()
-    assert "firing-boundary gate 0" in status["next_product_train"][
+    assert "context-loop trace gate 0" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "exit/status" in status[
+    assert "unique diagnostic fingerprints" in status[
         "next_product_train"
     ]["why_now"].lower()
-    assert "candidate artifact creation" in status[
+    assert "tool_event_fingerprint" in status[
         "next_product_train"
     ]["primary_metric"].lower()
     assert "must not change" in status["next_product_train"]["guardrail"].lower()
@@ -3107,19 +3100,19 @@ def test_codex_app_cli_posttooluse_task_standard_architecture_decision_queues_ph
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "phase-aware posttooluse completion predicate" in work_note
+    assert "context-loop trace gate 0" in work_note
     assert "missing-artifact" in work_note
     assert "behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
-    assert "product host actuator plus lab trace no-live remediation" == status["next_product_train"]["surface"]
-    assert "firing-boundary gate 0" in status["next_product_train"]["why_now"].lower()
-    assert "explicit current-turn approval" in status["next_product_train"]["guardrail"]
+    assert "product live proof" == status["next_product_train"]["surface"]
+    assert "context-loop trace gate 0" in status["next_product_train"]["why_now"].lower()
+    assert "explicit current-turn live approval" in status["next_product_train"]["guardrail"]
 
 
 def test_codex_app_cli_posttooluse_phase_aware_gate0_records_structural_pass() -> None:
@@ -3158,23 +3151,23 @@ def test_codex_app_cli_posttooluse_phase_aware_gate0_records_structural_pass() -
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "pre_artifact_candidate_missing" in work_note
-    assert "candidate artifact creation" in work_note
+    assert "posttooluse_context_active_context_pending" in work_note
+    assert "eligible mismatch" in work_note
     assert "no live behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
-    assert "product host actuator plus lab trace no-live remediation" == status["next_product_train"]["surface"]
+    assert "product live proof" == status["next_product_train"]["surface"]
     assert "explicit current-turn approval" in status["next_product_train"]["guardrail"]
     assert "`--require-pass`" in status["next_product_train"]["guardrail"]
     assert "three-arm behavior comparison" in status["next_product_train"]["guardrail"].lower()
-    assert "candidate_artifact_without_posttooluse_context" in status[
+    assert "repeated posttooluse contexts" in status[
         "next_product_train"
-    ]["why_now"]
+    ]["why_now"].lower()
     assert "architecture decision" in status["next_product_train"]["kill_rule"]
 
 
@@ -3214,32 +3207,32 @@ def test_codex_app_cli_posttooluse_phase_aware_narrow_live_run_records_no_contex
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "firing-boundary remediation" in work_note
+    assert "context-loop trace remediation" in work_note
     assert "live-equivalent" in work_note
-    assert "exit/status marker" in work_note
-    assert "posttooluse completion predicate" in work_note
+    assert "tool_event_fingerprint" in work_note
+    assert "context-loop trace gate 0" in work_note
     assert "behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
-    assert "product host actuator plus lab trace no-live remediation" == status["next_product_train"]["surface"]
+    assert "product live proof" == status["next_product_train"]["surface"]
     assert "rerun" in status["next_product_train"][
         "executive_benefit"
     ].lower()
-    assert "candidate_artifact_without_posttooluse_context" in status[
+    assert "repeated posttooluse contexts" in status[
         "next_product_train"
-    ]["why_now"]
+    ]["why_now"].lower()
     assert "explicit current-turn approval" in status["next_product_train"]["guardrail"]
     assert "posttooluse text" in status["next_product_train"][
         "guardrail"
     ].lower()
     assert "sinkhorn/transport" in status["next_product_train"]["guardrail"].lower()
     assert "pretooluse denial" in status["next_product_train"]["guardrail"].lower()
-    assert "approval-gated phase-aware narrow live rerun" in status["next_product_train"][
+    assert "repeated context loop" in status["next_product_train"][
         "kill_rule"
     ].lower()
 
@@ -3277,22 +3270,22 @@ def test_codex_app_cli_posttooluse_firing_boundary_remediation_records_gate0_pas
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "firing-boundary remediation" in work_note
+    assert "context-loop trace remediation" in work_note
     assert "live-equivalent" in work_note
-    assert "posttooluse completion predicate" in work_note
+    assert "context-loop trace gate 0" in work_note
     assert "no live behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
-    assert "product host actuator plus lab trace no-live remediation" == status["next_product_train"]["surface"]
+    assert "product live proof" == status["next_product_train"]["surface"]
     assert "explicit current-turn approval" in status["next_product_train"]["guardrail"]
     assert "`--require-pass`" in status["next_product_train"]["guardrail"]
     assert "three-arm behavior comparison" in status["next_product_train"]["guardrail"].lower()
-    assert "approval-gated phase-aware narrow live rerun" in status["next_product_train"][
+    assert "repeated context loop" in status["next_product_train"][
         "kill_rule"
     ].lower()
 
@@ -3326,19 +3319,19 @@ def test_codex_app_cli_posttooluse_phase_aware_narrow_live_rerun_records_overcon
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "failure_overcontrol" in work_note
-    assert "clean_evidenced" in work_note
-    assert "behavior_lift_claim_allowed" in work_note
+    assert "context-loop trace remediation" in work_note
+    assert "clean evidenced" in work_note
+    assert "no behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
-    assert "product host actuator plus lab trace no-live remediation" == status["next_product_train"]["surface"]
-    assert "no live codex run" in status["next_product_train"]["guardrail"].lower()
-    assert "clean/control rows silent" in status["next_product_train"][
+    assert "product live proof" == status["next_product_train"]["surface"]
+    assert "live spend is not authorized" in status["next_product_train"]["guardrail"].lower()
+    assert "repeated context loop" in status["next_product_train"][
         "kill_rule"
     ].lower()
 
@@ -3373,18 +3366,18 @@ def test_codex_app_cli_posttooluse_overcontrol_remediation_records_gate0_pass() 
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
     assert "pass" in work_note
-    assert "phase_check_failed" in work_note
-    assert "cat: illegal option -- a" in work_note
-    assert "behavior_lift_claim_allowed" in work_note
+    assert "failed-check" in work_note
+    assert "failed-check" in work_note
+    assert "no behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
-    assert "product host actuator plus lab trace no-live remediation" == status["next_product_train"]["surface"]
+    assert "product live proof" == status["next_product_train"]["surface"]
     assert "explicit current-turn live approval" in status["next_product_train"][
         "guardrail"
     ].lower()
@@ -3422,11 +3415,11 @@ def test_codex_app_cli_posttooluse_actuator_trace_repair_records_gate0_pass() ->
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
 
 
@@ -3455,13 +3448,13 @@ def test_codex_app_cli_posttooluse_causal_trace_ids_records_gate0_pass() -> None
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
-    assert "product host actuator plus lab trace no-live remediation" == status["next_product_train"][
+    assert "product live proof" == status["next_product_train"][
         "surface"
     ]
 
@@ -3497,21 +3490,21 @@ def test_codex_app_cli_posttooluse_shared_tool_evidence_records_gate0_pass() -> 
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "tool_evidence.py" in work_note
-    assert "toolevidenceobservation" in work_note
-    assert "toolevidencephase" in work_note
-    assert "status-only" in work_note
-    assert "prior causal-trace gate 0" in work_note
-    assert "no live codex run occurred" in work_note
+    assert "tool_event_fingerprint" in work_note
+    assert "tool_event_fingerprint" in work_note
+    assert "tool_event_fingerprint" in work_note
+    assert "tool_event_fingerprint" in work_note
+    assert "tool_event_fingerprint" in work_note
+    assert "no-live gate 0" in work_note
     assert "behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
-    assert "product host actuator plus lab trace no-live remediation" == status["next_product_train"][
+    assert "product live proof" == status["next_product_train"][
         "surface"
     ]
     assert "explicit current-turn live approval" in status["next_product_train"][
@@ -3557,27 +3550,66 @@ def test_codex_app_cli_posttooluse_phase_aware_rerun_after_shared_tool_evidence_
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+        == CURRENT_WORK_SLUG
     )
     work_note = status["work_today"]["note"].lower()
-    assert "repeated_posttooluse_context_loop" in work_note
-    assert "posttooluse_context_trace_ambiguous" in work_note
+    assert "context-loop" in work_note
+    assert "ambiguous" in work_note
     assert "call_*" in work_note
     assert "item_*" in work_note
-    assert "behavior_lift_claim_allowed=false" in work_note
+    assert "no behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
     assert (
         status["next_product_train"]["surface"]
-        == "product host actuator plus lab trace no-live remediation"
+        == "product live proof"
     )
-    assert "no live codex run" in status["next_product_train"]["guardrail"].lower()
-    assert "context-loop" in status["next_product_train"]["kill_rule"].lower()
-    assert "ambiguous live-equivalent trace" in status["next_product_train"][
+    assert "live spend is not authorized" in status["next_product_train"]["guardrail"].lower()
+    assert "repeated context loop" in status["next_product_train"]["kill_rule"].lower()
+    assert "ambiguous trace" in status["next_product_train"][
         "kill_rule"
     ].lower()
+
+
+def test_codex_app_cli_posttooluse_context_loop_trace_remediation_records_gate0_pass() -> None:
+    text = _read(CONTEXT_LOOP_TRACE_REMEDIATION_RECON_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product host actuator plus lab trace proof" in text
+    assert "Verdict: `pass_posttooluse_context_loop_trace_gate0`." in text
+    assert "task_standard_posttooluse_live_20260507T213732Z" in text
+    assert "posttooluse_context_active_context_pending" in text
+    assert "tool_event_fingerprint" in text
+    assert "no ordinal fallback" in text
+    assert "duplicate or missing fingerprints are marked ambiguous" in text
+    assert "behavior_lift_claim_allowed" in text
+    assert "no broad Cortex behavior lift" in text
+    assert "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun" in text
+    assert (
+        "recon/cortex_codex_app_cli_posttooluse_task_standard_context_loop_trace_remediation.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_context_loop_trace_remediation.md"
+        in status["active_docs"]
+    )
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    work_note = status["work_today"]["note"].lower()
+    assert "context-loop trace remediation" in work_note
+    assert "posttooluse_context_active_context_pending" in work_note
+    assert "tool_event_fingerprint" in work_note
+    assert "atomic replace" in work_note
+    assert "no behavior lift" in work_note
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
+    assert status["next_product_train"]["surface"] == "product live proof"
+    assert "explicit current-turn live approval" in status["next_product_train"][
+        "guardrail"
+    ]
+    assert "`--require-pass`" in status["next_product_train"]["guardrail"]
+    assert "repeated context loop" in status["next_product_train"]["kill_rule"].lower()
 
 
 def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
@@ -3653,9 +3685,7 @@ def test_task_standard_executive_doctrine_math_refinement_is_recorded() -> None:
         in status["active_docs"]
     )
     assert "recon/cortex_task_standard_executive_doctrine_math_refinement.md" in docs_index
-    assert status["work_today"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
-    )
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
 
 
 def test_cortex_plugin_design_preserves_scope_and_truth_boundaries() -> None:
@@ -3983,28 +4013,28 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
     assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     work_note = status["work_today"]["note"].lower()
-    assert "tool_evidence.py" in work_note
-    assert "typed" in work_note
-    assert "candidate artifact" in work_note
-    assert "readback" in work_note
-    assert "status-only" in work_note
-    assert "prior causal-trace gate 0" in work_note
-    assert "no live codex run occurred" in work_note
+    assert "tool_event_fingerprint" in work_note
+    assert "diagnostic-only" in work_note
+    assert "eligible mismatch" in work_note
+    assert "eligible mismatch" in work_note
+    assert "tool_event_fingerprint" in work_note
+    assert "tool_event_fingerprint" in work_note
+    assert "no-live gate 0" in work_note
     assert "behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
-    assert "product host actuator plus lab trace no-live remediation" == status["next_product_train"]["surface"]
+    assert "product live proof" == status["next_product_train"]["surface"]
     assert "task_standard_exactness" in status[
         "next_product_train"
     ][
         "executive_benefit"
     ].lower()
-    assert "shared tool-evidence gate 0" in status["next_product_train"]["why_now"].lower()
-    assert "stable `tool_event_ref`" in status["next_product_train"]["why_now"]
+    assert "context-loop trace gate 0" in status["next_product_train"]["why_now"].lower()
+    assert "unique diagnostic fingerprints" in status["next_product_train"]["why_now"]
     assert "behavior_lift_claim_allowed" in status["next_product_train"][
         "primary_metric"
     ]
@@ -4019,7 +4049,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "pretooluse denial" in status["next_product_train"][
         "guardrail"
     ].lower()
-    assert "clean/control rows silent" in status["next_product_train"][
+    assert "repeated context loop" in status["next_product_train"][
         "kill_rule"
     ].lower()
     assert "architecture decision" in status["next_product_train"][
@@ -4110,8 +4140,8 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
     assert "`codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun`" in text
-    assert "- Next product train after the current focus: `codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation`" in text
-    assert "- Train: `codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun`" in text
+    assert "- Train: `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import multiprocessing
 from dataclasses import replace
 from pathlib import Path
 
@@ -84,6 +85,7 @@ def test_tool_use_id_is_preserved_for_diagnostics() -> None:
 
     assert payload.tool_use_id == "item_42"
     assert payload.as_payload()["tool_use_id"] == "item_42"
+    assert isinstance(payload.as_payload()["tool_event_fingerprint"], str)
 
 
 def test_user_prompt_submit_can_emit_exact_signed_off_task_standard_text() -> None:
@@ -1280,6 +1282,113 @@ def test_posttooluse_task_standard_context_does_not_repeat_same_item() -> None:
     assert second.directive.action is OpenAICodexLifecycleDirectiveAction.ALLOW
     assert second.host_response.stdout_payload is None
     assert len(second.session_state.posttooluse_task_standard_context_item_ids) == 1
+    assert (
+        second.session_state.last_posttooluse_task_standard_context_silence_reason
+        == "posttooluse_context_active_context_pending"
+    )
+
+
+def test_posttooluse_task_standard_context_does_not_emit_second_item_while_active() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    transcript_path = Path("/tmp/codex-task-standard-posttooluse-second-item.jsonl")
+    _write_transcript(
+        transcript_path,
+        _assistant_message_row(_posttooluse_exactness_standard_block()),
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Create exact_result.txt with exact alpha beta omega content.",
+        ),
+        state_store=store,
+        task_standard_text_enabled=True,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PreToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={"command": "wc -l exact_result.txt"},
+        ),
+        state_store=store,
+    )
+
+    first = handle_openai_codex_hook_payload(
+        _posttooluse_wc_payload(transcript_path),
+        state_store=store,
+        posttooluse_task_standard_context_enabled=True,
+    )
+    second = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={"command": "cat -A exact_result.txt"},
+            tool_response="alpha beta omega$\n",
+        ),
+        state_store=store,
+        posttooluse_task_standard_context_enabled=True,
+    )
+
+    assert first.host_response.stdout_payload is not None
+    assert second.directive.action is OpenAICodexLifecycleDirectiveAction.ALLOW
+    assert second.host_response.stdout_payload is None
+    assert (
+        second.session_state.last_posttooluse_task_standard_context_silence_reason
+        == "posttooluse_context_active_context_pending"
+    )
+    assert len(second.session_state.posttooluse_task_standard_context_item_ids) == 1
+
+
+def test_json_state_store_context_lease_is_atomic_across_processes(tmp_path: Path) -> None:
+    state_root = tmp_path / "state"
+    transcript_path = tmp_path / "transcript.jsonl"
+    _write_transcript(
+        transcript_path,
+        _assistant_message_row(_posttooluse_exactness_standard_block()),
+    )
+    store = OpenAICodexJsonStateStore(state_root)
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Create exact_result.txt with exact alpha beta omega content.",
+        ),
+        state_store=store,
+        task_standard_text_enabled=True,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PreToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={"command": "wc -l exact_result.txt"},
+        ),
+        state_store=store,
+    )
+
+    result_paths = [tmp_path / f"result-{index}.json" for index in range(2)]
+    processes = [
+        multiprocessing.Process(
+            target=_record_posttooluse_context_in_json_store_process,
+            args=(state_root, transcript_path, result_path),
+        )
+        for result_path in result_paths
+    ]
+    for process in processes:
+        process.start()
+    for process in processes:
+        process.join(timeout=10)
+
+    assert all(process.exitcode == 0 for process in processes)
+    results = [json.loads(path.read_text(encoding="utf-8")) for path in result_paths]
+    assert sum(bool(result["stdout_payload_present"]) for result in results) == 1
+    assert any(
+        result["silence_reason"] == "posttooluse_context_active_context_pending"
+        for result in results
+    )
+    final_state = store.load("session-1")
+    assert final_state is not None
+    assert len(final_state.posttooluse_task_standard_context_item_ids) == 1
 
 
 def test_posttooluse_task_standard_context_has_session_cap() -> None:
@@ -2025,6 +2134,36 @@ def _posttooluse_wc_payload(transcript_path: Path) -> dict[str, object]:
             "exit_code": 0,
             "aggregated_output": "1 exact_result.txt\n",
         },
+    )
+
+
+def _record_posttooluse_context_in_json_store_process(
+    state_root: Path,
+    transcript_path: Path,
+    result_path: Path,
+) -> None:
+    store = OpenAICodexJsonStateStore(state_root)
+    result = handle_openai_codex_hook_payload(
+        _posttooluse_wc_payload(transcript_path),
+        state_store=store,
+        posttooluse_task_standard_context_enabled=True,
+    )
+    result_path.write_text(
+        json.dumps(
+            {
+                "stdout_payload_present": result.host_response.stdout_payload
+                is not None,
+                "silence_reason": (
+                    result.session_state.last_posttooluse_task_standard_context_silence_reason
+                ),
+                "context_item_ids": list(
+                    result.session_state.posttooluse_task_standard_context_item_ids
+                ),
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
     )
 
 

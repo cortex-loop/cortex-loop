@@ -120,6 +120,9 @@ from cortex.sre.tool_evidence import (
     ToolEvidencePhase,
     classify_tool_evidence,
 )
+from cortex.hosts.openai.codex_app_cli_hook_coordinator import (
+    codex_tool_event_fingerprint,
+)
 
 
 DEFAULT_OUTPUT_ROOT = (
@@ -131,6 +134,7 @@ DEFAULT_OUTPUT_ROOT = (
 class PostToolUseContextTrace:
     context_row_index: int | None
     context_tool_event_ref: str | None
+    context_tool_event_fingerprint: str | None
     selected_item_id: str | None
     context_hash: str | None
     context_text: str | None
@@ -144,6 +148,7 @@ class PostToolUseContextTrace:
         return {
             "context_row_index": self.context_row_index,
             "context_tool_event_ref": self.context_tool_event_ref,
+            "context_tool_event_fingerprint": self.context_tool_event_fingerprint,
             "selected_item_id": self.selected_item_id,
             "context_hash": self.context_hash,
             "context_text": self.context_text,
@@ -300,6 +305,10 @@ def main(argv: list[str] | None = None) -> int:
         "--task-standard-posttooluse-shared-tool-evidence-gate0",
         action="store_true",
     )
+    parser.add_argument(
+        "--task-standard-posttooluse-context-loop-trace-gate0",
+        action="store_true",
+    )
     parser.add_argument("--task-standard-posttooluse-live", action="store_true")
     parser.add_argument(
         "--task-standard-raw-vs-silent-artifact-readout", action="store_true"
@@ -348,6 +357,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     elif args.task_standard_posttooluse_shared_tool_evidence_gate0:
         report = run_task_standard_posttooluse_shared_tool_evidence_gate0(
+            output_root=args.output_root
+        )
+    elif args.task_standard_posttooluse_context_loop_trace_gate0:
+        report = run_task_standard_posttooluse_context_loop_trace_gate0(
             output_root=args.output_root
         )
     elif args.task_standard_posttooluse_gate0:
@@ -1931,6 +1944,205 @@ def run_task_standard_posttooluse_shared_tool_evidence_gate0(
     }
     _write_json(root / "gate0_report.json", report)
     return report
+
+
+def run_task_standard_posttooluse_context_loop_trace_gate0(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+) -> dict[str, object]:
+    root = Path(output_root) / "task_standard_posttooluse_context_loop_trace_gate0"
+    root.mkdir(parents=True, exist_ok=True)
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+    rows = _task_standard_posttooluse_overcontrol_gate0_rows(root / "phase_rows")
+    overcontrol_results = _task_standard_posttooluse_overcontrol_boundary_results(
+        rows,
+        root_config_hash_before=root_config_hash_before,
+        root_config=root_config,
+    )
+    context_loop = _posttooluse_context_loop_gate0_evidence(root)
+    exact_ref_trace = _posttooluse_event_ref_trace_gate0_evidence()
+    fingerprint_trace = _posttooluse_fingerprint_trace_gate0_evidence()
+    duplicate_fingerprint_trace = _posttooluse_fingerprint_trace_gate0_evidence(
+        duplicate=True
+    )
+    missing_fingerprint_trace = _posttooluse_fingerprint_trace_gate0_evidence(
+        missing=True
+    )
+    latest_replay = _posttooluse_live_trace_replay_evidence(
+        run_id="task_standard_posttooluse_live_20260507T213732Z"
+    )
+    boundary_results = {
+        **overcontrol_results,
+        "context_loop_first_context_emitted": context_loop[
+            "first_context_emitted"
+        ]
+        is True,
+        "context_loop_second_context_silent": context_loop[
+            "second_context_silent"
+        ]
+        is True,
+        "context_loop_single_context_item": context_loop["context_item_count"] == 1,
+        "context_loop_active_pending_reason": context_loop[
+            "second_silence_reason"
+        ]
+        == "posttooluse_context_active_context_pending",
+        "exact_ref_trace_still_non_ambiguous": exact_ref_trace["ambiguous"] is False,
+        "exact_ref_trace_uses_ref_join": exact_ref_trace["join_source"]
+        == "tool_event_ref",
+        "fingerprint_trace_non_ambiguous": fingerprint_trace["ambiguous"] is False,
+        "fingerprint_trace_uses_fingerprint_join": fingerprint_trace["join_source"]
+        == "tool_event_fingerprint",
+        "fingerprint_trace_next_tool_is_strictly_after_context": fingerprint_trace[
+            "next_tool_matches_context"
+        ]
+        is True,
+        "duplicate_fingerprint_marked_ambiguous": duplicate_fingerprint_trace[
+            "ambiguous"
+        ]
+        is True,
+        "missing_fingerprint_marked_ambiguous": missing_fingerprint_trace[
+            "ambiguous"
+        ]
+        is True,
+        "legacy_trace_not_interpreted_without_join": (
+            latest_replay["available"] is False or latest_replay["ambiguous"] is True
+        ),
+        "no_ordinal_trace_join": all(
+            trace["trace"].get("join_source")
+            in {None, "tool_event_ref", "tool_event_fingerprint"}
+            for trace in (
+                exact_ref_trace,
+                fingerprint_trace,
+                duplicate_fingerprint_trace,
+                missing_fingerprint_trace,
+                latest_replay if latest_replay["available"] else {"trace": {}},
+            )
+        ),
+    }
+    passed = all(boundary_results.values())
+    report = {
+        "probe": "codex_app_cli_task_standard_posttooluse_context_loop_trace_gate0",
+        "surface": "product_host_actuator_plus_lab_trace_proof",
+        "evidence_kind": "structural_posttooluse_context_loop_trace_remediation",
+        "passed": passed,
+        "verdict": "pass_posttooluse_context_loop_trace_gate0"
+        if passed
+        else "fail_posttooluse_context_loop_trace_gate0",
+        "live_trials_ran": False,
+        "behavior_lift_claim_allowed": False,
+        "rows": rows,
+        "context_loop": context_loop,
+        "exact_ref_trace": exact_ref_trace,
+        "fingerprint_trace": fingerprint_trace,
+        "duplicate_fingerprint_trace": duplicate_fingerprint_trace,
+        "missing_fingerprint_trace": missing_fingerprint_trace,
+        "latest_live_trace_replay": latest_replay,
+        "boundary_results": boundary_results,
+        "output_root": str(root),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": _file_hash(root_config),
+        "next_product_train": (
+            "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+            if passed
+            else "codex-app-cli-posttooluse-task-standard-context-loop-trace-decision"
+        ),
+        "truth_boundary": (
+            "Context-loop trace Gate 0 proves no-live lease and causal-trace "
+            "repair only. It does not run live Codex or earn behavior lift."
+        ),
+    }
+    _write_json(root / "gate0_report.json", report)
+    return report
+
+
+def _posttooluse_context_loop_gate0_evidence(root: Path) -> dict[str, object]:
+    from cortex.hosts.openai.codex_app_cli_hook_client import run_hook_client
+
+    case_root = root / "context_loop"
+    state_root = case_root / "state"
+    diagnostics_path = case_root / "hook_client_diagnostics.jsonl"
+    transcript_path = case_root / "transcript.jsonl"
+    case_root.mkdir(parents=True, exist_ok=True)
+    diagnostics_path.write_text("", encoding="utf-8")
+    _write_task_standard_posttooluse_transcript(transcript_path)
+    payloads = [
+        {
+            "session_id": "posttooluse-context-loop-gate0",
+            "turn_id": "turn-1",
+            "hook_event_name": "UserPromptSubmit",
+            "prompt": TASK_STANDARD_POSTTOOLUSE_LIVE_MISMATCH_PROMPT,
+            "transcript_path": str(transcript_path),
+        },
+        {
+            "session_id": "posttooluse-context-loop-gate0",
+            "turn_id": "turn-1",
+            "hook_event_name": "PreToolUse",
+            "tool_name": "Bash",
+            "tool_use_id": "call-pre-1",
+            "tool_input": {"command": "wc -l exact_result.txt"},
+            "transcript_path": str(transcript_path),
+        },
+        {
+            "session_id": "posttooluse-context-loop-gate0",
+            "turn_id": "turn-1",
+            "hook_event_name": "PostToolUse",
+            "tool_name": "Bash",
+            "tool_use_id": "call-post-1",
+            "tool_input": {"command": "wc -l exact_result.txt"},
+            "tool_response": "1 exact_result.txt\n",
+            "transcript_path": str(transcript_path),
+        },
+        {
+            "session_id": "posttooluse-context-loop-gate0",
+            "turn_id": "turn-1",
+            "hook_event_name": "PostToolUse",
+            "tool_name": "Bash",
+            "tool_use_id": "call-post-2",
+            "tool_input": {"command": "cat -A exact_result.txt"},
+            "tool_response": "alpha beta omega$\n",
+            "transcript_path": str(transcript_path),
+        },
+    ]
+    for payload in payloads:
+        run_hook_client(
+            argv=[
+                "--state-root",
+                str(state_root),
+                "--diagnostics-path",
+                str(diagnostics_path),
+                "--enable-task-standard-text",
+                "--enable-posttooluse-task-standard-context",
+            ],
+            stdin=io.StringIO(json.dumps(payload, sort_keys=True)),
+            stdout=io.StringIO(),
+            stderr=io.StringIO(),
+        )
+    rows = _live_trajectory_rows(_jsonl_rows(diagnostics_path))
+    posttooluse_rows = [
+        row for row in rows if row.get("hook_event_name") == "PostToolUse"
+    ]
+    context_rows = [
+        row for row in posttooluse_rows if _posttooluse_context_text_from_row(row)
+    ]
+    second = posttooluse_rows[-1] if posttooluse_rows else {}
+    second_state = second.get("session_state")
+    if not isinstance(second_state, Mapping):
+        second_state = {}
+    context_item_ids = second_state.get("posttooluse_task_standard_context_item_ids")
+    if not isinstance(context_item_ids, list):
+        context_item_ids = []
+    return {
+        "rows": rows,
+        "first_context_emitted": bool(context_rows),
+        "second_context_silent": _posttooluse_context_text_from_row(second) is None,
+        "second_silence_reason": second_state.get(
+            "last_posttooluse_task_standard_context_silence_reason"
+        ),
+        "context_item_count": len(context_item_ids),
+        "context_count": len(context_rows),
+        "diagnostics_path": str(diagnostics_path),
+    }
 
 
 def _task_standard_shared_tool_evidence_classifier_rows() -> list[dict[str, Any]]:
@@ -4841,10 +5053,17 @@ def _codex_stdout_command_items(
         command = str(item.get("command") or "")
         output = str(item.get("aggregated_output") or "")
         status = str(item.get("status") or "")
+        tool_event_fingerprint = codex_tool_event_fingerprint(
+            tool_name="Bash",
+            tool_input={"command": command},
+            tool_response={"aggregated_output": output},
+            status=status,
+        )
         if stdout_command_ref not in commands_by_ref:
             command_order.append(stdout_command_ref)
             commands_by_ref[stdout_command_ref] = {
                 "tool_event_ref": tool_event_ref,
+                "tool_event_fingerprint": tool_event_fingerprint,
                 "stdout_command_ref": stdout_command_ref,
                 "command": command,
                 "aggregated_output": "",
@@ -4855,10 +5074,30 @@ def _codex_stdout_command_items(
         command_item = commands_by_ref[stdout_command_ref]
         if command:
             command_item["command"] = command
+            command_item["tool_event_fingerprint"] = codex_tool_event_fingerprint(
+                tool_name="Bash",
+                tool_input={"command": command},
+                tool_response={"aggregated_output": str(command_item.get("aggregated_output") or "")},
+                status=str(command_item.get("status") or ""),
+            )
         if output:
             command_item["aggregated_output"] = output
+            command_item["tool_event_fingerprint"] = codex_tool_event_fingerprint(
+                tool_name="Bash",
+                tool_input={"command": str(command_item.get("command") or "")},
+                tool_response={"aggregated_output": output},
+                status=str(command_item.get("status") or ""),
+            )
         if status:
             command_item["status"] = status
+            command_item["tool_event_fingerprint"] = codex_tool_event_fingerprint(
+                tool_name="Bash",
+                tool_input={"command": str(command_item.get("command") or "")},
+                tool_response={
+                    "aggregated_output": str(command_item.get("aggregated_output") or "")
+                },
+                status=status,
+            )
         if record.get("type") == "item.started" or status == "in_progress":
             command_item["started_record_index"] = record_index
         if record.get("type") == "item.completed" or status in {"completed", "failed"}:
@@ -4893,6 +5132,7 @@ def _posttooluse_context_trace(
         return PostToolUseContextTrace(
             context_row_index=None,
             context_tool_event_ref=None,
+            context_tool_event_fingerprint=None,
             selected_item_id=None,
             context_hash=None,
             context_text=None,
@@ -4905,41 +5145,73 @@ def _posttooluse_context_trace(
         "last_posttooluse_task_standard_context_item_id",
     )
     context_tool_event_ref = _posttooluse_tool_event_ref(row)
+    context_tool_event_fingerprint = _posttooluse_tool_event_fingerprint(row)
     if context_tool_event_ref is None:
-        return PostToolUseContextTrace(
-            context_row_index=_row_index(row),
-            context_tool_event_ref=None,
-            selected_item_id=selected_item_id if isinstance(selected_item_id, str) else None,
-            context_hash=_hash_text(context_text),
-            context_text=context_text,
-            preceding_tool=None,
-            next_tool_after_context=None,
-            join_source=None,
-            ambiguous=True,
-            ambiguity_reason="missing_posttooluse_tool_event_ref",
+        matching_terminal_commands = _terminal_command_fingerprint_matches(
+            terminal_commands,
+            context_tool_event_fingerprint,
         )
-    matching_terminal_commands = [
-        (index, command)
-        for index, command in enumerate(terminal_commands)
-        if command.get("tool_event_ref") == context_tool_event_ref
-    ]
+        if len(matching_terminal_commands) != 1:
+            return PostToolUseContextTrace(
+                context_row_index=_row_index(row),
+                context_tool_event_ref=None,
+                context_tool_event_fingerprint=context_tool_event_fingerprint,
+                selected_item_id=selected_item_id if isinstance(selected_item_id, str) else None,
+                context_hash=_hash_text(context_text),
+                context_text=context_text,
+                preceding_tool=None,
+                next_tool_after_context=None,
+                join_source=(
+                    "tool_event_fingerprint"
+                    if context_tool_event_fingerprint is not None
+                    else None
+                ),
+                ambiguous=True,
+                ambiguity_reason=(
+                    "missing_posttooluse_tool_event_ref"
+                    if context_tool_event_fingerprint is None
+                    else "posttooluse_tool_event_fingerprint_not_found_in_stdout"
+                    if not matching_terminal_commands
+                    else "duplicate_stdout_tool_event_fingerprint"
+                ),
+            )
+        join_source = "tool_event_fingerprint"
+    else:
+        matching_terminal_commands = [
+            (index, command)
+            for index, command in enumerate(terminal_commands)
+            if command.get("tool_event_ref") == context_tool_event_ref
+        ]
+        join_source = "tool_event_ref"
     if len(matching_terminal_commands) != 1:
-        return PostToolUseContextTrace(
-            context_row_index=_row_index(row),
-            context_tool_event_ref=context_tool_event_ref,
-            selected_item_id=selected_item_id if isinstance(selected_item_id, str) else None,
-            context_hash=_hash_text(context_text),
-            context_text=context_text,
-            preceding_tool=None,
-            next_tool_after_context=None,
-            join_source="tool_event_ref",
-            ambiguous=True,
-            ambiguity_reason=(
-                "posttooluse_tool_event_ref_not_found_in_stdout"
-                if not matching_terminal_commands
-                else "duplicate_stdout_tool_event_ref"
-            ),
+        fingerprint_matches = _terminal_command_fingerprint_matches(
+            terminal_commands,
+            context_tool_event_fingerprint,
         )
+        if len(fingerprint_matches) != 1:
+            return PostToolUseContextTrace(
+                context_row_index=_row_index(row),
+                context_tool_event_ref=context_tool_event_ref,
+                context_tool_event_fingerprint=context_tool_event_fingerprint,
+                selected_item_id=selected_item_id if isinstance(selected_item_id, str) else None,
+                context_hash=_hash_text(context_text),
+                context_text=context_text,
+                preceding_tool=None,
+                next_tool_after_context=None,
+                join_source=(
+                    "tool_event_fingerprint"
+                    if context_tool_event_fingerprint is not None
+                    else "tool_event_ref"
+                ),
+                ambiguous=True,
+                ambiguity_reason=_posttooluse_trace_ambiguity_reason(
+                    ref_matches=matching_terminal_commands,
+                    fingerprint=context_tool_event_fingerprint,
+                    fingerprint_matches=fingerprint_matches,
+                ),
+            )
+        matching_terminal_commands = fingerprint_matches
+        join_source = "tool_event_fingerprint"
     _, preceding_command = matching_terminal_commands[0]
     next_tool = _next_terminal_command_after_context(
         terminal_commands,
@@ -4948,12 +5220,13 @@ def _posttooluse_context_trace(
     return PostToolUseContextTrace(
         context_row_index=_row_index(row),
         context_tool_event_ref=context_tool_event_ref,
+        context_tool_event_fingerprint=context_tool_event_fingerprint,
         selected_item_id=selected_item_id if isinstance(selected_item_id, str) else None,
         context_hash=_hash_text(context_text),
         context_text=context_text,
         preceding_tool=dict(preceding_command),
         next_tool_after_context=next_tool,
-        join_source="tool_event_ref",
+        join_source=join_source,
         ambiguous=False,
         ambiguity_reason=None,
     )
@@ -4964,6 +5237,41 @@ def _posttooluse_tool_event_ref(row: Mapping[str, Any]) -> str | None:
     if isinstance(value, str) and value.strip():
         return value.strip()
     return None
+
+
+def _posttooluse_tool_event_fingerprint(row: Mapping[str, Any]) -> str | None:
+    value = row.get("tool_event_fingerprint")
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
+def _terminal_command_fingerprint_matches(
+    terminal_commands: list[Mapping[str, object]],
+    fingerprint: str | None,
+) -> list[tuple[int, Mapping[str, object]]]:
+    if fingerprint is None:
+        return []
+    return [
+        (index, command)
+        for index, command in enumerate(terminal_commands)
+        if command.get("tool_event_fingerprint") == fingerprint
+    ]
+
+
+def _posttooluse_trace_ambiguity_reason(
+    *,
+    ref_matches: list[tuple[int, Mapping[str, object]]],
+    fingerprint: str | None,
+    fingerprint_matches: list[tuple[int, Mapping[str, object]]],
+) -> str:
+    if len(ref_matches) > 1:
+        return "duplicate_stdout_tool_event_ref"
+    if fingerprint is None:
+        return "posttooluse_tool_event_ref_not_found_in_stdout"
+    if not fingerprint_matches:
+        return "posttooluse_tool_event_fingerprint_not_found_in_stdout"
+    return "duplicate_stdout_tool_event_fingerprint"
 
 
 def _next_terminal_command_after_context(
@@ -5075,10 +5383,120 @@ def _posttooluse_event_ref_trace_gate0_evidence() -> dict[str, object]:
     }
 
 
-def _posttooluse_live_trace_replay_evidence() -> dict[str, object]:
+def _posttooluse_fingerprint_trace_gate0_evidence(
+    *,
+    duplicate: bool = False,
+    missing: bool = False,
+) -> dict[str, object]:
+    command = "/bin/zsh -lc 'wc -c exact_result.txt'"
+    output = "16 exact_result.txt\n"
+    fingerprint = None if missing else codex_tool_event_fingerprint(
+        tool_name="Bash",
+        tool_input={"command": command},
+        tool_response={"aggregated_output": output},
+        status="completed",
+    )
+    hook_rows: list[dict[str, object]] = [
+        {
+            "row_index": 1,
+            "hook_event_name": "PostToolUse",
+            "tool_use_id": "call_context_source",
+            "tool_event_fingerprint": fingerprint,
+            "stdout_payload": {
+                "hookSpecificOutput": {
+                    "hookEventName": "PostToolUse",
+                    "additionalContext": (
+                        "I still need direct evidence for: show command outputs "
+                        "proving exact bytes/content. The last tool result did not "
+                        "show that exact item. Next step: show command outputs "
+                        "proving exact bytes/content before treating this as done."
+                    ),
+                }
+            },
+            "session_state": {
+                "last_posttooluse_task_standard_context_item_id": (
+                    "task-standard:closure_evidence:fingerprint"
+                )
+            },
+        }
+    ]
+    records: list[dict[str, object]] = [
+        {
+            "type": "item.started",
+            "item": {
+                "id": "item_6",
+                "type": "command_execution",
+                "command": command,
+                "aggregated_output": "",
+                "status": "in_progress",
+            },
+        },
+        {
+            "type": "item.completed",
+            "item": {
+                "id": "item_6",
+                "type": "command_execution",
+                "command": command,
+                "aggregated_output": output,
+                "status": "completed",
+            },
+        },
+    ]
+    if duplicate:
+        records.append(
+            {
+                "type": "item.completed",
+                "item": {
+                    "id": "item_7",
+                    "type": "command_execution",
+                    "command": command,
+                    "aggregated_output": output,
+                    "status": "completed",
+                },
+            }
+        )
+    records.extend(
+        (
+            {
+                "type": "item.started",
+                "item": {
+                    "id": "item_8",
+                    "type": "command_execution",
+                    "command": "/bin/zsh -lc 'od -An -t x1 -v exact_result.txt'",
+                    "aggregated_output": "",
+                    "status": "in_progress",
+                },
+            },
+            {
+                "type": "item.completed",
+                "item": {
+                    "id": "item_8",
+                    "type": "command_execution",
+                    "command": "/bin/zsh -lc 'od -An -t x1 -v exact_result.txt'",
+                    "aggregated_output": "61 6c 70 68 61 20 62 65\n",
+                    "status": "completed",
+                },
+            },
+        )
+    )
+    trace = _posttooluse_context_trace(hook_rows, records)
+    next_tool = trace.next_tool_after_context or {}
+    return {
+        "trace": trace.as_payload(),
+        "ambiguous": trace.ambiguous,
+        "ambiguity_reason": trace.ambiguity_reason,
+        "join_source": trace.join_source,
+        "next_tool_matches_context": _command_matches_posttooluse_context(next_tool),
+    }
+
+
+def _posttooluse_live_trace_replay_evidence(
+    *,
+    run_id: str = "task_standard_posttooluse_live_20260507T153242Z",
+) -> dict[str, object]:
     trial_root = (
         DEFAULT_OUTPUT_ROOT
-        / "task_standard_posttooluse_live_20260507T153242Z"
+        / run_id
         / "trials"
         / "posttooluse_task_standard__mismatch_exactness__001"
     )
@@ -5402,11 +5820,13 @@ __all__ = [
     "run_live_comparison",
     "run_task_standard_offline_readiness_gate",
     "run_task_standard_posttooluse_actuator_trace_gate0",
+    "run_task_standard_posttooluse_context_loop_trace_gate0",
     "run_task_standard_posttooluse_firing_boundary_gate0",
     "run_task_standard_posttooluse_gate0",
     "run_task_standard_posttooluse_overcontrol_gate0",
     "run_task_standard_posttooluse_phase_aware_gate0",
     "run_task_standard_posttooluse_live_probe",
+    "run_task_standard_posttooluse_shared_tool_evidence_gate0",
     "run_task_standard_raw_vs_silent_artifact_readout",
     "run_task_standard_three_arm_gate0_probe",
     "run_task_standard_three_arm_live",

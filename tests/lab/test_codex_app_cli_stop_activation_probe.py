@@ -809,6 +809,7 @@ def test_live_trajectory_rows_record_no_snapshot_product_state() -> None:
             "raw_keys": None,
             "tool_name": None,
             "tool_use_id": None,
+            "tool_event_fingerprint": None,
             "tool_input_present": None,
             "tool_response_present": None,
             "error_present": None,

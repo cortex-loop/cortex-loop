@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun`
-### Next Product Train
 - Slug: `codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation`
-- Surface: `product host actuator plus lab trace no-live remediation`
-- Why now: The approval-gated phase-aware live rerun reached the mismatch path and kept clean/blocker/waiting/unrelated controls silent, but failed before interpretation because the mismatch case emitted three PostToolUse contexts and the live trace could not join `call_*` hook tool ids to `item_*` stdout command refs. Another live rerun would only repeat an uninterpretable boundary failure until both are proven no-live. This follows the prior firing-boundary Gate 0 and shared-classifier Gate 0; both were structurally necessary but not sufficient for live-loop safety. It also preserves the prior `candidate_artifact_without_posttooluse_context` lesson without treating it as current failure. Prior exit/status marker remediation remains preserved but is not sufficient for this live ref mismatch. The shared tool-evidence Gate 0 remains the immediate structural predecessor. The next proof must restore stable `tool_event_ref` joining for live-shaped rows.
+### Next Product Train
+- Slug: `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun`
+- Surface: `product live proof`
+- Why now: The no-live context-loop trace Gate 0 passed after the prior live rerun failed on repeated PostToolUse contexts and ambiguous `call_*`/`item_*` trace joining; future traces may use exact refs or unique diagnostic fingerprints. Clean/control silence, phase-aware timing, firing-boundary remediation, overcontrol remediation, causal trace IDs, and shared SRE-owned tool-evidence classification are preserved. A live rerun is now the next required evidence step, but only with explicit current-turn live approval.
 
 ### Research Lines Under Evaluation
 
