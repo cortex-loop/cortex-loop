@@ -218,6 +218,10 @@ Active docs:
 - [Cortex Codex App/CLI PostToolUse Task-Standard Phase-Aware Calibration Gate 0](recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_calibration_gate0.md) —
   no-live structural proof that PostToolUse context waits for candidate
   artifact creation and keeps pre-artifact/control cases silent
+- [Cortex Codex App/CLI PostToolUse Task-Standard Phase-Aware Narrow Live Run](recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_run.md) —
+  live negative evidence that the phase-aware actuator did not emit
+  PostToolUse context after candidate artifact work, queuing firing-boundary
+  remediation
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed
