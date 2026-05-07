@@ -981,6 +981,60 @@ def test_cleanup_report_fails_when_repo_has_residual_work(
     assert "review/leftover" in failures["remote_review_heads"]
 
 
+def test_active_stack_report_passes_for_clean_stacked_branch_with_reason(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260601-010206")
+    _git(repo, "switch", "-c", "claude/20260101-030303-blocking-prior")
+    (repo / "blocker.txt").write_text("blocker\n", encoding="utf-8")
+    _git(repo, "add", "blocker.txt")
+    _git(repo, "commit", "-m", "tests: blocking prior work")
+    _git(repo, "switch", "main")
+
+    module.cmd_start_session(
+        "codex",
+        "workflow-gate",
+        allow_stacked=True,
+        stacked_reason="workflow-only clarification while product stack is open",
+    )
+    capsys.readouterr()
+
+    result = module.cmd_active_stack_report()
+    payload = json.loads(capsys.readouterr().out)
+
+    assert result == 0
+    assert payload["ok"] is True
+    assert payload["mode"] == "active_stack"
+    assert payload["current_branch"] == "codex/20260601-010206-workflow-gate"
+    assert payload["main_sync"] == "synced"
+    assert payload["cleanup_report_contract"] == "strict_final_clean_gate_unchanged"
+    assert payload["cleanup_report_expected_to_fail"] is True
+    assert payload["stacked_session_reason_recorded"] is True
+    assert "workflow-only clarification" in payload["stacked_session_reason"]
+    assert any(
+        row["branch"] == "claude/20260101-030303-blocking-prior"
+        for row in payload["branch_inventory_debt"]["open_managed"]
+    )
+
+
+def test_active_stack_report_fails_without_stacked_reason(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    _git(repo, "switch", "-c", "codex/20260601-010207-manual-stack")
+
+    result = module.cmd_active_stack_report()
+    payload = json.loads(capsys.readouterr().out)
+
+    assert result == 1
+    assert payload["ok"] is False
+    assert payload["current_branch"] == "codex/20260601-010207-manual-stack"
+    assert payload["stacked_session_reason_recorded"] is False
+    assert "stacked_session_reason" in payload["failures"]
+    assert "start-session --allow-stacked" in payload["failures"]["stacked_session_reason"]
+
+
 def test_preserve_worktree_refuses_on_main(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
     with pytest.raises(SystemExit, match="refuses on clean or dirty main"):

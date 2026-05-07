@@ -241,6 +241,14 @@ health for Claude Code and Codex App, Codex validator availability,
 clean synced `main`, and dangling worktree detection. Product work
 should not start while it fails.
 
+`cleanup-report` is the final resting-state gate, not a mid-stack progress
+gate. It must remain strict: if the repo is on an active stacked branch, has
+open branch anchors, or has remote managed heads, it should fail. When a
+stacked session is explicitly justified with `start-session --allow-stacked
+--stacked-reason "<text>"`, use `active-stack-report` during the stack to
+verify the active branch is mechanically legible without pretending the repo is
+fully clean.
+
 Scaffold the enforced closeout contract for the current branch:
 
 ```bash
@@ -264,6 +272,19 @@ Require the strict final-clean contract:
 ```bash
 python internal/workflow/repo_workflow.py cleanup-report
 ```
+
+Check an explicitly stacked in-flight branch without weakening the final-clean
+contract:
+
+```bash
+python internal/workflow/repo_workflow.py active-stack-report
+```
+
+`active-stack-report` passes only when the worktree is clean, local `main` is
+synced with `origin/main`, and the current managed branch has a recorded
+`stacked_session_reason` from `start-session --allow-stacked`. It reports open
+local and remote branch inventory as debt and marks `cleanup-report` as
+expected to fail. It is not evidence that the repo is back at resting truth.
 
 ## Codex App Dogfood Mode
 
@@ -415,6 +436,17 @@ Closeout contract artifact:
 - fails if any merged local branch, open manual branch, or open managed branch remains
 - fails if any remote managed-session head or remote `review/*` head remains
 - is the final repo-hygiene gate for declaring the repo fully clean
+
+`active-stack-report`:
+
+- is read-only
+- is the active-stack gate for a deliberately stacked managed session
+- does not run or relax `cleanup-report`
+- fails on dirty worktree state, unsynced `main`, non-managed current branches,
+  or a missing `stacked_session_reason`
+- reports open local/remote branch anchors as branch-inventory debt
+- may pass while `cleanup-report` correctly fails; that means the active stack
+  is legible, not that the repo is clean
 
 Managed verification is purpose-first and surface-aware:
 

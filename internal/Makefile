@@ -5,7 +5,7 @@ MESSAGE ?= docs: update internal workflow
 REPO_WORKFLOW ?= workflow/repo_workflow.py
 MODE ?= close-session
 
-.PHONY: test closeout-test closeout-init closeout-render closeout-validate sync-main start-session close-session finalize preserve-worktree audit-branches cleanup-report
+.PHONY: test closeout-test closeout-init closeout-render closeout-validate sync-main start-session close-session finalize preserve-worktree audit-branches cleanup-report active-stack-report
 
 test:
 	PYTHONPATH=.. $(PYTHON) -m pytest ../tests/internal -q
@@ -44,3 +44,6 @@ audit-branches:
 
 cleanup-report:
 	$(PYTHON) $(REPO_WORKFLOW) cleanup-report
+
+active-stack-report:
+	$(PYTHON) $(REPO_WORKFLOW) active-stack-report

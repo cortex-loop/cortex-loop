@@ -1236,6 +1236,87 @@ def cmd_cleanup_report() -> int:
     return 0 if not failures else 1
 
 
+def _stacked_session_reason_for_branch(branch: str) -> str | None:
+    marker = (
+        _root()
+        / ".cortex"
+        / "closeout_contract"
+        / Path(*branch.split("/"))
+        / "stacked_session_reason.txt"
+    )
+    if not marker.exists():
+        return None
+    reason = marker.read_text(encoding="utf-8").strip()
+    return reason or None
+
+
+def cmd_active_stack_report() -> int:
+    """Report whether an in-flight stacked branch is mechanically legible.
+
+    This is deliberately not a weaker `cleanup-report`. It is for the middle
+    of an explicitly stacked session: worktree clean, main synced, and the
+    current managed branch has the `--stacked-reason` marker that explains why
+    work continued while cleanup-report was known to fail on branch inventory.
+    """
+
+    _ensure_canonical_origin()
+    _fetch_origin(quiet=True)
+    payload = _audit_payload()
+    dirty = _tracked_status_lines()
+    main_sync = _main_origin_state()
+    current_branch = str(payload["current_branch"])
+    stacked_reason = (
+        _stacked_session_reason_for_branch(current_branch)
+        if is_managed_session_branch(current_branch)
+        else None
+    )
+    branch_inventory = {
+        key: payload[key]
+        for key in (
+            "worktree_attached",
+            "merged_local",
+            "open_manual",
+            "open_managed",
+            "remote_managed_heads",
+            "remote_review_heads",
+        )
+        if payload[key]
+    }
+
+    failures: dict[str, object] = {}
+    if dirty:
+        failures["dirty"] = dirty
+    if main_sync != "synced":
+        failures["main_sync"] = main_sync
+    if current_branch == "main":
+        failures["current_branch"] = "main is resting-state territory; use cleanup-report, not active-stack-report"
+    elif not is_managed_session_branch(current_branch):
+        failures["current_branch"] = current_branch
+    if is_managed_session_branch(current_branch) and not stacked_reason:
+        failures["stacked_session_reason"] = (
+            "missing; start stacked work with start-session --allow-stacked "
+            "--stacked-reason \"<text>\" so the override is auditable"
+        )
+
+    report = {
+        "ok": not failures,
+        "mode": "active_stack",
+        "current_branch": current_branch,
+        "main_head": payload["main_head"],
+        "origin_main_head": payload["origin_main_head"],
+        "main_sync": main_sync,
+        "cleanup_report_expected_to_fail": bool(branch_inventory or current_branch != "main"),
+        "cleanup_report_contract": "strict_final_clean_gate_unchanged",
+        "stacked_session_reason_recorded": bool(stacked_reason),
+        "stacked_session_reason": stacked_reason,
+        "branch_inventory_debt": branch_inventory,
+    }
+    if failures:
+        report["failures"] = failures
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 0 if not failures else 1
+
+
 # ---------------------------------------------------------------------------
 # Mission reflection graph: status-snapshot, reflection-check, grid
 # ---------------------------------------------------------------------------
@@ -2263,6 +2344,13 @@ def main(argv: list[str] | None = None) -> int:
         "cleanup-report",
         help="Fail unless the repo is on clean synced main with no extra worktrees, non-main branches, or remote managed/review heads.",
     )
+    subparsers.add_parser(
+        "active-stack-report",
+        help=(
+            "Report whether an explicitly stacked in-flight managed branch is "
+            "mechanically legible without weakening cleanup-report."
+        ),
+    )
 
     preserve_parser = subparsers.add_parser(
         "preserve-worktree",
@@ -2392,6 +2480,8 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_audit_branches()
     if args.command == "cleanup-report":
         return cmd_cleanup_report()
+    if args.command == "active-stack-report":
+        return cmd_active_stack_report()
     if args.command == "preserve-worktree":
         return cmd_preserve_worktree(args.slug)
     if args.command == "status-snapshot":
