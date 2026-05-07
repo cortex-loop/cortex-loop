@@ -61,6 +61,7 @@
     "docs/recon/cortex_task_standard_executive_doctrine_math_refinement.md",
     "docs/recon/cortex_codex_app_cli_task_standard_live_probe.md",
     "docs/recon/cortex_codex_app_cli_task_standard_live_run.md",
+    "docs/recon/cortex_semantic_contraction_audit.md",
     "docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md"
   ],
   "doc_roles": {
@@ -187,6 +188,7 @@
           "docs/recon/cortex_task_standard_executive_doctrine_math_refinement.md",
           "docs/recon/cortex_codex_app_cli_task_standard_live_probe.md",
           "docs/recon/cortex_codex_app_cli_task_standard_live_run.md",
+          "docs/recon/cortex_semantic_contraction_audit.md",
           "docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md"
         ],
         "update_rule": "Add a recon when a proof or decision is earned; do not treat recon alone as shipping truth without status promotion."

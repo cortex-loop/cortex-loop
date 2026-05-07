@@ -190,20 +190,26 @@ update that names the code-grounded reason.
 
 | Candidate seam | Why it matters for the future Cortex shape | Promotion gate | Current state |
 | --- | --- | --- | --- |
-| `cortex-semantic-contraction-audit` | Cortex should not grow by default; a dedicated audit produces a deletion/consolidation map with owners, behavior-preservation proof requirements, and candidate seams. | Queue when workflow/planning work is allowed; no deletion until a seam proves behavior is preserved or the surface is explicitly retired in status/recon. | `queueable_now` |
+| `cortex-semantic-contraction-audit` | Cortex should not grow by default; the audit produced a deletion/consolidation map with owners, behavior-preservation proof requirements, and candidate seams. | Use `docs/recon/cortex_semantic_contraction_audit.md` as evidence only; no deletion until a seam proves behavior is preserved or the surface is explicitly retired in status/recon. | `evidence_landed` |
 | `workflow-connectivity-trace-reachability` | Closeout already requires `connectivity_trace`, but shape validation is not enough; product seams should mechanically prove a path to model input/output. | Queue when workflow work is allowed; start with deterministic reach classes before call-graph crawling. | `queueable_now` |
 | `recon-frontmatter-indexer` | Recon docs are the audit memory of earned and forbidden claims; structured fields would make live evidence, verdicts, hosts, actuators, and families queryable instead of grep-only. | Target `doc_roles.recon_evidence`; keep narrative primary and schema supporting. | `queueable_now` |
 | `sre-output-law-rendering-contract` | Model-visible Cortex output should be constructively lawful, not protected only by template discipline and forbidden-term checks. | Extend the existing `cortex/sre/interventions.py` rendering path; no new model-visible wording without regression proof. | `queueable_now` |
 | `core-proof-obligation-test-factories` | Core packet proof obligations should be executable checks where possible, so packet law does not rely only on prose and spot tests. | Start with bounded deterministic factories; add Hypothesis only after dependency and strategy cost are justified. | `queueable_after_probe` |
 | `host-runtime-kernel-extraction-audit` | The four host runtime files carry large parallel structures; a future Cortex should share law without flattening host-native realization. | First land an audit that measures exact helper equivalence and host-specific divergences; migrate only after that evidence. | `queueable_after_probe` |
+| `driver-session-io-common-kernel-audit` | Per-host commitment, neutral, and session I/O paths look highly parallel; a future seam should find the smallest shared helper layer without flattening host vocabulary. | Compare host drivers and session I/O round trips; no collapse until per-host fixture proof preserves behavior. | `queueable_after_probe` |
+| `coordinator-actuator-boundary-extraction` | `codex_app_cli_hook_coordinator.py` is the OpenAI Codex App/CLI pressure point for actuator growth; per-event actuator modules may keep policy ownership clearer. | Extract only after current task-standard questions settle; require no model-visible text change and Gate 0 replay proof. | `queueable_after_probe` |
+| `recon-archive-retirement-pass` | Lab/recon/doc active surfaces should not accumulate forever; inactive proof paths need explicit archive or retention decisions. | Queue after structured recon indexing or equivalent active-doc evidence; generated docs and role maps must stay exact. | `queueable_after_probe` |
+| `sre-aux-policy-concentration-audit` | Large SRE/AUX modules may contain duplicate policy paths, but SRE and AUX ownership must remain distinct and AUX must stay removable. | Audit specific duplicated rules first; no SRE/AUX consolidation without packet-law citation and proof coverage. | `research_backlog` |
 | `posttooluse-phase-aware-calibration` | PostToolUse is the strongest near-term Codex App/CLI next-step actuator, but it must fire at the phase where the named check is actionable. | Queue after the current PostToolUse architecture decision; prove Gate 0 without live spend before another live probe. | `queueable_after_probe` |
 | `pretooluse-motor-inhibition-gate0` | PreToolUse deny is the lifecycle lever for action inhibition, which is closer to executive control than late Stop repair. | Reverify current Codex hook semantics, require typed output-law reason text, and treat any clean-control deny as high-severity overcontrol. | `research_backlog` |
 | `bayesian-kill-rule-shadow` | Behavior-lift decisions should eventually use posterior uncertainty rather than only fixed 4/5 trial thresholds, while preserving hard clean-control overblock rules. | Run as replay-only shadow first; it must not produce easier lift claims on historical runs. | `research_backlog` |
 | `task-standard-semantic-alignment` | Lexical task-standard matching may hit a synonym wall; semantic or transport methods may eventually be needed for robust evidence allocation. | Defer until actuator timing is no longer the bottleneck and replay proves pairwise alignment or mass allocation is load-bearing. | `research_backlog` |
 
-The first three rows are the current best candidates for low-risk mechanical
-discipline. The later rows are important future-shape pressure, but they must
-not bypass the promotion gates just because they are mathematically attractive.
+The queueable discipline rows remain the current best low-risk candidates.
+Rows produced by the semantic contraction audit are serious candidate seams,
+not deletion permission. The later rows are important future-shape pressure,
+but they must not bypass the promotion gates just because they are
+mathematically attractive.
 
 ## Use In Future Planning
 

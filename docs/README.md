@@ -146,6 +146,9 @@ Support context and evidence:
   live Codex CLI evidence that the signed context payload was emitted, but the
   model did not produce a prework task-standard block and existing Stop
   verification text fired
+- [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
+  internal audit evidence for high-confidence deletion/consolidation
+  candidates; no runtime contraction or product behavior change is claimed
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch
