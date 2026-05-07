@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0`
-### Next Product Train
 - Slug: `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run`
-- Surface: `product host actuator + live proof`
-- Why now: Phase-aware Gate 0 passed without live spend: context no longer fires on failed missing-artifact preconditions, it fires after a successful candidate artifact references a captured path-like anchor with unresolved closure evidence, and clean/control cases stay silent. The next needed evidence is a narrow live run, not a three-arm behavior comparison.
+### Next Product Train
+- Slug: `codex-app-cli-posttooluse-task-standard-firing-boundary-remediation`
+- Surface: `product host actuator + no-live remediation proof`
+- Why now: The phase-aware Gate 0 passed after the prior failed missing-artifact precondition result, but the phase-aware narrow live run failed with `candidate_artifact_without_posttooluse_context`: host delivery, state capture, clean/control silence, root/runtime/hidden boundaries, and Stop continuation all behaved as expected, while candidate artifact creation and readback PostToolUse rows stayed privately silent with `no_verification_marker` / `no_candidate_artifact_or_readback`. Another live run or text tuning would not address that firing boundary.
 
 ### Research Lines Under Evaluation
 
