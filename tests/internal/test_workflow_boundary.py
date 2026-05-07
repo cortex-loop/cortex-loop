@@ -21,6 +21,7 @@ def test_internal_workflow_surfaces_exist() -> None:
 
     assert "cleanup-report:" in internal_makefile
     assert "active-stack-report:" in internal_makefile
+    assert "seam-preflight:" in internal_makefile
     assert "audit-branches:" in internal_makefile
     assert "closeout-test:" in internal_makefile
     assert "closeout-init:" in internal_makefile
@@ -55,6 +56,10 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert 'help="Fail unless the repo is on clean synced main with no extra worktrees, non-main branches, or remote managed/review heads."' in canonical
     assert "Report whether an explicitly stacked in-flight managed branch is" in canonical
     assert "mechanically legible without weakening cleanup-report" in canonical
+    assert "seam-preflight" in canonical
+    assert 'def cmd_seam_preflight(' in canonical
+    assert "allowed_next_surfaces" in canonical
+    assert "reviewed_path_surfaces_not_allowed" in canonical
     assert 'def cmd_active_stack_report(' in canonical
     assert '"strict_final_clean_gate_unchanged"' in canonical
     assert "closeout contract" in workflow_doc.lower()
@@ -85,6 +90,9 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert "`cleanup-report` is the final resting-state gate" in workflow_doc
     assert "`active-stack-report` passes only when the worktree is clean" in workflow_doc
     assert "may pass while `cleanup-report` correctly fails" in workflow_doc
+    assert "seam-preflight" in workflow_doc
+    assert "Workflow-only, docs-only, audit-only, or planning-only" in workflow_doc
+    assert "Recon prose or chat rationale alone does\nnot satisfy this gate." in workflow_doc
 
 
 def test_compatibility_wrappers_remain_callable_for_one_transition_cycle() -> None:

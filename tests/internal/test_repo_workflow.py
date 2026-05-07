@@ -69,6 +69,7 @@ def _write_closeout_contract(
     mode: str,
     reviewed_paths: list[str],
     surface: str = "internal",
+    seam_slug: str = "closeout-enforcement",
     profile_override: str | None = None,
 ) -> None:
     payload = closeout_contract.scaffold_payload(branch=branch, mode=mode, reviewed_paths=reviewed_paths)
@@ -78,7 +79,7 @@ def _write_closeout_contract(
             payload.pop("governing_locks", None)
             payload.pop("law_to_code_completeness", None)
     payload["seam"] = {
-        "slug": "closeout-enforcement",
+        "slug": seam_slug,
         "surface": surface,
         "executive_benefit": "Prevent overclaiming at closeout.",
         "why_now": "The workflow must gate S-tier closure rigor mechanically.",
@@ -1012,10 +1013,151 @@ def test_active_stack_report_passes_for_clean_stacked_branch_with_reason(
     assert payload["cleanup_report_expected_to_fail"] is True
     assert payload["stacked_session_reason_recorded"] is True
     assert "workflow-only clarification" in payload["stacked_session_reason"]
+    assert payload["allowed_next_surfaces"] == ["internal"]
+    assert "product" in payload["blocked_next_surfaces"]
     assert any(
         row["branch"] == "claude/20260101-030303-blocking-prior"
         for row in payload["branch_inventory_debt"]["open_managed"]
     )
+
+
+def test_seam_preflight_allows_internal_on_workflow_only_stack(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260601-010208")
+    _git(repo, "switch", "-c", "claude/20260101-040404-blocking-prior")
+    (repo / "blocker.txt").write_text("blocker\n", encoding="utf-8")
+    _git(repo, "add", "blocker.txt")
+    _git(repo, "commit", "-m", "tests: blocking prior work")
+    _git(repo, "switch", "main")
+    module.cmd_start_session(
+        "codex",
+        "workflow-gate",
+        allow_stacked=True,
+        stacked_reason="workflow-only clarification while product stack is open",
+    )
+    capsys.readouterr()
+
+    result = module.cmd_seam_preflight("workflow-gate", "internal")
+    payload = json.loads(capsys.readouterr().out)
+
+    assert result == 0
+    assert payload["ok"] is True
+    assert payload["mode"] == "seam_preflight"
+    assert payload["allowed_next_surfaces"] == ["internal"]
+    assert payload["cleanup_report_expected_to_fail"] is True
+
+
+def test_seam_preflight_blocks_product_on_workflow_only_stack(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260601-010209")
+    _git(repo, "switch", "-c", "claude/20260101-050505-blocking-prior")
+    (repo / "blocker.txt").write_text("blocker\n", encoding="utf-8")
+    _git(repo, "add", "blocker.txt")
+    _git(repo, "commit", "-m", "tests: blocking prior work")
+    _git(repo, "switch", "main")
+    module.cmd_start_session(
+        "codex",
+        "workflow-gate",
+        allow_stacked=True,
+        stacked_reason="workflow-only clarification while product stack is open",
+    )
+    capsys.readouterr()
+
+    result = module.cmd_seam_preflight("workflow-gate", "product")
+    payload = json.loads(capsys.readouterr().out)
+
+    assert result == 1
+    assert payload["ok"] is False
+    assert payload["failures"]["surface_not_allowed"].startswith("surface 'product'")
+    assert payload["allowed_next_surfaces"] == ["internal"]
+
+
+def test_seam_preflight_requires_override_for_new_slug_on_active_stack(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260601-010210")
+    _git(repo, "switch", "-c", "claude/20260101-060606-blocking-prior")
+    (repo / "blocker.txt").write_text("blocker\n", encoding="utf-8")
+    _git(repo, "add", "blocker.txt")
+    _git(repo, "commit", "-m", "tests: blocking prior work")
+    _git(repo, "switch", "main")
+    module.cmd_start_session(
+        "codex",
+        "workflow-gate",
+        allow_stacked=True,
+        stacked_reason="workflow-only clarification while product stack is open",
+    )
+    capsys.readouterr()
+
+    result = module.cmd_seam_preflight("different-workflow-seam", "internal")
+    payload = json.loads(capsys.readouterr().out)
+
+    assert result == 1
+    assert payload["ok"] is False
+    assert "branch_slug_mismatch" in payload["failures"]
+
+    result = module.cmd_seam_preflight(
+        "different-workflow-seam",
+        "internal",
+        allow_stacked=True,
+        stacked_reason="surface:internal explicit continuation of workflow-only stack",
+    )
+    payload = json.loads(capsys.readouterr().out)
+
+    assert result == 0
+    assert payload["ok"] is True
+    marker = (
+        repo
+        / ".cortex"
+        / "closeout_contract"
+        / "codex"
+        / "20260601-010210-workflow-gate"
+        / "stacked_seams"
+        / "different-workflow-seam.json"
+    )
+    marker_payload = json.loads(marker.read_text(encoding="utf-8"))
+    assert marker_payload["surface"] == "internal"
+    assert "surface:internal" in marker_payload["stacked_reason"]
+
+
+def test_closeout_surface_gate_blocks_product_paths_on_workflow_only_stack(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, _remote, module = _prepare_repo(tmp_path, monkeypatch)
+    monkeypatch.setattr(module, "_session_timestamp", lambda: "20260601-010211")
+    _git(repo, "switch", "-c", "claude/20260101-070707-blocking-prior")
+    (repo / "blocker.txt").write_text("blocker\n", encoding="utf-8")
+    _git(repo, "add", "blocker.txt")
+    _git(repo, "commit", "-m", "tests: blocking prior work")
+    _git(repo, "switch", "main")
+    module.cmd_start_session(
+        "codex",
+        "workflow-gate",
+        allow_stacked=True,
+        stacked_reason="workflow-only clarification while product stack is open",
+    )
+    (repo / "cortex").mkdir()
+    (repo / "cortex" / "product.py").write_text("VALUE = 1\n", encoding="utf-8")
+    _write_closeout_contract(
+        repo,
+        branch="codex/20260601-010211-workflow-gate",
+        mode="close-session",
+        reviewed_paths=["cortex/product.py"],
+        surface="internal",
+        seam_slug="workflow-gate",
+    )
+
+    with pytest.raises(SystemExit, match="reviewed_path_surfaces_not_allowed"):
+        module._validate_closeout_contract_for_paths(
+            "close-session",
+            "codex/20260601-010211-workflow-gate",
+            ["cortex/product.py"],
+        )
 
 
 def test_active_stack_report_fails_without_stacked_reason(

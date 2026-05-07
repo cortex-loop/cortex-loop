@@ -65,6 +65,26 @@ FULL_BUNDLE_FALLBACK_PATHS = {
     "Makefile",
     "pyproject.toml",
 }
+STACKED_REASON_SURFACE_RE = re.compile(r"\bsurface:(product|experimental|lab|internal)\b", re.IGNORECASE)
+STACKED_REASON_INTERNAL_MARKERS = (
+    "workflow-only",
+    "docs-only",
+    "documentation-only",
+    "audit-only",
+    "planning-only",
+)
+PRODUCT_STACK_PATH_PREFIXES = (
+    "cortex/",
+    "tests/product/",
+    "tests/conformance/",
+)
+LAB_STACK_PATH_PREFIXES = (
+    "lab/",
+    "tests/lab/",
+)
+EXPERIMENTAL_STACK_PATH_PREFIXES = (
+    "tests/experimental/",
+)
 
 
 def _root() -> Path:
@@ -535,6 +555,7 @@ def _validate_closeout_contract_for_paths(mode: str, branch: str, reviewed_paths
         branch=branch,
         reviewed_paths=reviewed_paths,
     )
+    _validate_active_stack_gate_for_closeout(branch, reviewed_paths)
 
 
 def _revalidate_closeout_contract_after_verification(
@@ -1250,6 +1271,272 @@ def _stacked_session_reason_for_branch(branch: str) -> str | None:
     return reason or None
 
 
+def _managed_branch_slug(branch: str) -> str | None:
+    match = MANAGED_SESSION_BRANCH_RE.fullmatch(branch)
+    if match is None:
+        return None
+    return match.group("slug")
+
+
+def _allowed_next_surfaces_from_stacked_reason(reason: str | None) -> list[str]:
+    if not reason:
+        return []
+    explicit = {match.lower() for match in STACKED_REASON_SURFACE_RE.findall(reason)}
+    if explicit:
+        return sorted(explicit)
+    lowered = reason.lower()
+    if any(marker in lowered for marker in STACKED_REASON_INTERNAL_MARKERS):
+        return ["internal"]
+    return []
+
+
+def _stacked_seam_override_path(branch: str, slug: str) -> Path:
+    safe_slug = re.sub(r"[^a-z0-9-]+", "-", slug.strip().lower()).strip("-")
+    return (
+        _root()
+        / ".cortex"
+        / "closeout_contract"
+        / Path(*branch.split("/"))
+        / "stacked_seams"
+        / f"{safe_slug}.json"
+    )
+
+
+def _record_stacked_seam_override(branch: str, slug: str, surface: str, reason: str) -> None:
+    path = _stacked_seam_override_path(branch, slug)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "branch": branch,
+        "slug": slug,
+        "surface": surface,
+        "stacked_reason": reason.strip(),
+    }
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _stacked_seam_override_for_branch(branch: str, slug: str) -> dict[str, object] | None:
+    path = _stacked_seam_override_path(branch, slug)
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(payload, dict):
+        return None
+    if payload.get("branch") != branch or payload.get("slug") != slug:
+        return None
+    surface = payload.get("surface")
+    if surface not in closeout_contract.VALID_SURFACES:
+        return None
+    reason = payload.get("stacked_reason")
+    if not isinstance(reason, str) or not reason.strip():
+        return None
+    return payload
+
+
+def _required_surfaces_for_paths(paths: list[str]) -> list[str]:
+    required: set[str] = set()
+    for path in paths:
+        if path.startswith(PRODUCT_STACK_PATH_PREFIXES):
+            required.add("product")
+        elif path.startswith(LAB_STACK_PATH_PREFIXES):
+            required.add("lab")
+        elif path.startswith(EXPERIMENTAL_STACK_PATH_PREFIXES):
+            required.add("experimental")
+        else:
+            required.add("internal")
+    return sorted(required)
+
+
+def _active_stack_gate_failures(
+    *,
+    slug: str,
+    surface: str,
+    allow_stacked: bool = False,
+    stacked_reason: str | None = None,
+    reviewed_paths: list[str] | None = None,
+    require_clean_tree: bool = True,
+) -> tuple[dict[str, object], dict[str, object]]:
+    payload = _audit_payload()
+    current_branch = str(payload["current_branch"])
+    main_sync = _main_origin_state()
+    dirty = _tracked_status_lines()
+    branch_inventory = {
+        key: payload[key]
+        for key in (
+            "worktree_attached",
+            "merged_local",
+            "open_manual",
+            "open_managed",
+            "remote_managed_heads",
+            "remote_review_heads",
+        )
+        if payload[key]
+    }
+    cleanup_like_failures: dict[str, object] = {}
+    if current_branch != "main":
+        cleanup_like_failures["current_branch"] = current_branch
+    if require_clean_tree and dirty:
+        cleanup_like_failures["dirty"] = dirty
+    if main_sync != "synced":
+        cleanup_like_failures["main_sync"] = main_sync
+    cleanup_like_failures.update(branch_inventory)
+
+    if surface not in closeout_contract.VALID_SURFACES:
+        return (
+            {"surface": f"must be one of {sorted(closeout_contract.VALID_SURFACES)}"},
+            {
+                "current_branch": current_branch,
+                "main_sync": main_sync,
+                "cleanup_report_expected_to_fail": bool(cleanup_like_failures),
+                "allowed_next_surfaces": [],
+                "branch_inventory_debt": branch_inventory,
+            },
+        )
+    if not cleanup_like_failures:
+        return (
+            {},
+            {
+                "current_branch": current_branch,
+                "main_sync": main_sync,
+                "cleanup_report_expected_to_fail": False,
+                "allowed_next_surfaces": sorted(closeout_contract.VALID_SURFACES),
+                "branch_inventory_debt": branch_inventory,
+            },
+        )
+
+    failures: dict[str, object] = {}
+    branch_reason = (
+        _stacked_session_reason_for_branch(current_branch)
+        if is_managed_session_branch(current_branch)
+        else None
+    )
+    branch_slug = _managed_branch_slug(current_branch)
+    branch_allowed = set(_allowed_next_surfaces_from_stacked_reason(branch_reason))
+    seam_override = _stacked_seam_override_for_branch(current_branch, slug)
+    if seam_override is not None:
+        branch_allowed.add(str(seam_override["surface"]))
+
+    if dirty and require_clean_tree:
+        failures["dirty"] = dirty
+    if main_sync != "synced":
+        failures["main_sync"] = main_sync
+    if not is_managed_session_branch(current_branch):
+        failures["current_branch"] = current_branch
+    elif not branch_reason:
+        failures["stacked_session_reason"] = (
+            "missing; start stacked work with start-session --allow-stacked "
+            "--stacked-reason \"<text>\" so active-stack work is auditable"
+        )
+    if branch_slug and slug != branch_slug and seam_override is None and not allow_stacked:
+        failures["branch_slug_mismatch"] = (
+            f"current branch slug '{branch_slug}' differs from requested seam slug "
+            f"'{slug}'; rerun seam-preflight with --allow-stacked --stacked-reason "
+            "\"<text>\" to record a per-seam override"
+        )
+    if allow_stacked:
+        if not (stacked_reason and stacked_reason.strip()):
+            failures["stacked_seam_reason"] = (
+                "seam-preflight --allow-stacked requires --stacked-reason \"<text>\""
+            )
+        elif not failures.get("dirty") and not failures.get("main_sync"):
+            _record_stacked_seam_override(current_branch, slug, surface, stacked_reason)
+            branch_allowed.add(surface)
+    if surface not in branch_allowed:
+        failures["surface_not_allowed"] = (
+            f"surface '{surface}' is not allowed by the active stacked branch reason; "
+            f"allowed surfaces are {sorted(branch_allowed) or 'none'}"
+        )
+    if reviewed_paths is not None:
+        required_surfaces = set(_required_surfaces_for_paths(reviewed_paths))
+        missing = sorted(required_surfaces - branch_allowed)
+        if missing:
+            failures["reviewed_path_surfaces_not_allowed"] = missing
+
+    context = {
+        "current_branch": current_branch,
+        "main_sync": main_sync,
+        "cleanup_report_expected_to_fail": True,
+        "stacked_session_reason_recorded": bool(branch_reason),
+        "stacked_session_reason": branch_reason,
+        "allowed_next_surfaces": sorted(branch_allowed),
+        "branch_inventory_debt": branch_inventory,
+    }
+    if reviewed_paths is not None:
+        context["reviewed_path_surfaces"] = _required_surfaces_for_paths(reviewed_paths)
+    return failures, context
+
+
+def _validate_active_stack_gate_for_closeout(branch: str, reviewed_paths: list[str]) -> None:
+    if not is_managed_session_branch(branch):
+        return
+    branch_reason = _stacked_session_reason_for_branch(branch)
+    if branch_reason is None:
+        return
+    paths = closeout_contract.resolve_artifact_paths(_root(), branch)
+    json_path = paths["json_path"]
+    if not json_path.exists():
+        return
+    try:
+        payload = json.loads(json_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return
+    seam = payload.get("seam")
+    if not isinstance(seam, dict):
+        return
+    slug = str(seam.get("slug", "")).strip()
+    surface = str(seam.get("surface", "")).strip()
+    if not slug or not surface:
+        return
+    failures, _context = _active_stack_gate_failures(
+        slug=slug,
+        surface=surface,
+        reviewed_paths=reviewed_paths,
+        require_clean_tree=False,
+    )
+    if failures:
+        raise SystemExit(
+            "Active stacked closeout surface gate failed: "
+            + json.dumps(failures, sort_keys=True)
+        )
+
+
+def cmd_seam_preflight(
+    slug: str,
+    surface: str,
+    *,
+    allow_stacked: bool = False,
+    stacked_reason: str | None = None,
+) -> int:
+    """Validate that the current branch is allowed to start or continue `slug`.
+
+    This is the mechanical guard for the active-stack ambiguity: a branch can
+    be legible for workflow-only stacked work without being allowed to accept
+    product, lab, or unrelated seam changes.
+    """
+
+    _ensure_canonical_origin()
+    _fetch_origin(quiet=True)
+    failures, context = _active_stack_gate_failures(
+        slug=slug,
+        surface=surface,
+        allow_stacked=allow_stacked,
+        stacked_reason=stacked_reason,
+    )
+    report = {
+        "ok": not failures,
+        "mode": "seam_preflight",
+        "slug": slug,
+        "surface": surface,
+        **context,
+    }
+    if failures:
+        report["failures"] = failures
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 0 if not failures else 1
+
+
 def cmd_active_stack_report() -> int:
     """Report whether an in-flight stacked branch is mechanically legible.
 
@@ -1270,6 +1557,7 @@ def cmd_active_stack_report() -> int:
         if is_managed_session_branch(current_branch)
         else None
     )
+    allowed_next_surfaces = _allowed_next_surfaces_from_stacked_reason(stacked_reason)
     branch_inventory = {
         key: payload[key]
         for key in (
@@ -1309,6 +1597,10 @@ def cmd_active_stack_report() -> int:
         "cleanup_report_contract": "strict_final_clean_gate_unchanged",
         "stacked_session_reason_recorded": bool(stacked_reason),
         "stacked_session_reason": stacked_reason,
+        "allowed_next_surfaces": allowed_next_surfaces,
+        "blocked_next_surfaces": sorted(
+            set(closeout_contract.VALID_SURFACES) - set(allowed_next_surfaces)
+        ),
         "branch_inventory_debt": branch_inventory,
     }
     if failures:
@@ -2351,6 +2643,31 @@ def main(argv: list[str] | None = None) -> int:
             "mechanically legible without weakening cleanup-report."
         ),
     )
+    seam_preflight_parser = subparsers.add_parser(
+        "seam-preflight",
+        help=(
+            "Check whether the current branch is allowed to start or continue "
+            "a named seam, especially while cleanup-report fails on an active stack."
+        ),
+    )
+    seam_preflight_parser.add_argument("--slug", required=True)
+    seam_preflight_parser.add_argument(
+        "--surface",
+        choices=sorted(closeout_contract.VALID_SURFACES),
+        required=True,
+    )
+    seam_preflight_parser.add_argument(
+        "--allow-stacked",
+        action="store_true",
+        help=(
+            "Record an explicit per-seam stacked override when the requested "
+            "slug or surface is not already allowed by the active branch."
+        ),
+    )
+    seam_preflight_parser.add_argument(
+        "--stacked-reason",
+        help="Required with --allow-stacked; written to a per-seam marker.",
+    )
 
     preserve_parser = subparsers.add_parser(
         "preserve-worktree",
@@ -2482,6 +2799,13 @@ def main(argv: list[str] | None = None) -> int:
         return cmd_cleanup_report()
     if args.command == "active-stack-report":
         return cmd_active_stack_report()
+    if args.command == "seam-preflight":
+        return cmd_seam_preflight(
+            args.slug,
+            args.surface,
+            allow_stacked=args.allow_stacked,
+            stacked_reason=args.stacked_reason,
+        )
     if args.command == "preserve-worktree":
         return cmd_preserve_worktree(args.slug)
     if args.command == "status-snapshot":
