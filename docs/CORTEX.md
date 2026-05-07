@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-task-standard-stack-publication-hygiene`
-### Next Product Train
 - Slug: `codex-app-cli-posttooluse-task-standard-narrow-live-probe`
+### Next Product Train
+- Slug: `codex-app-cli-posttooluse-task-standard-narrow-live-run`
 - Surface: `product live proof`
-- Why now: The calibration decision accepted a narrow live probe because Gate 0 passed cleanly, and the stack-publication hygiene seam split the completed scored-alignment, offline-readiness, lifecycle-map, PostToolUse actuator, and pre-live hardening work into a reviewable branch. Three-arm behavior comparison remains paused, and the live probe is blocked until this stack is published or merged and cleanup no longer reports dirty worktree state.
+- Why now: The no-spend narrow-live-probe harness seam added `--task-standard-posttooluse-live`, the approval env, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running live. Three-arm behavior comparison remains paused; the next step is only the explicitly approved narrow live run.
 
 ### Research Lines Under Evaluation
 
@@ -374,6 +374,7 @@ state, read `internal/truth/cortex_status.json` directly.
 - The Codex App/CLI lifecycle actuator map then classified each event by actual host control without changing runtime behavior: SessionStart is session/workspace context, UserPromptSubmit is prospective task-set formation, PreToolUse is deny-only motor inhibition later, PermissionRequest is approval-bound route control, PostToolUse is the strongest next-step correction surface, and Stop is late closure continuation. This queues a PostToolUse task-standard next-step correction seam constrained to exactness/evidence-recovery and keeps Sinkhorn, PreToolUse denial, live reruns, broad lift, output-quality lift, truth-gap lift, and shipping promotion unearned.
 - The Codex App/CLI PostToolUse task-standard next-step correction Gate 0 then passed without live spend: a gated `--enable-posttooluse-task-standard-context` path emits Codex-native PostToolUse `additionalContext` only after product-visible verification/readback evidence leaves a specific model-derived work-standard or closure-evidence item unresolved, while flag-disabled, clean-evidenced, blocker/waiting, and unrelated-tool controls stay silent. The context is host-adapter policy only, uses the existing SRE `TaskStandardSpine` and scored matcher without changing SRE law, repeats no item twice, emits no Stop block or PreToolUse denial, and introduces no signed text, Stop text, threshold, fixture, scoring, root-hook, hidden-verifier, Sinkhorn/transport, PermissionRequest, or live behavior-lift claim.
 - The Codex App/CLI PostToolUse task-standard calibration decision then reviewed the Gate 0 report without live spend and queued `codex-app-cli-posttooluse-task-standard-narrow-live-probe`: the next probe is constrained to the earned `task_standard_exactness` / evidence-recovery surface, must use explicit current-turn live approval, must not use `--require-pass`, and may not broaden into three-arm behavior comparison or output-quality/truth-gap lift. The decision preserves signed UserPromptSubmit text, Stop text, SRE law, scored matcher, fixtures, scoring, hooks, root config, hidden-verifier boundaries, Sinkhorn/transport deferral, PreToolUse denial deferral, and PermissionRequest policy.
+- The Codex App/CLI PostToolUse task-standard narrow live probe harness seam then added `--task-standard-posttooluse-live`, approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running a live Codex command. The live probe remains unearned until explicitly approved and run; this seam earns harness readiness only and preserves signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport deferral, PreToolUse denial deferral, and PermissionRequest policy.
 <!-- END GENERATED: current-state-and-strategy -->
 
 ### V2 Model-I/O Analysis

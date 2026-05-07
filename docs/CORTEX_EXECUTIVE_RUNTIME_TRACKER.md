@@ -184,12 +184,13 @@ still requires explicit current-turn approval and must not use `--require-pass`
 because negative verdicts are valid evidence. The PostToolUse text must remain
 specific to a product-visible mismatch and obey Cortex output law: no
 third-agent voice, no internal labels, no hidden verifier facts, and no generic
-"verify more" advice. The PostToolUse live probe remains queued but blocked until stack
-publication hygiene is clean: the task-standard stack must be published or
-merged and the worktree must no longer be dirty before live approval is
-considered.
-PostToolUse live probe remains queued but blocked until stack publication hygiene is clean.
-The probe is not approved until the stack is published or merged.
+"verify more" advice. The PostToolUse narrow live probe harness is now
+approval-gated: `--task-standard-posttooluse-live` refuses without
+`CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, records
+pass/no-context/ignored-context/overcontrol/scoped-negative/fail verdicts, and
+does not authorize broad behavior-lift claims. The live run remains separate
+future work requiring explicit current-turn approval and must not use
+`--require-pass`.
 PreToolUse motor inhibition should follow only as action blocking, not as a
 model-visible advice surface, and false-deny clean-control risk must be treated
 as a future kill-rule risk. Sinkhorn-style transport belongs later as the

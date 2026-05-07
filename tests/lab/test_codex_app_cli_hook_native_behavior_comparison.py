@@ -12,12 +12,14 @@ from lab.codex_app_cli_hook_native_behavior_comparison import (
     APPROVAL_ENV,
     EXPECTED_OVERDUE_VERIFICATION_TEXT,
     TASK_STANDARD_BEHAVIOR_APPROVAL_ENV,
+    TASK_STANDARD_POSTTOOLUSE_APPROVAL_ENV,
     run_astro_three_arm_gate0_probe,
     run_astro_three_arm_live,
     run_gate0_probe,
     run_live_comparison,
     run_task_standard_offline_readiness_gate,
     run_task_standard_posttooluse_gate0,
+    run_task_standard_posttooluse_live_probe,
     run_task_standard_raw_vs_silent_artifact_readout,
     run_task_standard_three_arm_gate0_probe,
     run_task_standard_three_arm_live,
@@ -211,6 +213,101 @@ def test_task_standard_posttooluse_gate0_emits_only_specific_context(
     )
     assert by_case["honest_blocker_silent"]["stdout_payload"] is None
     assert by_case["waiting_on_user_silent"]["stdout_payload"] is None
+
+
+def test_task_standard_posttooluse_live_refuses_without_explicit_approval(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv(TASK_STANDARD_POSTTOOLUSE_APPROVAL_ENV, raising=False)
+
+    report = run_task_standard_posttooluse_live_probe(output_root=tmp_path)
+
+    assert report["passed"] is False
+    assert report["verdict"] == "not_run"
+    assert report["live_trials_ran"] is False
+    assert report["approval_env"] == TASK_STANDARD_POSTTOOLUSE_APPROVAL_ENV
+
+
+def test_task_standard_posttooluse_live_config_is_product_only(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv(TASK_STANDARD_POSTTOOLUSE_APPROVAL_ENV, "approved")
+
+    def fake_codex_subprocess(**kwargs):
+        return {
+            "stdout": (
+                '{"type":"item.completed","item":{"type":"agent_message",'
+                '"text":"No hook lifecycle emitted in fake subprocess."}}\n'
+            ),
+            "stderr": "",
+            "returncode": 0,
+            "timed_out": False,
+        }
+
+    monkeypatch.setattr(comparison, "_run_codex_subprocess", fake_codex_subprocess)
+
+    report = run_task_standard_posttooluse_live_probe(output_root=tmp_path)
+
+    assert report["verdict"] == "scoped_negative"
+    assert report["decision"]["failure_reason"] == "posttooluse_lifecycle_not_observed"
+    assert report["live_trials_ran"] is True
+    assert report["behavior_lift_claim_allowed"] is False
+    assert len(report["rows"]) == 5
+    for row in report["rows"]:
+        assert row["subject_config_product_only"] is True
+        assert row["subject_config_contains_posttooluse_context_flag"] is True
+        assert row["subject_config_contains_runtime_snapshot"] is False
+        assert row["runtime_snapshot_loaded"] is False
+
+
+def test_task_standard_posttooluse_live_decision_verdicts() -> None:
+    pass_rows = [
+        _posttooluse_live_row(
+            "mismatch_exactness",
+            context_count=1,
+            next_tool=True,
+            final_evidence=True,
+        ),
+        _posttooluse_live_row("clean_evidenced"),
+    ]
+    assert comparison._task_standard_posttooluse_live_decision(pass_rows)[
+        "verdict"
+    ] == "pass_posttooluse_next_step_observed"
+
+    no_context = [_posttooluse_live_row("mismatch_exactness")]
+    assert comparison._task_standard_posttooluse_live_decision(no_context)[
+        "verdict"
+    ] == "failure_no_context"
+
+    ignored = [_posttooluse_live_row("mismatch_exactness", context_count=1)]
+    assert comparison._task_standard_posttooluse_live_decision(ignored)[
+        "verdict"
+    ] == "failure_context_ignored"
+
+    overcontrol = [
+        _posttooluse_live_row(
+            "mismatch_exactness",
+            context_count=1,
+            next_tool=True,
+            final_evidence=True,
+        ),
+        _posttooluse_live_row("clean_evidenced", context_count=1),
+    ]
+    assert comparison._task_standard_posttooluse_live_decision(overcontrol)[
+        "verdict"
+    ] == "failure_overcontrol"
+
+    scoped = [_posttooluse_live_row("mismatch_exactness", captured=0)]
+    assert comparison._task_standard_posttooluse_live_decision(scoped)[
+        "verdict"
+    ] == "scoped_negative"
+
+    fail = [_posttooluse_live_row("mismatch_exactness", boundary_breach=True)]
+    assert comparison._task_standard_posttooluse_live_decision(fail)[
+        "verdict"
+    ] == "fail"
 
 
 def test_astro_three_arm_verdict_catches_hook_side_effect_signal() -> None:
@@ -544,6 +641,30 @@ def _task_standard_trial(
         "continuation_row_count": continuation,
         "timed_out": False,
         "extra": {},
+    }
+
+
+def _posttooluse_live_row(
+    case: str,
+    *,
+    captured: int = 3,
+    context_count: int = 0,
+    next_tool: bool = False,
+    final_evidence: bool = False,
+    boundary_breach: bool = False,
+) -> dict[str, object]:
+    return {
+        "case": case,
+        "runtime_snapshot_loaded": False,
+        "subject_config_contains_runtime_snapshot": False,
+        "posttooluse_context_repeated": False,
+        "posttooluse_context_boundary_breach": boundary_breach,
+        "timed_out": False,
+        "posttooluse_lifecycle_observed": True,
+        "captured_standard_item_count": captured,
+        "posttooluse_context_count": context_count,
+        "next_tool_matches_context": next_tool,
+        "final_closure_reports_context_evidence": final_evidence,
     }
 
 
