@@ -82,6 +82,7 @@ class OpenAICodexHookPayload:
     stop_hook_active: bool = False
     last_assistant_message: str | None = None
     tool_name: str | None = None
+    tool_use_id: str | None = None
     tool_input: Any = None
     tool_response: Any = None
     error: str | None = None
@@ -105,6 +106,7 @@ class OpenAICodexHookPayload:
             "permission_mode",
             "last_assistant_message",
             "tool_name",
+            "tool_use_id",
             "error",
             "prompt_text",
             "prompt_text_hash",
@@ -156,6 +158,7 @@ class OpenAICodexHookPayload:
             "stop_hook_active": self.stop_hook_active,
             "has_transcript_backed_assistant_turn": self.has_transcript_backed_assistant_turn,
             "tool_name": self.tool_name,
+            "tool_use_id": self.tool_use_id,
             "tool_input_present": self.tool_input is not None,
             "tool_response_present": self.tool_response is not None,
             "error_present": self.error is not None,
@@ -633,6 +636,7 @@ def normalize_openai_codex_hook_payload(
         stop_hook_active=bool(payload.get("stop_hook_active", False)),
         last_assistant_message=_optional_string(payload.get("last_assistant_message")),
         tool_name=_optional_string(payload.get("tool_name")),
+        tool_use_id=_optional_string(payload.get("tool_use_id")),
         tool_input=_optional_json_value(payload.get("tool_input")),
         tool_response=_optional_json_value(payload.get("tool_response")),
         error=_optional_string(payload.get("error")),

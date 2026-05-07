@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-actuator-boundary-trace-repair`
+- Slug: `codex-app-cli-posttooluse-causal-trace-ids`
 ### Next Product Train
-- Slug: `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun`
-- Surface: `product live proof`
-- Why now: The actuator-boundary trace Gate 0 passed without live spend after the earlier firing-boundary Gate 0 and `failure_overcontrol` overcontrol remediations: the prior `clean_evidenced` overcontrol row stays covered by failed-check silence, the prior `candidate_artifact_without_posttooluse_context` gap and live-equivalent exit/status marker gap remain covered by the narrow completion predicate, the PostToolUse task-standard decision now lives in a small Codex host actuator module, live-equivalent failed checks stay silent as `phase_check_failed`, live-equivalent mismatch candidate/readback rows still emit the existing PostToolUse context, and replay of `task_standard_posttooluse_live_20260507T153242Z` proves the harness no longer counts the artifact-creation command as the next action after the context that followed it. The next evidence question is a narrow approval-gated live rerun, not value probing, text tuning, matcher tuning, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, or a three-arm behavior comparison.
+- Slug: `codex-app-cli-posttooluse-shared-tool-evidence-classification`
+- Surface: `product host actuator plus SRE substrate proof`
+- Why now: The causal trace-id Gate 0 now blocks ordinal live readout: future PostToolUse next-action evidence must join context rows to stdout command records by `tool_event_ref`, while the historical `task_standard_posttooluse_live_20260507T153242Z` replay is correctly marked ambiguous because it lacks persisted `tool_use_id`. The remaining live-readout blocker is duplicated tool-evidence classification between the Codex host actuator and SRE task-standard evidence code. Fixing that shared predicate ownership is narrower and more load-bearing than rerunning live, text tuning, matcher tuning, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, typed intervention pressure, output-law centralization, or host-runtime extraction. This follows the firing-boundary Gate 0, preserves the prior `candidate_artifact_without_posttooluse_context` remediation, preserves the exit/status marker coverage for candidate artifact creation/readback, preserves the `failure_overcontrol` / `clean_evidenced` remediation, and keeps the approval-gated live rerun paused.
 
 ### Research Lines Under Evaluation
 

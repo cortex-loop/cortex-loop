@@ -124,22 +124,26 @@ DEFAULT_OUTPUT_ROOT = (
 @dataclass(frozen=True, slots=True)
 class PostToolUseContextTrace:
     context_row_index: int | None
+    context_tool_event_ref: str | None
     selected_item_id: str | None
     context_hash: str | None
     context_text: str | None
-    preceding_tool: dict[str, str] | None
-    next_tool_after_context: dict[str, str] | None
+    preceding_tool: dict[str, object] | None
+    next_tool_after_context: dict[str, object] | None
+    join_source: str | None = None
     ambiguous: bool = False
     ambiguity_reason: str | None = None
 
     def as_payload(self) -> dict[str, object]:
         return {
             "context_row_index": self.context_row_index,
+            "context_tool_event_ref": self.context_tool_event_ref,
             "selected_item_id": self.selected_item_id,
             "context_hash": self.context_hash,
             "context_text": self.context_text,
             "preceding_tool": self.preceding_tool,
             "next_tool_after_context": self.next_tool_after_context,
+            "join_source": self.join_source,
             "ambiguous": self.ambiguous,
             "ambiguity_reason": self.ambiguity_reason,
         }
@@ -1720,22 +1724,45 @@ def run_task_standard_posttooluse_actuator_trace_gate0(
         root_config_hash_before=root_config_hash_before,
         root_config=root_config,
     )
+    event_ref_trace = _posttooluse_event_ref_trace_gate0_evidence()
     trace_replay = _posttooluse_live_trace_replay_evidence()
     trace_results = {
-        "trace_replay_available": trace_replay["available"] is True,
-        "trace_uses_context_row_chronology": trace_replay[
-            "context_row_index_present"
-        ]
-        is True,
-        "preceding_tool_is_context_source": trace_replay[
+        "event_ref_trace_non_ambiguous": event_ref_trace["ambiguous"] is False,
+        "event_ref_join_source": event_ref_trace["join_source"] == "tool_event_ref",
+        "event_ref_preceding_tool_is_context_source": event_ref_trace[
             "preceding_tool_is_artifact_creation"
         ]
         is True,
-        "next_tool_is_strictly_after_context": trace_replay[
+        "event_ref_next_tool_is_strictly_after_context": event_ref_trace[
             "next_tool_is_not_artifact_creation"
         ]
         is True,
-        "next_tool_matches_named_direct_check": trace_replay[
+        "event_ref_next_tool_matches_named_direct_check": event_ref_trace[
+            "next_tool_matches_context"
+        ]
+        is True,
+        "historical_trace_replay_available": trace_replay["available"] is True,
+        "historical_trace_marked_ambiguous_without_event_ref": trace_replay[
+            "ambiguous"
+        ]
+        is True,
+        "historical_trace_does_not_infer_by_position": trace_replay[
+            "ambiguity_reason"
+        ]
+        == "missing_posttooluse_tool_event_ref",
+        "trace_uses_context_row_chronology": event_ref_trace[
+            "context_row_index_present"
+        ]
+        is True,
+        "preceding_tool_is_context_source": event_ref_trace[
+            "preceding_tool_is_artifact_creation"
+        ]
+        is True,
+        "next_tool_is_strictly_after_context": event_ref_trace[
+            "next_tool_is_not_artifact_creation"
+        ]
+        is True,
+        "next_tool_matches_named_direct_check": event_ref_trace[
             "next_tool_matches_context"
         ]
         is True,
@@ -1759,6 +1786,7 @@ def run_task_standard_posttooluse_actuator_trace_gate0(
         "live_trials_ran": False,
         "behavior_lift_claim_allowed": False,
         "rows": rows,
+        "event_ref_trace": event_ref_trace,
         "trace_replay": trace_replay,
         "boundary_results": boundary_results,
         "output_root": str(root),
@@ -4569,28 +4597,48 @@ def _last_session_state_value(
     return value
 
 
-def _codex_stdout_command_items(records: list[Mapping[str, Any]]) -> list[dict[str, str]]:
-    commands: list[dict[str, str]] = []
-    for record in records:
+def _codex_stdout_command_items(
+    records: list[Mapping[str, Any]],
+) -> list[dict[str, object]]:
+    commands_by_ref: dict[str, dict[str, object]] = {}
+    command_order: list[str] = []
+    for record_index, record in enumerate(records):
         item = record.get("item")
         if not isinstance(item, Mapping) or item.get("type") != "command_execution":
             continue
+        tool_event_ref = item.get("id") if isinstance(item.get("id"), str) else None
+        stdout_command_ref = tool_event_ref or f"stdout-command:{len(command_order) + 1}"
         command = str(item.get("command") or "")
         output = str(item.get("aggregated_output") or "")
         status = str(item.get("status") or "")
-        commands.append(
-            {
+        if stdout_command_ref not in commands_by_ref:
+            command_order.append(stdout_command_ref)
+            commands_by_ref[stdout_command_ref] = {
+                "tool_event_ref": tool_event_ref,
+                "stdout_command_ref": stdout_command_ref,
                 "command": command,
-                "aggregated_output": output,
+                "aggregated_output": "",
                 "status": status,
+                "started_record_index": None,
+                "completed_record_index": None,
             }
-        )
-    return commands
+        command_item = commands_by_ref[stdout_command_ref]
+        if command:
+            command_item["command"] = command
+        if output:
+            command_item["aggregated_output"] = output
+        if status:
+            command_item["status"] = status
+        if record.get("type") == "item.started" or status == "in_progress":
+            command_item["started_record_index"] = record_index
+        if record.get("type") == "item.completed" or status in {"completed", "failed"}:
+            command_item["completed_record_index"] = record_index
+    return [commands_by_ref[ref] for ref in command_order]
 
 
 def _codex_stdout_terminal_command_items(
     records: list[Mapping[str, Any]],
-) -> list[dict[str, str]]:
+) -> list[dict[str, object]]:
     return [
         command
         for command in _codex_stdout_command_items(records)
@@ -4614,6 +4662,7 @@ def _posttooluse_context_trace(
     if not context_rows:
         return PostToolUseContextTrace(
             context_row_index=None,
+            context_tool_event_ref=None,
             selected_item_id=None,
             context_hash=None,
             context_text=None,
@@ -4621,36 +4670,179 @@ def _posttooluse_context_trace(
             next_tool_after_context=None,
         )
     posttooluse_index, row, context_text = context_rows[0]
-    preceding_tool = (
-        dict(terminal_commands[posttooluse_index])
-        if posttooluse_index < len(terminal_commands)
-        else None
-    )
-    next_tool = (
-        dict(terminal_commands[posttooluse_index + 1])
-        if posttooluse_index + 1 < len(terminal_commands)
-        else None
-    )
-    ambiguous = preceding_tool is None or (
-        next_tool is None and posttooluse_index + 1 < len(posttooluse_rows)
-    )
-    ambiguity_reason = None
-    if ambiguous:
-        ambiguity_reason = "posttooluse_hook_rows_do_not_align_to_terminal_commands"
     selected_item_id = _session_state_value(
         row,
         "last_posttooluse_task_standard_context_item_id",
     )
+    context_tool_event_ref = _posttooluse_tool_event_ref(row)
+    if context_tool_event_ref is None:
+        return PostToolUseContextTrace(
+            context_row_index=_row_index(row),
+            context_tool_event_ref=None,
+            selected_item_id=selected_item_id if isinstance(selected_item_id, str) else None,
+            context_hash=_hash_text(context_text),
+            context_text=context_text,
+            preceding_tool=None,
+            next_tool_after_context=None,
+            join_source=None,
+            ambiguous=True,
+            ambiguity_reason="missing_posttooluse_tool_event_ref",
+        )
+    matching_terminal_commands = [
+        (index, command)
+        for index, command in enumerate(terminal_commands)
+        if command.get("tool_event_ref") == context_tool_event_ref
+    ]
+    if len(matching_terminal_commands) != 1:
+        return PostToolUseContextTrace(
+            context_row_index=_row_index(row),
+            context_tool_event_ref=context_tool_event_ref,
+            selected_item_id=selected_item_id if isinstance(selected_item_id, str) else None,
+            context_hash=_hash_text(context_text),
+            context_text=context_text,
+            preceding_tool=None,
+            next_tool_after_context=None,
+            join_source="tool_event_ref",
+            ambiguous=True,
+            ambiguity_reason=(
+                "posttooluse_tool_event_ref_not_found_in_stdout"
+                if not matching_terminal_commands
+                else "duplicate_stdout_tool_event_ref"
+            ),
+        )
+    _, preceding_command = matching_terminal_commands[0]
+    next_tool = _next_terminal_command_after_context(
+        terminal_commands,
+        preceding_command,
+    )
     return PostToolUseContextTrace(
         context_row_index=_row_index(row),
+        context_tool_event_ref=context_tool_event_ref,
         selected_item_id=selected_item_id if isinstance(selected_item_id, str) else None,
         context_hash=_hash_text(context_text),
         context_text=context_text,
-        preceding_tool=preceding_tool,
+        preceding_tool=dict(preceding_command),
         next_tool_after_context=next_tool,
-        ambiguous=ambiguous,
-        ambiguity_reason=ambiguity_reason,
+        join_source="tool_event_ref",
+        ambiguous=False,
+        ambiguity_reason=None,
     )
+
+
+def _posttooluse_tool_event_ref(row: Mapping[str, Any]) -> str | None:
+    value = row.get("tool_use_id")
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
+def _next_terminal_command_after_context(
+    terminal_commands: list[Mapping[str, object]],
+    context_source_command: Mapping[str, object],
+) -> dict[str, object] | None:
+    completed_index = context_source_command.get("completed_record_index")
+    if not isinstance(completed_index, int):
+        return None
+    next_commands = []
+    for command in terminal_commands:
+        started_index = command.get("started_record_index")
+        completed_candidate_index = command.get("completed_record_index")
+        ordering_index = (
+            started_index
+            if isinstance(started_index, int)
+            else completed_candidate_index
+            if isinstance(completed_candidate_index, int)
+            else None
+        )
+        if isinstance(ordering_index, int) and ordering_index > completed_index:
+            next_commands.append((ordering_index, command))
+    if not next_commands:
+        return None
+    return dict(min(next_commands, key=lambda item: item[0])[1])
+
+
+def _posttooluse_event_ref_trace_gate0_evidence() -> dict[str, object]:
+    hook_rows: list[dict[str, object]] = [
+        {
+            "row_index": 1,
+            "hook_event_name": "PostToolUse",
+            "tool_use_id": "item_4",
+            "stdout_payload": {
+                "hookSpecificOutput": {
+                    "hookEventName": "PostToolUse",
+                    "additionalContext": (
+                        "I still need direct evidence for: show command outputs "
+                        "proving exact bytes/content. The last tool result did not "
+                        "show that exact item. Next step: show command outputs "
+                        "proving exact bytes/content before treating this as done."
+                    ),
+                }
+            },
+            "session_state": {
+                "last_posttooluse_task_standard_context_item_id": (
+                    "task-standard:closure_evidence:synthetic"
+                )
+            },
+        }
+    ]
+    records: list[dict[str, object]] = [
+        {
+            "type": "item.started",
+            "item": {
+                "id": "item_4",
+                "type": "command_execution",
+                "command": "/bin/zsh -lc \"printf 'alpha beta omega' > exact_result.txt\"",
+                "aggregated_output": "",
+                "status": "in_progress",
+            },
+        },
+        {
+            "type": "item.completed",
+            "item": {
+                "id": "item_4",
+                "type": "command_execution",
+                "command": "/bin/zsh -lc \"printf 'alpha beta omega' > exact_result.txt\"",
+                "aggregated_output": "",
+                "status": "completed",
+            },
+        },
+        {
+            "type": "item.started",
+            "item": {
+                "id": "item_6",
+                "type": "command_execution",
+                "command": "/bin/zsh -lc 'od -An -t x1 -v exact_result.txt'",
+                "aggregated_output": "",
+                "status": "in_progress",
+            },
+        },
+        {
+            "type": "item.completed",
+            "item": {
+                "id": "item_6",
+                "type": "command_execution",
+                "command": "/bin/zsh -lc 'od -An -t x1 -v exact_result.txt'",
+                "aggregated_output": "61 6c 70 68 61 20 62 65\n",
+                "status": "completed",
+            },
+        },
+    ]
+    trace = _posttooluse_context_trace(hook_rows, records)
+    preceding_tool = trace.preceding_tool or {}
+    next_tool = trace.next_tool_after_context or {}
+    artifact_creation = "printf 'alpha beta omega' > exact_result.txt"
+    return {
+        "trace": trace.as_payload(),
+        "ambiguous": trace.ambiguous,
+        "ambiguity_reason": trace.ambiguity_reason,
+        "join_source": trace.join_source,
+        "context_row_index_present": trace.context_row_index is not None,
+        "preceding_tool_is_artifact_creation": artifact_creation
+        in str(preceding_tool.get("command") or ""),
+        "next_tool_is_not_artifact_creation": artifact_creation
+        not in str(next_tool.get("command") or ""),
+        "next_tool_matches_context": _command_matches_posttooluse_context(next_tool),
+    }
 
 
 def _posttooluse_live_trace_replay_evidence() -> dict[str, object]:
@@ -4686,6 +4878,9 @@ def _posttooluse_live_trace_replay_evidence() -> dict[str, object]:
         "available": True,
         "trial_root": str(trial_root),
         "trace": trace.as_payload(),
+        "ambiguous": trace.ambiguous,
+        "ambiguity_reason": trace.ambiguity_reason,
+        "join_source": trace.join_source,
         "context_row_index_present": trace.context_row_index is not None,
         "preceding_tool_is_artifact_creation": artifact_creation in preceding_command,
         "next_tool_is_not_artifact_creation": artifact_creation not in next_command,
@@ -4706,12 +4901,12 @@ def _session_state_value(row: Mapping[str, Any], key: str) -> object | None:
 
 
 def _posttooluse_artifact_prerequisite_observed(
-    commands: list[Mapping[str, str]],
+    commands: list[Mapping[str, object]],
 ) -> bool:
     return any(_posttooluse_command_creates_exact_result(command) for command in commands)
 
 
-def _posttooluse_command_creates_exact_result(command: Mapping[str, str]) -> bool:
+def _posttooluse_command_creates_exact_result(command: Mapping[str, object]) -> bool:
     text = str(command.get("command") or "").lower()
     return bool(
         "exact_result.txt" in text
@@ -4728,7 +4923,7 @@ def _posttooluse_command_creates_exact_result(command: Mapping[str, str]) -> boo
     )
 
 
-def _command_matches_posttooluse_context(command: Mapping[str, str] | None) -> bool:
+def _command_matches_posttooluse_context(command: Mapping[str, object] | None) -> bool:
     if not command:
         return False
     text = " ".join(str(command.get(key, "")) for key in ("command", "aggregated_output"))

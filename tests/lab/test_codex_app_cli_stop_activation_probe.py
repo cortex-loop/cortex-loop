@@ -808,6 +808,7 @@ def test_live_trajectory_rows_record_no_snapshot_product_state() -> None:
             "hook_event_name": "Stop",
             "raw_keys": None,
             "tool_name": None,
+            "tool_use_id": None,
             "tool_input_present": None,
             "tool_response_present": None,
             "error_present": None,

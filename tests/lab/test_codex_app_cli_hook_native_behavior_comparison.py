@@ -358,16 +358,24 @@ def test_task_standard_posttooluse_actuator_trace_gate0_uses_hook_chronology(
     boundary_results = report["boundary_results"]
     assert boundary_results["live_equivalent_failed_check_stays_silent"] is True
     assert boundary_results["mismatch_candidate_still_emits_context"] is True
+    assert boundary_results["event_ref_trace_non_ambiguous"] is True
+    assert boundary_results["event_ref_join_source"] is True
     assert boundary_results["trace_uses_context_row_chronology"] is True
     assert boundary_results["preceding_tool_is_context_source"] is True
     assert boundary_results["next_tool_is_strictly_after_context"] is True
-    trace = report["trace_replay"]["trace"]
+    assert boundary_results["historical_trace_marked_ambiguous_without_event_ref"] is True
+    assert boundary_results["historical_trace_does_not_infer_by_position"] is True
+    trace = report["event_ref_trace"]["trace"]
     assert "printf 'alpha beta omega' > exact_result.txt" in trace["preceding_tool"][
         "command"
     ]
     assert "printf 'alpha beta omega' > exact_result.txt" not in trace[
         "next_tool_after_context"
     ]["command"]
+    historical_trace = report["trace_replay"]["trace"]
+    assert historical_trace["ambiguous"] is True
+    assert historical_trace["preceding_tool"] is None
+    assert historical_trace["next_tool_after_context"] is None
 
 
 def test_task_standard_posttooluse_live_refuses_without_explicit_approval(
