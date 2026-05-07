@@ -18,6 +18,7 @@ from lab.codex_app_cli_hook_native_behavior_comparison import (
     run_gate0_probe,
     run_live_comparison,
     run_task_standard_offline_readiness_gate,
+    run_task_standard_posttooluse_firing_boundary_gate0,
     run_task_standard_posttooluse_phase_aware_gate0,
     run_task_standard_posttooluse_gate0,
     run_task_standard_posttooluse_live_probe,
@@ -250,6 +251,58 @@ def test_task_standard_posttooluse_phase_aware_gate0_waits_for_candidate(
     assert "product-visible" not in text
     assert "verify more" not in text.lower()
     assert "Cortex" not in text
+
+
+def test_task_standard_posttooluse_firing_boundary_gate0_accepts_live_equivalent_payloads(
+    tmp_path: Path,
+) -> None:
+    report = run_task_standard_posttooluse_firing_boundary_gate0(output_root=tmp_path)
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_posttooluse_firing_boundary_gate0"
+    assert report["live_trials_ran"] is False
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["next_product_train"] == (
+        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+    )
+    assert report["boundary_results"]["pre_artifact_check_stays_silent"] is True
+    assert (
+        report["boundary_results"][
+            "live_equivalent_candidate_artifact_emits_context"
+        ]
+        is True
+    )
+    assert (
+        report["boundary_results"][
+            "live_equivalent_readback_emits_context_without_status_marker"
+        ]
+        is True
+    )
+    assert report["boundary_results"]["successful_contexts_target_unresolved_evidence"]
+    assert report["boundary_results"]["clean_and_control_cases_stay_silent"] is True
+    assert report["boundary_results"]["marker_miss_is_private"] is True
+    assert report["boundary_results"]["failed_candidate_stays_silent"] is True
+    assert report["boundary_results"]["no_stop_block_or_pretool_deny"] is True
+    by_case = {row["case"]: row for row in report["rows"]}
+    assert (
+        by_case["live_equivalent_pre_artifact_missing_silent"][
+            "posttooluse_context_silence_reason"
+        ]
+        == "pre_artifact_candidate_missing"
+    )
+    assert (
+        by_case["markerless_aligned_silent"][
+            "posttooluse_context_silence_reason"
+        ]
+        == "no_verification_marker"
+    )
+    context_payload = by_case["live_equivalent_candidate_artifact_context"][
+        "stdout_payload"
+    ]
+    text = context_payload["hookSpecificOutput"]["additionalContext"]
+    assert "direct evidence for:" in text
+    assert "product-visible" not in text
+    assert "verify more" not in text.lower()
 
 
 def test_task_standard_posttooluse_live_refuses_without_explicit_approval(

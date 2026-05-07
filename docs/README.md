@@ -222,6 +222,10 @@ Active docs:
   live negative evidence that the phase-aware actuator did not emit
   PostToolUse context after candidate artifact work, queuing firing-boundary
   remediation
+- [Cortex Codex App/CLI PostToolUse Task-Standard Firing-Boundary Remediation](recon/cortex_codex_app_cli_posttooluse_task_standard_firing_boundary_remediation.md) —
+  no-live proof that live-equivalent candidate artifact and readback payloads
+  without exit/status markers can fire phase-aware PostToolUse context while
+  pre-artifact and control cases stay silent
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed

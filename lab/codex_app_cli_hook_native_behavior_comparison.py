@@ -249,6 +249,10 @@ def main(argv: list[str] | None = None) -> int:
         "--task-standard-posttooluse-phase-aware-gate0",
         action="store_true",
     )
+    parser.add_argument(
+        "--task-standard-posttooluse-firing-boundary-gate0",
+        action="store_true",
+    )
     parser.add_argument("--task-standard-posttooluse-live", action="store_true")
     parser.add_argument(
         "--task-standard-raw-vs-silent-artifact-readout", action="store_true"
@@ -281,6 +285,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     elif args.task_standard_posttooluse_phase_aware_gate0:
         report = run_task_standard_posttooluse_phase_aware_gate0(
+            output_root=args.output_root
+        )
+    elif args.task_standard_posttooluse_firing_boundary_gate0:
+        report = run_task_standard_posttooluse_firing_boundary_gate0(
             output_root=args.output_root
         )
     elif args.task_standard_posttooluse_gate0:
@@ -1372,6 +1380,151 @@ def run_task_standard_posttooluse_phase_aware_gate0(
     return report
 
 
+def run_task_standard_posttooluse_firing_boundary_gate0(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+) -> dict[str, object]:
+    root = Path(output_root) / "task_standard_posttooluse_firing_boundary_gate0"
+    root.mkdir(parents=True, exist_ok=True)
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+    cases = (
+        "live_equivalent_pre_artifact_missing_silent",
+        "live_equivalent_candidate_artifact_context",
+        "live_equivalent_readback_context",
+        "clean_evidenced_silent",
+        "generic_unrelated_silent",
+        "markerless_aligned_silent",
+        "failed_candidate_silent",
+        "honest_blocker_silent",
+        "waiting_on_user_silent",
+    )
+    rows = [
+        _task_standard_posttooluse_gate0_case(root=root, case_name=case_name)
+        for case_name in cases
+    ]
+    by_case = {row["case"]: row for row in rows}
+    candidate_row = by_case["live_equivalent_candidate_artifact_context"]
+    readback_row = by_case["live_equivalent_readback_context"]
+    candidate_payload = candidate_row["stdout_payload"]
+    readback_payload = readback_row["stdout_payload"]
+    candidate_text = _posttooluse_gate0_context_text(candidate_payload)
+    readback_text = _posttooluse_gate0_context_text(readback_payload)
+    silent_cases = tuple(
+        case
+        for case in cases
+        if case
+        not in {
+            "live_equivalent_candidate_artifact_context",
+            "live_equivalent_readback_context",
+        }
+    )
+    boundary_results = {
+        "pre_artifact_check_stays_silent": (
+            by_case["live_equivalent_pre_artifact_missing_silent"]["stdout_payload"]
+            is None
+            and by_case["live_equivalent_pre_artifact_missing_silent"][
+                "posttooluse_context_silence_reason"
+            ]
+            == "pre_artifact_candidate_missing"
+        ),
+        "live_equivalent_candidate_artifact_emits_context": (
+            isinstance(candidate_payload, Mapping)
+            and candidate_row["directive_action"] == "add_additional_context"
+            and candidate_text is not None
+        ),
+        "live_equivalent_readback_emits_context_without_status_marker": (
+            isinstance(readback_payload, Mapping)
+            and readback_row["directive_action"] == "add_additional_context"
+            and readback_text is not None
+        ),
+        "successful_contexts_target_unresolved_evidence": (
+            candidate_text is not None
+            and readback_text is not None
+            and "direct evidence for:" in candidate_text
+            and "direct evidence for:" in readback_text
+            and "wc -l exact_result.txt" in candidate_text
+            and "cat -A exact_result.txt" in candidate_text
+            and "wc -l exact_result.txt" in readback_text
+            and "cat -A exact_result.txt" in readback_text
+        ),
+        "clean_and_control_cases_stay_silent": all(
+            by_case[case]["stdout_payload"] is None for case in silent_cases
+        ),
+        "marker_miss_is_private": (
+            by_case["markerless_aligned_silent"][
+                "posttooluse_context_silence_reason"
+            ]
+            == "no_verification_marker"
+        ),
+        "failed_candidate_stays_silent": (
+            by_case["failed_candidate_silent"]["stdout_payload"] is None
+            and by_case["failed_candidate_silent"][
+                "posttooluse_context_silence_reason"
+            ]
+            in {"evidence_not_standard_aligned", "tool_event_failed"}
+        ),
+        "clean_evidenced_has_no_unresolved_context": (
+            by_case["clean_evidenced_silent"]["stdout_payload"] is None
+            and by_case["clean_evidenced_silent"][
+                "posttooluse_context_silence_reason"
+            ]
+            in {"task_standard_closure_satisfied", "no_unresolved_required_item"}
+        ),
+        "no_stop_block_or_pretool_deny": all(
+            not row["pretool_decision_blocked"] and row["stop_block_count"] == 0
+            for row in rows
+        ),
+        "no_runtime_snapshot": all(not row["runtime_snapshot_loaded"] for row in rows),
+        "root_config_unchanged": root_config_hash_before == _file_hash(root_config),
+        "hidden_scoring_stays_scoring_only": True,
+        "no_transport_math": True,
+    }
+    passed = all(boundary_results.values())
+    report = {
+        "probe": "codex_app_cli_task_standard_posttooluse_firing_boundary_gate0",
+        "surface": "product_host_actuator_plus_lab_proof",
+        "evidence_kind": "structural_posttooluse_firing_boundary_remediation",
+        "passed": passed,
+        "verdict": "pass_posttooluse_firing_boundary_gate0"
+        if passed
+        else "fail_posttooluse_firing_boundary_gate0",
+        "live_trials_ran": False,
+        "behavior_lift_claim_allowed": False,
+        "rows": rows,
+        "boundary_results": boundary_results,
+        "output_root": str(root),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": _file_hash(root_config),
+        "next_product_train": (
+            "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+            if passed
+            else "codex-app-cli-posttooluse-task-standard-firing-boundary-decision"
+        ),
+        "truth_boundary": (
+            "Firing-boundary Gate 0 proves only that live-equivalent PostToolUse "
+            "payloads without exit/status markers can fire phase-aware "
+            "task-standard context after candidate artifact or readback evidence "
+            "while clean/control cases stay silent. It does not earn live behavior "
+            "lift."
+        ),
+    }
+    _write_json(root / "gate0_report.json", report)
+    return report
+
+
+def _posttooluse_gate0_context_text(payload: object) -> str | None:
+    if not isinstance(payload, Mapping):
+        return None
+    hook_specific = payload.get("hookSpecificOutput")
+    if not isinstance(hook_specific, Mapping):
+        return None
+    if hook_specific.get("hookEventName") != "PostToolUse":
+        return None
+    text = hook_specific.get("additionalContext")
+    return text if isinstance(text, str) and text else None
+
+
 def _task_standard_posttooluse_gate0_case(
     *,
     root: Path,
@@ -1521,6 +1674,20 @@ def _task_standard_posttooluse_gate0_payloads(
             "tool_input": {"command": "printf 'alpha beta omega' > exact_result.txt"},
             "tool_response": {"exit_code": 0, "aggregated_output": ""},
         },
+        "live_equivalent_pre_artifact_missing_silent": {
+            "tool_input": {"command": "wc -l exact_result.txt"},
+            "tool_response": "wc: exact_result.txt: open: No such file or directory\n",
+        },
+        "live_equivalent_candidate_artifact_context": {
+            "tool_input": {
+                "command": "printf '%s' 'alpha beta omega' > exact_result.txt"
+            },
+            "tool_response": "",
+        },
+        "live_equivalent_readback_context": {
+            "tool_input": {"command": "wc -l exact_result.txt"},
+            "tool_response": "1 exact_result.txt\n",
+        },
         "unresolved_exactness_context": {
             "tool_input": {"command": "wc -l exact_result.txt"},
             "tool_response": {
@@ -1545,6 +1712,12 @@ def _task_standard_posttooluse_gate0_payloads(
                 "exit_code": 0,
                 "output": "alpha beta omega with no extra text",
             },
+        },
+        "failed_candidate_silent": {
+            "tool_input": {
+                "command": "printf '%s' 'alpha beta omega' > exact_result.txt"
+            },
+            "tool_response": "error: permission denied writing exact_result.txt\n",
         },
         "honest_blocker_silent": {
             "tool_input": {"command": "printf blocked"},
@@ -4411,6 +4584,7 @@ __all__ = [
     "run_gate0_probe",
     "run_live_comparison",
     "run_task_standard_offline_readiness_gate",
+    "run_task_standard_posttooluse_firing_boundary_gate0",
     "run_task_standard_posttooluse_gate0",
     "run_task_standard_posttooluse_phase_aware_gate0",
     "run_task_standard_posttooluse_live_probe",
