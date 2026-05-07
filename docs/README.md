@@ -244,6 +244,10 @@ Active docs:
   no-live proof that SRE task-standard evidence and the Codex PostToolUse
   actuator consume one typed classifier for missing, failed, candidate,
   readback, markerless, and completion phases before the next live rerun
+- [Cortex Codex App/CLI PostToolUse Task-Standard Phase-Aware Narrow Live Rerun After Shared Tool Evidence](recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun_after_shared_tool_evidence.md) —
+  live negative evidence that the shared-classifier rerun failed on repeated
+  PostToolUse context and ambiguous hook/stdout event-ref joining, queuing
+  no-live context-loop and trace remediation
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed
