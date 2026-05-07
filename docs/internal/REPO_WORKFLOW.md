@@ -241,6 +241,14 @@ health for Claude Code and Codex App, Codex validator availability,
 clean synced `main`, and dangling worktree detection. Product work
 should not start while it fails.
 
+`cleanup-report` is the final resting-state gate, not a mid-stack progress
+gate. It must remain strict: if the repo is on an active stacked branch, has
+open branch anchors, or has remote managed heads, it should fail. When a
+stacked session is explicitly justified with `start-session --allow-stacked
+--stacked-reason "<text>"`, use `active-stack-report` during the stack to
+verify the active branch is mechanically legible without pretending the repo is
+fully clean.
+
 Scaffold the enforced closeout contract for the current branch:
 
 ```bash
@@ -264,6 +272,49 @@ Require the strict final-clean contract:
 ```bash
 python internal/workflow/repo_workflow.py cleanup-report
 ```
+
+Check an explicitly stacked in-flight branch without weakening the final-clean
+contract:
+
+```bash
+python internal/workflow/repo_workflow.py active-stack-report
+```
+
+`active-stack-report` passes only when the worktree is clean, local `main` is
+synced with `origin/main`, and the current managed branch has a recorded
+`stacked_session_reason` from `start-session --allow-stacked`. It reports open
+local and remote branch inventory as debt and marks `cleanup-report` as
+expected to fail. It is not evidence that the repo is back at resting truth.
+
+Before starting or continuing any seam while `cleanup-report` fails, run the
+surface-aware seam gate:
+
+```bash
+python internal/workflow/repo_workflow.py seam-preflight --slug task-name --surface internal
+```
+
+`seam-preflight` is the guard that prevents "active stack is legible" from
+turning into "anything may be added to this branch." On a clean resting `main`
+it permits all closeout surfaces. On an active stacked branch it permits only
+the surfaces allowed by the recorded stacked reason. A workflow-only,
+docs-only, audit-only, or planning-only stacked reason permits `internal`
+seams only; `product`, `lab`, and `experimental` seams must stop unless the
+operator records a new per-seam override:
+
+Workflow-only, docs-only, audit-only, or planning-only means internal-only
+for this gate.
+
+```bash
+python internal/workflow/repo_workflow.py seam-preflight \
+  --slug product-hotfix \
+  --surface product \
+  --allow-stacked \
+  --stacked-reason "surface:product emergency hotfix while branch disposition is in flight"
+```
+
+The per-seam override is written under `.cortex/closeout_contract/<branch>/`
+and closeout validation checks it. Recon prose or chat rationale alone does
+not satisfy this gate.
 
 ## Codex App Dogfood Mode
 
@@ -415,6 +466,30 @@ Closeout contract artifact:
 - fails if any merged local branch, open manual branch, or open managed branch remains
 - fails if any remote managed-session head or remote `review/*` head remains
 - is the final repo-hygiene gate for declaring the repo fully clean
+
+`active-stack-report`:
+
+- is read-only
+- is the active-stack gate for a deliberately stacked managed session
+- does not run or relax `cleanup-report`
+- fails on dirty worktree state, unsynced `main`, non-managed current branches,
+  or a missing `stacked_session_reason`
+- reports open local/remote branch anchors as branch-inventory debt
+- reports `allowed_next_surfaces` and `blocked_next_surfaces`; a workflow-only
+  stack should allow only `internal`
+- may pass while `cleanup-report` correctly fails; that means the active stack
+  is legible, not that the repo is clean
+
+`seam-preflight`:
+
+- is the surface-aware gate for starting or continuing a seam
+- allows every closeout surface only when the repo is at clean resting `main`
+- on active stacks, permits only surfaces explicitly allowed by the branch's
+  stacked reason or by a per-seam `--allow-stacked --stacked-reason` marker
+- fails when the requested seam slug differs from the current branch slug
+  unless a per-seam override is recorded
+- is checked again during managed closeout so product/lab path changes cannot
+  hide behind an internal workflow stack
 
 Managed verification is purpose-first and surface-aware:
 

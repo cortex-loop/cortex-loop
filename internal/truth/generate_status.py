@@ -103,6 +103,34 @@ def _render_host_surface_taxonomy(taxonomy: dict[str, object] | None) -> list[st
     return lines
 
 
+def _render_doc_roles(doc_roles: dict[str, object] | None) -> list[str]:
+    if not doc_roles:
+        return []
+    lines: list[str] = ["## Document Authority Map", ""]
+    summary = str(doc_roles.get("summary", "")).strip()
+    if summary:
+        lines.extend([summary, ""])
+    roles = doc_roles.get("roles", [])
+    if not isinstance(roles, list) or not roles:
+        return lines
+    lines.extend(
+        [
+            "| Role | Meaning | Update Rule | Docs |",
+            "| --- | --- | --- | --- |",
+        ]
+    )
+    for role in roles:
+        if not isinstance(role, dict):
+            continue
+        paths = role.get("paths", [])
+        if not isinstance(paths, list):
+            paths = []
+        lines.append(
+            f"| `{role.get('id', '')}` | {role.get('meaning', '')} | {role.get('update_rule', '')} | {_format_path_list([str(path) for path in paths])} |"
+        )
+    return lines
+
+
 def _next_product_train_slug_display(next_product_train: dict[str, object]) -> str:
     slug = next_product_train.get("slug")
     if slug is None:
@@ -132,6 +160,7 @@ def render_status(data: dict[str, object]) -> str:
     blocked_moves = data["blocked_moves"]
     where_to_work = data["where_to_work"]
     active_docs = data["active_docs"]
+    doc_roles = data.get("doc_roles")
     host_truth = ", ".join(
         f"`{host['name']}={host['conformance']}`" for host in hosts
     )
@@ -201,6 +230,9 @@ def render_status(data: dict[str, object]) -> str:
             f"- Next product train after the current focus: {_next_product_train_slug_display(next_product_train)}",
         ]
     )
+    doc_role_lines = _render_doc_roles(doc_roles if isinstance(doc_roles, dict) else None)
+    if doc_role_lines:
+        lines.extend(["", *doc_role_lines])
     lines.extend(
         [
             "",
@@ -359,7 +391,11 @@ def render_status(data: dict[str, object]) -> str:
         lines.append(f"  Purpose: {ref['purpose']}")
     lines.extend(["", "## Blocked Moves", ""])
     lines.extend(f"- {item}" for item in blocked_moves)
-    lines.extend(["", "## Active Docs", ""])
+    lines.extend(["", "## Active Docs Inventory", ""])
+    lines.append(
+        "This is the complete non-archive document inventory tracked by the status registry. Authority comes from the Document Authority Map above, not from this inventory list alone."
+    )
+    lines.append("")
     lines.extend(f"- `{path}`" for path in active_docs)
     return "\n".join(lines)
 

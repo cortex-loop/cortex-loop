@@ -330,6 +330,9 @@ TASK_STANDARD_EXECUTIVE_DOCTRINE_MATH_RECON_PATH = (
     / "recon"
     / "cortex_task_standard_executive_doctrine_math_refinement.md"
 )
+SEMANTIC_CONTRACTION_AUDIT_RECON_PATH = (
+    REPO_ROOT / "docs" / "recon" / "cortex_semantic_contraction_audit.md"
+)
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
 WORKFLOW_DOC_PATH = REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md"
@@ -671,7 +674,81 @@ def test_executive_runtime_tracker_keeps_product_goal_and_live_truths_visible() 
     assert "brake EMA" in text
     assert "AUX priors" in text
     assert "internal tags" in text
+    assert "Semantic Contraction Discipline" in text
+    assert "minifying readable code" in text
+    assert "duplicate policy" in text
+    assert "`cortex/**` is about 43.6K Python LOC" in text
+    assert "`cortex/hosts` about 21.6K LOC" in text
+    assert "four host `runtime.py` files" in text
+    assert "per-host `session_io.py` parallelism" in text
+    assert "`cortex/hosts/openai/codex_app_cli_hook_coordinator.py`" in text
+    assert "large SRE/AUX" in text
+    assert "schedule or explicitly\nwaive a contraction audit" in text
+    assert "added/deleted" in text
+    assert "Raw LOC reduction is not success" in text
+    assert "Audit-Survivor Future Backlog" in text
+    assert "serious candidate backlog, not casual brainstorming" in text
+    assert "must consider these candidates" in text
+    assert "To remove or demote a row" in text
+    assert "`cortex-semantic-contraction-audit`" in text
+    assert "deletion/consolidation map" in text
+    assert "behavior-preservation proof requirements" in text
+    assert "`evidence_landed`" in text
+    assert "`driver-session-io-common-kernel-audit`" in text
+    assert "`coordinator-actuator-boundary-extraction`" in text
+    assert "`recon-archive-retirement-pass`" in text
+    assert "`sre-aux-policy-concentration-audit`" in text
+    assert "`workflow-connectivity-trace-reachability`" in text
+    assert "`recon-frontmatter-indexer`" in text
+    assert "`sre-output-law-rendering-contract`" in text
+    assert "`core-proof-obligation-test-factories`" in text
+    assert "`host-runtime-kernel-extraction-audit`" in text
+    assert "`posttooluse-phase-aware-calibration`" in text
+    assert "`pretooluse-motor-inhibition-gate0`" in text
+    assert "`bayesian-kill-rule-shadow`" in text
+    assert "`task-standard-semantic-alignment`" in text
+    assert "`queueable_now`" in text
+    assert "`queueable_after_probe`" in text
+    assert "`research_backlog`" in text
+    assert "Rows produced by the semantic contraction audit are serious candidate seams" in text
+    assert "mathematically attractive" in text
     assert "If the answer starts with \"which hook can we use?\"" in text
+
+
+def test_semantic_contraction_audit_records_candidates_without_runtime_claim() -> None:
+    text = _read(SEMANTIC_CONTRACTION_AUDIT_RECON_PATH)
+    status = _load_status()
+    recon_paths = {
+        path
+        for role in status["doc_roles"]["roles"]
+        if role["id"] == "recon_evidence"
+        for path in role["paths"]
+    }
+
+    assert SEMANTIC_CONTRACTION_AUDIT_RECON_PATH.exists()
+    assert "docs/recon/cortex_semantic_contraction_audit.md" in status["active_docs"]
+    assert "docs/recon/cortex_semantic_contraction_audit.md" in recon_paths
+    assert "Surface: internal / recon audit" in text
+    assert "Semantic contraction is not minification" in text
+    assert "behavior-preservation proof" in text
+    assert "host runtime parallelism" in text
+    assert "per-host driver/session I/O duplication" in text
+    assert "`codex_app_cli_hook_coordinator.py` growth" in text
+    assert "large SRE/AUX modules" in text
+    assert "inactive lab/recon/doc active-surface retirement" in text
+    assert "`delete`" in text
+    assert "`collapse`" in text
+    assert "`extract`" in text
+    assert "`archive`" in text
+    assert "`defer`" in text
+    assert "No product behavior changed" in text
+    assert "No runtime contraction, deletion, refactor" in text
+    assert "No behavior lift" in text
+    assert "shipping promotion" in text
+    assert "status `next_product_train`" in text
+    assert status["next_product_train"]["slug"] == (
+        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
 
 
 def test_retired_executive_runtime_roadmap_is_not_active_authority() -> None:
@@ -879,6 +956,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "recon/cortex_openai_operator_visible_intervention_live_probe.md" in docs_index
     assert "recon/cortex_visible_intervention_product_perception_hardening.md" in docs_index
     assert "recon/cortex_openai_operator_visible_intervention_hardened_rerun.md" in docs_index
+    assert "recon/cortex_semantic_contraction_audit.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
@@ -948,6 +1026,42 @@ def test_active_doc_allowlist_matches_status_registry() -> None:
     }
 
     assert actual == expected
+
+
+def test_document_role_map_covers_docs_without_turning_context_into_roadmap() -> None:
+    status = _load_status()
+    role_map = status["doc_roles"]
+    roles = role_map["roles"]
+    role_paths: dict[str, set[str]] = {
+        role["id"]: set(role["paths"])
+        for role in roles
+    }
+    all_role_paths = [path for role in roles for path in role["paths"]]
+
+    assert "status registry remains the operational roadmap authority" in role_map["summary"]
+    assert len(all_role_paths) == len(set(all_role_paths))
+    assert set(all_role_paths) == set(status["active_docs"])
+
+    assert role_paths["identity_authority"] == {"docs/CORTEX.md"}
+    assert role_paths["generated_operational_view"] == {"docs/CORTEX_STATUS.md"}
+    assert role_paths["planning_scoreboard"] == {"docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md"}
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" in role_paths["retained_context"]
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md" in role_paths["retained_context"]
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" not in role_paths["planning_scoreboard"]
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" not in role_paths["identity_authority"]
+    assert "docs/internal/REPO_WORKFLOW.md" in role_paths["workflow_authority"]
+    assert "docs/recon/cortex_codex_app_cli_task_standard_live_run.md" in role_paths["recon_evidence"]
+    assert "docs/recon/cortex_semantic_contraction_audit.md" in role_paths["recon_evidence"]
+
+    readme = _read(DOCS_INDEX_PATH)
+    status_doc = _read(STATUS_DOC_PATH)
+    assert "Document roles are machine-readable" in readme
+    assert "not current roadmap authority" in readme.replace("\n  ", " ")
+    assert "## Document Authority Map" in status_doc
+    assert "`retained_context`" in status_doc
+    assert "Do not queue work from these docs directly" in status_doc
+    assert "## Active Docs Inventory" in status_doc
+    assert "Authority comes from the Document Authority Map" in status_doc
 
 
 def test_anti_drift_rules_pin_fixture_to_law_product_spine() -> None:
@@ -1077,6 +1191,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_openai_operator_verification_debt_continuation.md",
             "cortex_openai_operator_visible_intervention_hardened_rerun.md",
             "cortex_openai_operator_visible_intervention_live_probe.md",
+            "cortex_semantic_contraction_audit.md",
             "cortex_task_standard_executive_doctrine_math_refinement.md",
             "cortex_task_standard_sre_correspondence_reconciliation.md",
             "cortex_visible_intervention_product_perception_hardening.md",
@@ -3236,6 +3351,7 @@ def test_status_registry_is_complete_and_stable() -> None:
         "bootstrap",
         "product_goal",
         "identity",
+        "doc_roles",
         "executive_completion",
         "bio_to_code_matrix",
         "math_to_code_rules",

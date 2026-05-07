@@ -4,6 +4,11 @@ Surface: product
 
 This directory index is product-first and single-truth-first.
 
+Document roles are machine-readable in `internal/truth/cortex_status.json`.
+The generated status view explains which docs are authority, retained
+context, planning scoreboard, workflow law, support context, or recon
+evidence; retained context is not current roadmap authority.
+
 Active docs:
 - [CORTEX](CORTEX.md) — canonical narrative authority
 - [Cortex Executive Runtime Tracker](CORTEX_EXECUTIVE_RUNTIME_TRACKER.md) —
@@ -210,6 +215,9 @@ Active docs:
 - [Cortex Codex App/CLI PostToolUse Task-Standard Actuator Architecture Decision](recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md) —
   decision classifying the negative live result as PostToolUse timing/selection
   failure and queuing no-live phase-aware calibration
+- [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
+  internal audit evidence for high-confidence deletion/consolidation
+  candidates; no runtime contraction or product behavior change is claimed
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch
