@@ -575,10 +575,25 @@ def test_executive_runtime_tracker_keeps_product_goal_and_live_truths_visible() 
     assert "brake EMA" in text
     assert "AUX priors" in text
     assert "internal tags" in text
+    assert "Semantic Contraction Discipline" in text
+    assert "minifying readable code" in text
+    assert "duplicate policy" in text
+    assert "`cortex/**` is about 43.6K Python LOC" in text
+    assert "`cortex/hosts` about 21.6K LOC" in text
+    assert "four host `runtime.py` files" in text
+    assert "per-host `session_io.py` parallelism" in text
+    assert "`cortex/hosts/openai/codex_app_cli_hook_coordinator.py`" in text
+    assert "large SRE/AUX" in text
+    assert "schedule or explicitly\nwaive a contraction audit" in text
+    assert "added/deleted" in text
+    assert "Raw LOC reduction is not success" in text
     assert "Audit-Survivor Future Backlog" in text
     assert "serious candidate backlog, not casual brainstorming" in text
     assert "must consider these candidates" in text
     assert "To remove or demote a row" in text
+    assert "`cortex-semantic-contraction-audit`" in text
+    assert "deletion/consolidation map" in text
+    assert "behavior-preservation proof requirements" in text
     assert "`workflow-connectivity-trace-reachability`" in text
     assert "`recon-frontmatter-indexer`" in text
     assert "`sre-output-law-rendering-contract`" in text

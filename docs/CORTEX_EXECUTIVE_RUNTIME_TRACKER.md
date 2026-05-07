@@ -154,6 +154,30 @@ obligation, a continuity gap, a capability boundary, or a verified-work
 preservation risk. If control pressure exists without an anchor, Cortex should
 route, degrade, inspect, or stay silent rather than invent generic advice.
 
+## Semantic Contraction Discipline
+
+Cortex should get smaller by removing duplicate policy and stale surfaces, not
+by minifying readable code. Semantic contraction means collapsing duplicate
+law into one owner, retiring inactive proof paths, archiving or role-demoting
+retained context that no longer governs current work, and deleting host/runtime
+copy-paste only when behavior-preservation proof or explicit retirement
+evidence exists.
+
+Current size pressure is material: `cortex/**` is about 43.6K Python LOC, with
+`cortex/hosts` about 21.6K LOC. The largest contraction risk centers are the
+four host `runtime.py` files, per-host `session_io.py` parallelism,
+`cortex/hosts/openai/codex_app_cli_hook_coordinator.py`, and large SRE/AUX
+modules that can accumulate duplicate policy paths.
+
+After a run of additive product seams, planning should schedule or explicitly
+waive a contraction audit before the next large actuator, substrate, or
+host-kernel expansion. Future architecture/product seams should report LOC
+added/deleted, duplicate policy removed, the owner module after the change,
+and whether the seam added a new policy path, consolidated one, or left
+explicit contraction debt. Raw LOC reduction is not success; removal of
+duplicate policy or retired surfaces while preserving Cortex law, host
+distinction, and proof coverage is success.
+
 ## Audit-Survivor Future Backlog
 
 This section is a serious candidate backlog, not casual brainstorming and not
@@ -166,6 +190,7 @@ update that names the code-grounded reason.
 
 | Candidate seam | Why it matters for the future Cortex shape | Promotion gate | Current state |
 | --- | --- | --- | --- |
+| `cortex-semantic-contraction-audit` | Cortex should not grow by default; a dedicated audit produces a deletion/consolidation map with owners, behavior-preservation proof requirements, and candidate seams. | Queue when workflow/planning work is allowed; no deletion until a seam proves behavior is preserved or the surface is explicitly retired in status/recon. | `queueable_now` |
 | `workflow-connectivity-trace-reachability` | Closeout already requires `connectivity_trace`, but shape validation is not enough; product seams should mechanically prove a path to model input/output. | Queue when workflow work is allowed; start with deterministic reach classes before call-graph crawling. | `queueable_now` |
 | `recon-frontmatter-indexer` | Recon docs are the audit memory of earned and forbidden claims; structured fields would make live evidence, verdicts, hosts, actuators, and families queryable instead of grep-only. | Target `doc_roles.recon_evidence`; keep narrative primary and schema supporting. | `queueable_now` |
 | `sre-output-law-rendering-contract` | Model-visible Cortex output should be constructively lawful, not protected only by template discipline and forbidden-term checks. | Extend the existing `cortex/sre/interventions.py` rendering path; no new model-visible wording without regression proof. | `queueable_now` |
