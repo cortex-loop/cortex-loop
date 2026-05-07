@@ -71,6 +71,21 @@ def test_user_prompt_submit_updates_state_without_model_visible_text() -> None:
     assert result.directive.model_visible_text is None
 
 
+def test_tool_use_id_is_preserved_for_diagnostics() -> None:
+    payload = normalize_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            tool_name="Bash",
+            tool_use_id="item_42",
+            tool_input={"command": "wc -c exact_result.txt"},
+            tool_response={"aggregated_output": "16 exact_result.txt\n"},
+        )
+    )
+
+    assert payload.tool_use_id == "item_42"
+    assert payload.as_payload()["tool_use_id"] == "item_42"
+
+
 def test_user_prompt_submit_can_emit_exact_signed_off_task_standard_text() -> None:
     store = OpenAICodexInMemoryStateStore()
 

@@ -236,6 +236,10 @@ Active docs:
 - [Cortex Codex App/CLI PostToolUse Actuator Boundary and Trace Repair](recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_trace_repair.md) —
   structural proof that the PostToolUse task-standard actuator decision has a
   host-owned module and the live harness reads next action from hook chronology
+- [Cortex Codex App/CLI PostToolUse Causal Trace IDs](recon/cortex_codex_app_cli_posttooluse_causal_trace_ids.md) —
+  structural proof that PostToolUse live readout joins context rows to stdout
+  commands by stable tool-event reference and marks missing historical joins
+  ambiguous instead of inferring by ordinal position
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed
