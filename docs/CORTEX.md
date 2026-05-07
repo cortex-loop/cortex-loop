@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-causal-trace-ids`
-### Next Product Train
 - Slug: `codex-app-cli-posttooluse-shared-tool-evidence-classification`
-- Surface: `product host actuator plus SRE substrate proof`
-- Why now: The causal trace-id Gate 0 now blocks ordinal live readout: future PostToolUse next-action evidence must join context rows to stdout command records by `tool_event_ref`, while the historical `task_standard_posttooluse_live_20260507T153242Z` replay is correctly marked ambiguous because it lacks persisted `tool_use_id`. The remaining live-readout blocker is duplicated tool-evidence classification between the Codex host actuator and SRE task-standard evidence code. Fixing that shared predicate ownership is narrower and more load-bearing than rerunning live, text tuning, matcher tuning, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, typed intervention pressure, output-law centralization, or host-runtime extraction. This follows the firing-boundary Gate 0, preserves the prior `candidate_artifact_without_posttooluse_context` remediation, preserves the exit/status marker coverage for candidate artifact creation/readback, preserves the `failure_overcontrol` / `clean_evidenced` remediation, and keeps the approval-gated live rerun paused.
+### Next Product Train
+- Slug: `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun`
+- Surface: `approval-gated product live probe`
+- Why now: The shared tool-evidence Gate 0 passed without live spend: `cortex/sre/tool_evidence.py` now owns missing-artifact, failed-check, failed-tool, markerless/generic, candidate-artifact, readback, completion, exit/status marker distinction, and explicit path-anchor classification. The SRE task-standard evidence path and Codex PostToolUse actuator consume that shared classifier while preserving prior overcontrol, firing-boundary Gate 0, phase-aware, and causal-trace Gate 0 outcomes, including the prior `candidate_artifact_without_posttooluse_context` live result, the prior `candidate artifact creation` remediation, and the `failure_overcontrol` / `clean_evidenced` remediation. With duplicated classifier ownership removed and live readout gated by stable `tool_event_ref`, the remaining current-truth question is the approval-gated phase-aware narrow live rerun.
 
 ### Research Lines Under Evaluation
 

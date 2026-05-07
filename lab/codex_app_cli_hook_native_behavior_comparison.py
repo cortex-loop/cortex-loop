@@ -108,11 +108,17 @@ from cortex.sre.task_standard import (
     TASK_STANDARD_FORMATION_TEXT,
     TaskStandardSpine,
     external_scoring_boundary_terms,
+    initialize_task_standard_spine,
     record_closure_claims,
     record_task_standard_evidence,
     store_assistant_standard_block,
     task_standard_alignment_score,
     task_standard_closure_satisfied,
+)
+from cortex.sre.tool_evidence import (
+    ToolEvidenceObservation,
+    ToolEvidencePhase,
+    classify_tool_evidence,
 )
 
 
@@ -290,6 +296,10 @@ def main(argv: list[str] | None = None) -> int:
         "--task-standard-posttooluse-actuator-trace-gate0",
         action="store_true",
     )
+    parser.add_argument(
+        "--task-standard-posttooluse-shared-tool-evidence-gate0",
+        action="store_true",
+    )
     parser.add_argument("--task-standard-posttooluse-live", action="store_true")
     parser.add_argument(
         "--task-standard-raw-vs-silent-artifact-readout", action="store_true"
@@ -334,6 +344,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     elif args.task_standard_posttooluse_actuator_trace_gate0:
         report = run_task_standard_posttooluse_actuator_trace_gate0(
+            output_root=args.output_root
+        )
+    elif args.task_standard_posttooluse_shared_tool_evidence_gate0:
+        report = run_task_standard_posttooluse_shared_tool_evidence_gate0(
             output_root=args.output_root
         )
     elif args.task_standard_posttooluse_gate0:
@@ -1806,6 +1820,222 @@ def run_task_standard_posttooluse_actuator_trace_gate0(
     }
     _write_json(root / "gate0_report.json", report)
     return report
+
+
+def run_task_standard_posttooluse_shared_tool_evidence_gate0(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+) -> dict[str, object]:
+    root = Path(output_root) / "task_standard_posttooluse_shared_tool_evidence_gate0"
+    root.mkdir(parents=True, exist_ok=True)
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+    rows = _task_standard_posttooluse_overcontrol_gate0_rows(root)
+    overcontrol_results = _task_standard_posttooluse_overcontrol_boundary_results(
+        rows,
+        root_config_hash_before=root_config_hash_before,
+        root_config=root_config,
+    )
+    classifier_rows = _task_standard_shared_tool_evidence_classifier_rows()
+    classifier_by_case = {row["case"]: row for row in classifier_rows}
+    by_case = {row["case"]: row for row in rows}
+    boundary_results = {
+        **overcontrol_results,
+        "shared_classifier_detects_pre_artifact_missing": (
+            classifier_by_case["pre_artifact_missing"]["phase"]
+            == ToolEvidencePhase.PRE_ARTIFACT_MISSING.value
+            and by_case["live_equivalent_pre_artifact_missing_silent"][
+                "posttooluse_context_silence_reason"
+            ]
+            == "pre_artifact_candidate_missing"
+        ),
+        "shared_classifier_detects_failed_check": (
+            classifier_by_case["failed_check"]["phase"]
+            == ToolEvidencePhase.FAILED_CHECK.value
+            and by_case["live_equivalent_clean_failed_check_silent"][
+                "posttooluse_context_silence_reason"
+            ]
+            == "phase_check_failed"
+        ),
+        "shared_classifier_detects_candidate_artifact": (
+            classifier_by_case["candidate_artifact"]["phase"]
+            == ToolEvidencePhase.CANDIDATE_ARTIFACT_CREATED.value
+            and by_case["live_equivalent_candidate_artifact_context"][
+                "directive_action"
+            ]
+            == "add_additional_context"
+        ),
+        "shared_classifier_detects_readback": (
+            classifier_by_case["readback_completed"]["phase"]
+            == ToolEvidencePhase.READBACK_COMPLETED.value
+            and by_case["live_equivalent_readback_context"]["directive_action"]
+            == "add_additional_context"
+        ),
+        "shared_classifier_detects_markerless": (
+            classifier_by_case["markerless"]["phase"]
+            == ToolEvidencePhase.MARKERLESS.value
+            and by_case["markerless_aligned_silent"][
+                "posttooluse_context_silence_reason"
+            ]
+            == "no_verification_marker"
+        ),
+        "sre_task_standard_generic_check_preserved": (
+            classifier_by_case["sre_generic_build"]["evidence_class"]
+            == "generic_check"
+        ),
+        "sre_task_standard_aligned_readback_preserved": (
+            classifier_by_case["sre_exact_readback"]["evidence_class"]
+            == "standard_aligned"
+        ),
+        "status_completion_marker_is_not_host_phase_marker": (
+            classifier_by_case["status_only_host_phase"]["phase"]
+            == ToolEvidencePhase.MARKERLESS.value
+            and classifier_by_case["status_only_sre_phase"]["has_verification_marker"]
+            is True
+        ),
+        "prior_causal_trace_gate0_preserved": (
+            run_task_standard_posttooluse_actuator_trace_gate0(
+                output_root=root / "prior_trace_gate0"
+            )["passed"]
+            is True
+        ),
+    }
+    passed = all(boundary_results.values())
+    report = {
+        "probe": "codex_app_cli_task_standard_posttooluse_shared_tool_evidence_gate0",
+        "surface": "product_host_actuator_plus_sre_substrate_proof",
+        "evidence_kind": "structural_shared_tool_evidence_classification",
+        "passed": passed,
+        "verdict": "pass_posttooluse_shared_tool_evidence_gate0"
+        if passed
+        else "fail_posttooluse_shared_tool_evidence_gate0",
+        "live_trials_ran": False,
+        "behavior_lift_claim_allowed": False,
+        "rows": rows,
+        "classifier_rows": classifier_rows,
+        "boundary_results": boundary_results,
+        "output_root": str(root),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": _file_hash(root_config),
+        "next_product_train": (
+            "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+            if passed
+            else "codex-app-cli-posttooluse-shared-tool-evidence-remediation"
+        ),
+        "truth_boundary": (
+            "Shared tool-evidence Gate 0 proves only that the Codex "
+            "PostToolUse actuator and SRE task-standard evidence path consume "
+            "one typed classifier while preserving prior no-live outcomes. It "
+            "does not run live Codex or earn behavior lift."
+        ),
+    }
+    _write_json(root / "gate0_report.json", report)
+    return report
+
+
+def _task_standard_shared_tool_evidence_classifier_rows() -> list[dict[str, Any]]:
+    cases = (
+        (
+            "pre_artifact_missing",
+            "Bash wc -l exact_result.txt\nwc: exact_result.txt: No such file or directory",
+            False,
+        ),
+        (
+            "failed_check",
+            "Bash cat -A exact_result.txt\ncat: illegal option -- A\nusage: cat [-belnstuv] [file ...]\n",
+            False,
+        ),
+        (
+            "candidate_artifact",
+            "Bash {\"command\":\"printf 'alpha beta omega' > exact_result.txt\"}",
+            False,
+        ),
+        (
+            "readback_completed",
+            "Bash {\"command\":\"wc -l exact_result.txt && cat -A exact_result.txt\"} 1 exact_result.txt alpha beta omega$",
+            False,
+        ),
+        (
+            "markerless",
+            "Bash {\"command\":\"printf alpha beta omega\"} {\"exit_code\":0}",
+            False,
+        ),
+        (
+            "status_only_host_phase",
+            "Bash {\"command\":\"printf alpha beta omega\"} {\"exit_code\":0}",
+            False,
+        ),
+        (
+            "status_only_sre_phase",
+            "Bash {\"command\":\"printf alpha beta omega\"} {\"exit_code\":0}",
+            True,
+        ),
+    )
+    rows: list[dict[str, Any]] = []
+    for case, tool_text, count_status_marker in cases:
+        classification = classify_tool_evidence(
+            ToolEvidenceObservation(
+                tool_text=tool_text,
+                hook_event_name="PostToolUse",
+                tool_response_present=True,
+                path_anchors=("exact_result.txt",),
+                count_completion_status_as_verification_marker=count_status_marker,
+            )
+        )
+        rows.append(
+            {
+                "case": case,
+                "phase": classification.phase.value,
+                "has_verification_marker": classification.has_verification_marker,
+                "context_eligible": classification.context_eligible,
+                "silence_reason": classification.silence_reason,
+            }
+        )
+    rows.extend(_task_standard_shared_tool_evidence_sre_rows())
+    return rows
+
+
+def _task_standard_shared_tool_evidence_sre_rows() -> list[dict[str, Any]]:
+    spine = _task_standard_gate0_seed_spine()
+    _, generic = record_task_standard_evidence(
+        spine,
+        event_ref="shared-tool-evidence:generic-build",
+        tool_text="npm run build\nexit_code: 0",
+        successful=True,
+    )
+    _, exact = record_task_standard_evidence(
+        spine,
+        event_ref="shared-tool-evidence:exact-readback",
+        tool_text=(
+            "Bash {\"command\":\"wc -l exact_result.txt && cat -A exact_result.txt\"} "
+            "1 exact_result.txt alpha beta omega$ exit_code: 0"
+        ),
+        successful=True,
+    )
+    return [
+        {
+            "case": "sre_generic_build",
+            "evidence_class": generic.evidence_class.value,
+            "item_ids": list(generic.item_ids),
+        },
+        {
+            "case": "sre_exact_readback",
+            "evidence_class": exact.evidence_class.value,
+            "item_ids": list(exact.item_ids),
+        },
+    ]
+
+
+def _task_standard_gate0_seed_spine() -> TaskStandardSpine:
+    spine = initialize_task_standard_spine(
+        "Create exact_result.txt with exact alpha beta omega content.",
+        event_ref="shared-tool-evidence:prompt",
+    )
+    return store_assistant_standard_block(
+        spine,
+        TASK_STANDARD_POSTTOOLUSE_STANDARD_BLOCK,
+        event_ref="shared-tool-evidence:standard",
+    )
 
 
 def _posttooluse_gate0_context_text(payload: object) -> str | None:
