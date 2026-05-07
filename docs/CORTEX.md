@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-task-standard-firing-boundary-remediation`
-### Next Product Train
 - Slug: `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun`
-- Surface: `product host actuator + live proof`
-- Why now: The prior phase-aware narrow live run failed with `candidate_artifact_without_posttooluse_context` because candidate artifact creation and readback PostToolUse rows stayed silent as `no_verification_marker` / `no_candidate_artifact_or_readback`. The no-live firing-boundary Gate 0 now passes on those live-equivalent payload shapes without exit/status markers while pre-artifact and clean/control rows stay silent. The next evidence question is live model response to the remediated actuator, not text tuning, matcher tuning, or a three-arm behavior comparison.
+### Next Product Train
+- Slug: `codex-app-cli-posttooluse-task-standard-overcontrol-remediation`
+- Surface: `product host actuator + no-live remediation proof`
+- Why now: The phase-aware narrow live rerun failed with `failure_overcontrol`: after the firing-boundary Gate 0 and the earlier `candidate_artifact_without_posttooluse_context` / exit/status-marker remediation, the mismatch case emitted one PostToolUse context and the next tool matched it, but the `clean_evidenced` control also received context. The next evidence question is no-live overcontrol remediation, not another live run, value probing, text tuning, matcher tuning, Sinkhorn/transport, PreToolUse denial, or a three-arm behavior comparison.
 
 ### Research Lines Under Evaluation
 
