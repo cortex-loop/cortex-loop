@@ -20,6 +20,8 @@ def test_internal_workflow_surfaces_exist() -> None:
     workflow_doc = (REPO_ROOT / "docs" / "internal" / "REPO_WORKFLOW.md").read_text(encoding="utf-8")
 
     assert "cleanup-report:" in internal_makefile
+    assert "active-stack-report:" in internal_makefile
+    assert "seam-preflight:" in internal_makefile
     assert "audit-branches:" in internal_makefile
     assert "closeout-test:" in internal_makefile
     assert "closeout-init:" in internal_makefile
@@ -52,6 +54,14 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert '("make", "lab-test")' in canonical
     assert '["make", "-C", "internal", "closeout-test"]' in canonical
     assert 'help="Fail unless the repo is on clean synced main with no extra worktrees, non-main branches, or remote managed/review heads."' in canonical
+    assert "Report whether an explicitly stacked in-flight managed branch is" in canonical
+    assert "mechanically legible without weakening cleanup-report" in canonical
+    assert "seam-preflight" in canonical
+    assert 'def cmd_seam_preflight(' in canonical
+    assert "allowed_next_surfaces" in canonical
+    assert "reviewed_path_surfaces_not_allowed" in canonical
+    assert 'def cmd_active_stack_report(' in canonical
+    assert '"strict_final_clean_gate_unchanged"' in canonical
     assert "closeout contract" in workflow_doc.lower()
     assert "no-op exemption" in workflow_doc.lower()
     assert "reviewed-path drift during verification" in workflow_doc
@@ -77,6 +87,12 @@ def test_internal_workflow_surfaces_exist() -> None:
     assert '`status`, `published_branch`, `pr_number`, `pr_url`, `main_head`, and `main_sync`' in workflow_doc
     assert '`python3 internal/archive/generate_archive_index.py --check`' in workflow_doc
     assert "clean synced `main`" in workflow_doc
+    assert "`cleanup-report` is the final resting-state gate" in workflow_doc
+    assert "`active-stack-report` passes only when the worktree is clean" in workflow_doc
+    assert "may pass while `cleanup-report` correctly fails" in workflow_doc
+    assert "seam-preflight" in workflow_doc
+    assert "Workflow-only, docs-only, audit-only, or planning-only" in workflow_doc
+    assert "Recon prose or chat rationale alone does\nnot satisfy this gate." in workflow_doc
 
 
 def test_compatibility_wrappers_remain_callable_for_one_transition_cycle() -> None:

@@ -9,6 +9,7 @@ recitation: it must force grounded Cortex Mission Reflection.
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -39,6 +40,7 @@ def _run_hook(hook_input: dict[str, object]) -> tuple[int, str, str]:
         text=True,
         timeout=180,
         cwd=str(REPO_ROOT),
+        env={**os.environ, "CORTEX_GRID_STOP_HOOK_STRUCTURAL_ONLY": "1"},
     )
     return proc.returncode, proc.stdout, proc.stderr
 

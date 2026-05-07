@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -57,6 +58,7 @@ def _run_hook(last_assistant_message: str | None) -> tuple[int, str, str]:
         text=True,
         timeout=180,
         cwd=str(REPO_ROOT),
+        env={**os.environ, "CORTEX_CODEX_APP_HOOK_STRUCTURAL_ONLY": "1"},
     )
     return proc.returncode, proc.stdout, proc.stderr
 

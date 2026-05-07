@@ -4,10 +4,11 @@ Surface: product / live proof
 
 Probe date: 2026-05-05
 
-Verdict: fail; the signed UserPromptSubmit context was emitted by the product
-hook client, but the live model did not produce a prework task-standard block,
-and existing Stop verification law emitted model-visible overdue-verification
-text during the same run.
+Verdict: fail; the signed UserPromptSubmit text was emitted by the product hook
+client as a flat Cortex-internal `{"context": ...}` payload, not as Codex's
+native `hookSpecificOutput.additionalContext` shape. The live model did not
+produce a prework task-standard block, and existing Stop verification law
+emitted model-visible overdue-verification text during the same run.
 
 ## What Ran
 
@@ -38,11 +39,12 @@ hook client, enabled `--enable-task-standard-text`, and omitted
 - `root_config_hash_before` and `root_config_hash_after` matched.
 - `context_hash`: `9021a0efef77eb6371eecf4996332d7fce31febae8462decf10b48056f6cf1a9`.
 
-The first hook row emitted exactly the signed context payload. The first model
-message then skipped the requested `Work standard`, `Likely misses`, and
-`Closure evidence` block and moved directly to creating and reading the file.
-No task-standard items were captured before the first tool event or later in
-the turn.
+The first hook row emitted the exact signed text, but the stdout contract was
+the non-native flat `{"context": ...}` shape. That means this run did not prove
+Codex CLI model-visible context assimilation. The first model message skipped
+the requested `Work standard`, `Likely misses`, and `Closure evidence` block
+and moved directly to creating and reading the file. No task-standard items
+were captured before the first tool event or later in the turn.
 
 At the first Stop row, the existing overdue-verification path emitted the
 locked identity-continuous Stop text with rendered text hash
@@ -52,12 +54,12 @@ second Stop row had `stop_hook_active=true` and stayed silent with
 
 ## Interpretation
 
-This is not a task-standard behavior-lift result. It is a host/context
-assimilation finding: Codex CLI accepted and ran the project hooks, and the
-product hook client produced the signed context, but the live model did not
-surface a prework standard block that Cortex could capture. The existing Stop
-actuator also confounded the task-standard-only measurement by firing overdue
-verification text after the model declared completion.
+This is not a task-standard behavior-lift result. It is a host-contract finding:
+Codex CLI accepted and ran the project hooks, but the product hook client used a
+Cortex-internal context shorthand instead of Codex's native
+`hookSpecificOutput.additionalContext`. The existing Stop actuator also
+confounded the task-standard-only measurement by firing overdue-verification
+text after the model declared completion.
 
 ## Not Earned
 
@@ -73,6 +75,6 @@ verification text after the model declared completion.
 
 Queue `codex-app-cli-task-standard-capture-boundary-remediation`. The next seam
 should isolate task-standard context assimilation and capture from existing Stop
-blocking, determine whether Codex CLI's UserPromptSubmit `context` channel is
-actually model-assimilated before tool use, and record the result without
-changing the signed text or weakening task-standard law.
+blocking, serialize `UserPromptSubmit` through Codex-native
+`hookSpecificOutput.additionalContext`, and record the result without changing
+the signed text or weakening task-standard law.

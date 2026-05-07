@@ -31,7 +31,7 @@ except ImportError:  # pragma: no cover
     from lab.live_validation_common import LOCAL_LIVE_ROOT
 
 from cortex.sre.task_standard import (
-    hidden_verifier_terms,
+    external_scoring_boundary_terms,
     initialize_task_standard_spine,
     record_closure_claims,
     record_task_standard_evidence,
@@ -119,7 +119,7 @@ def replay_rows(
         "passed": True,
         "verdict": verdict,
         "hidden_verifier_read": False,
-        "hidden_verifier_terms": list(hidden_verifier_terms()),
+        "external_scoring_boundary_terms": list(external_scoring_boundary_terms()),
         "caught_hidden_failures": caught_hidden_failures,
         "overblock_risk_count": overblock_risk_count,
         "trials": trial_reports,
@@ -215,7 +215,7 @@ def _visible_hook_summary(path: Path) -> list[str]:
 
 def _strip_hidden_terms(text: str) -> str:
     cleaned = text
-    for term in hidden_verifier_terms():
+    for term in external_scoring_boundary_terms():
         cleaned = cleaned.replace(term, "")
     return cleaned
 

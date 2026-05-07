@@ -222,6 +222,102 @@ CODEX_APP_CLI_TASK_STANDARD_LIVE_RUN_PATH = (
     / "recon"
     / "cortex_codex_app_cli_task_standard_live_run.md"
 )
+CODEX_APP_CLI_HOOK_CONTRACT_CAPTURE_BOUNDARY_REMEDIATION_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_hook_contract_capture_boundary_remediation.md"
+)
+CODEX_APP_CLI_TASK_STANDARD_CONTEXT_LIVE_RERUN_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_task_standard_context_live_rerun.md"
+)
+CODEX_APP_CLI_COMMUNICATION_BOUNDARY_AUDIT_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_communication_boundary_audit_and_hardening.md"
+)
+CODEX_APP_CLI_TASK_STANDARD_PRETOOL_TRANSCRIPT_CAPTURE_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_task_standard_pretool_transcript_capture.md"
+)
+CODEX_APP_CLI_TASK_STANDARD_LIVE_CAPTURE_RERUN_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_task_standard_live_capture_rerun.md"
+)
+CODEX_APP_CLI_TASK_STANDARD_STOP_GATING_CALIBRATION_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md"
+)
+CODEX_APP_CLI_TASK_STANDARD_STOP_GATING_LIVE_RUN_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_task_standard_stop_gating_live_run.md"
+)
+CODEX_APP_CLI_TASK_STANDARD_BEHAVIOR_COMPARISON_HARNESS_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_task_standard_behavior_comparison_harness.md"
+)
+CODEX_APP_CLI_TASK_STANDARD_BEHAVIOR_COMPARISON_LIVE_RUN_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_task_standard_behavior_comparison_live_run.md"
+)
+CODEX_APP_CLI_LIFECYCLE_ACTUATOR_MAP_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_lifecycle_actuator_map.md"
+)
+CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_NEXT_STEP_CORRECTION_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_posttooluse_task_standard_next_step_correction.md"
+)
+CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_CALIBRATION_DECISION_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_posttooluse_task_standard_calibration_decision.md"
+)
+CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_NARROW_LIVE_PROBE_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md"
+)
+CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_NARROW_LIVE_RUN_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md"
+)
+CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_ACTUATOR_ARCHITECTURE_DECISION_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md"
+)
+CODEX_APP_CLI_TASK_STANDARD_STACK_PUBLICATION_HYGIENE_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_task_standard_stack_publication_hygiene.md"
+)
 TASK_STANDARD_SRE_CORRESPONDENCE_RECON_PATH = (
     REPO_ROOT
     / "docs"
@@ -233,6 +329,9 @@ TASK_STANDARD_EXECUTIVE_DOCTRINE_MATH_RECON_PATH = (
     / "docs"
     / "recon"
     / "cortex_task_standard_executive_doctrine_math_refinement.md"
+)
+SEMANTIC_CONTRACTION_AUDIT_RECON_PATH = (
+    REPO_ROOT / "docs" / "recon" / "cortex_semantic_contraction_audit.md"
 )
 STATUS_REGISTRY_PATH = REPO_ROOT / "internal" / "truth" / "cortex_status.json"
 STATUS_DOC_PATH = REPO_ROOT / "docs" / "CORTEX_STATUS.md"
@@ -453,7 +552,7 @@ def test_cortex_doc_is_canonical_narrative_with_required_sections() -> None:
     # CORTEX.md is the canonical narrative authority. The cap prevents
     # the document from drifting into per-session noise; the narrative
     # is meant to evolve only when major learnings warrant.
-    assert len(lines) <= 735
+    assert len(lines) <= 745
     assert sections == [
         "## 1. Identity",
         "## 2. Failure Modes Cortex Addresses",
@@ -575,7 +674,81 @@ def test_executive_runtime_tracker_keeps_product_goal_and_live_truths_visible() 
     assert "brake EMA" in text
     assert "AUX priors" in text
     assert "internal tags" in text
+    assert "Semantic Contraction Discipline" in text
+    assert "minifying readable code" in text
+    assert "duplicate policy" in text
+    assert "`cortex/**` is about 43.6K Python LOC" in text
+    assert "`cortex/hosts` about 21.6K LOC" in text
+    assert "four host `runtime.py` files" in text
+    assert "per-host `session_io.py` parallelism" in text
+    assert "`cortex/hosts/openai/codex_app_cli_hook_coordinator.py`" in text
+    assert "large SRE/AUX" in text
+    assert "schedule or explicitly\nwaive a contraction audit" in text
+    assert "added/deleted" in text
+    assert "Raw LOC reduction is not success" in text
+    assert "Audit-Survivor Future Backlog" in text
+    assert "serious candidate backlog, not casual brainstorming" in text
+    assert "must consider these candidates" in text
+    assert "To remove or demote a row" in text
+    assert "`cortex-semantic-contraction-audit`" in text
+    assert "deletion/consolidation map" in text
+    assert "behavior-preservation proof requirements" in text
+    assert "`evidence_landed`" in text
+    assert "`driver-session-io-common-kernel-audit`" in text
+    assert "`coordinator-actuator-boundary-extraction`" in text
+    assert "`recon-archive-retirement-pass`" in text
+    assert "`sre-aux-policy-concentration-audit`" in text
+    assert "`workflow-connectivity-trace-reachability`" in text
+    assert "`recon-frontmatter-indexer`" in text
+    assert "`sre-output-law-rendering-contract`" in text
+    assert "`core-proof-obligation-test-factories`" in text
+    assert "`host-runtime-kernel-extraction-audit`" in text
+    assert "`posttooluse-phase-aware-calibration`" in text
+    assert "`pretooluse-motor-inhibition-gate0`" in text
+    assert "`bayesian-kill-rule-shadow`" in text
+    assert "`task-standard-semantic-alignment`" in text
+    assert "`queueable_now`" in text
+    assert "`queueable_after_probe`" in text
+    assert "`research_backlog`" in text
+    assert "Rows produced by the semantic contraction audit are serious candidate seams" in text
+    assert "mathematically attractive" in text
     assert "If the answer starts with \"which hook can we use?\"" in text
+
+
+def test_semantic_contraction_audit_records_candidates_without_runtime_claim() -> None:
+    text = _read(SEMANTIC_CONTRACTION_AUDIT_RECON_PATH)
+    status = _load_status()
+    recon_paths = {
+        path
+        for role in status["doc_roles"]["roles"]
+        if role["id"] == "recon_evidence"
+        for path in role["paths"]
+    }
+
+    assert SEMANTIC_CONTRACTION_AUDIT_RECON_PATH.exists()
+    assert "docs/recon/cortex_semantic_contraction_audit.md" in status["active_docs"]
+    assert "docs/recon/cortex_semantic_contraction_audit.md" in recon_paths
+    assert "Surface: internal / recon audit" in text
+    assert "Semantic contraction is not minification" in text
+    assert "behavior-preservation proof" in text
+    assert "host runtime parallelism" in text
+    assert "per-host driver/session I/O duplication" in text
+    assert "`codex_app_cli_hook_coordinator.py` growth" in text
+    assert "large SRE/AUX modules" in text
+    assert "inactive lab/recon/doc active-surface retirement" in text
+    assert "`delete`" in text
+    assert "`collapse`" in text
+    assert "`extract`" in text
+    assert "`archive`" in text
+    assert "`defer`" in text
+    assert "No product behavior changed" in text
+    assert "No runtime contraction, deletion, refactor" in text
+    assert "No behavior lift" in text
+    assert "shipping promotion" in text
+    assert "status `next_product_train`" in text
+    assert status["next_product_train"]["slug"] == (
+        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
 
 
 def test_retired_executive_runtime_roadmap_is_not_active_authority() -> None:
@@ -783,6 +956,7 @@ def test_public_docs_point_to_status_and_keep_archive_out_of_the_front_door() ->
     assert "recon/cortex_openai_operator_visible_intervention_live_probe.md" in docs_index
     assert "recon/cortex_visible_intervention_product_perception_hardening.md" in docs_index
     assert "recon/cortex_openai_operator_visible_intervention_hardened_rerun.md" in docs_index
+    assert "recon/cortex_semantic_contraction_audit.md" in docs_index
     # CORTEX.md content anchors the previously-fragmented charter and
     # boundary identity material in one canonical surface.
     assert "executive-function layer that wraps a model after" in cortex_doc
@@ -852,6 +1026,42 @@ def test_active_doc_allowlist_matches_status_registry() -> None:
     }
 
     assert actual == expected
+
+
+def test_document_role_map_covers_docs_without_turning_context_into_roadmap() -> None:
+    status = _load_status()
+    role_map = status["doc_roles"]
+    roles = role_map["roles"]
+    role_paths: dict[str, set[str]] = {
+        role["id"]: set(role["paths"])
+        for role in roles
+    }
+    all_role_paths = [path for role in roles for path in role["paths"]]
+
+    assert "status registry remains the operational roadmap authority" in role_map["summary"]
+    assert len(all_role_paths) == len(set(all_role_paths))
+    assert set(all_role_paths) == set(status["active_docs"])
+
+    assert role_paths["identity_authority"] == {"docs/CORTEX.md"}
+    assert role_paths["generated_operational_view"] == {"docs/CORTEX_STATUS.md"}
+    assert role_paths["planning_scoreboard"] == {"docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md"}
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" in role_paths["retained_context"]
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md" in role_paths["retained_context"]
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" not in role_paths["planning_scoreboard"]
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" not in role_paths["identity_authority"]
+    assert "docs/internal/REPO_WORKFLOW.md" in role_paths["workflow_authority"]
+    assert "docs/recon/cortex_codex_app_cli_task_standard_live_run.md" in role_paths["recon_evidence"]
+    assert "docs/recon/cortex_semantic_contraction_audit.md" in role_paths["recon_evidence"]
+
+    readme = _read(DOCS_INDEX_PATH)
+    status_doc = _read(STATUS_DOC_PATH)
+    assert "Document roles are machine-readable" in readme
+    assert "not current roadmap authority" in readme.replace("\n  ", " ")
+    assert "## Document Authority Map" in status_doc
+    assert "`retained_context`" in status_doc
+    assert "Do not queue work from these docs directly" in status_doc
+    assert "## Active Docs Inventory" in status_doc
+    assert "Authority comes from the Document Authority Map" in status_doc
 
 
 def test_anti_drift_rules_pin_fixture_to_law_product_spine() -> None:
@@ -941,16 +1151,38 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "claude_code_user_scope_plugin_pretooluse_probe.md",
         "codex_app_hook_probe.md",
         "cortex_codex_app_cli_astro_three_arm_fixture_refresh.md",
+        "cortex_codex_app_cli_communication_boundary_audit_and_hardening.md",
+        "cortex_codex_app_cli_hook_contract_capture_boundary_remediation.md",
         "cortex_codex_app_cli_hook_native_behavior_comparison.md",
         "cortex_codex_app_cli_hook_native_stop_activation_probe.md",
         "cortex_codex_app_cli_hook_native_stop_live_canary.md",
+        "cortex_codex_app_cli_lifecycle_actuator_map.md",
+        "cortex_codex_app_cli_lifecycle_actuator_map_roadmap_update.md",
+        "cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md",
+        "cortex_codex_app_cli_posttooluse_task_standard_calibration_decision.md",
+        "cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md",
+        "cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md",
+        "cortex_codex_app_cli_posttooluse_task_standard_next_step_correction.md",
         "cortex_codex_app_cli_product_event_capture_remediation.md",
         "cortex_codex_app_cli_product_perception_live_probe.md",
         "cortex_codex_app_cli_product_perception_loop.md",
+        "cortex_codex_app_cli_raw_vs_silent_artifact_readout_roadmap_update.md",
         "cortex_codex_app_cli_stop_continuation_resolution_loop.md",
+        "cortex_codex_app_cli_task_standard_behavior_comparison_harness.md",
+        "cortex_codex_app_cli_task_standard_behavior_comparison_live_run.md",
+        "cortex_codex_app_cli_task_standard_context_live_rerun.md",
+        "cortex_codex_app_cli_task_standard_evidence_gating_remediation.md",
+        "cortex_codex_app_cli_task_standard_live_capture_rerun.md",
         "cortex_codex_app_cli_task_standard_live_probe.md",
         "cortex_codex_app_cli_task_standard_live_run.md",
+        "cortex_codex_app_cli_task_standard_offline_replay_readiness_gate.md",
+        "cortex_codex_app_cli_task_standard_pre_live_audit_roadmap_update.md",
+        "cortex_codex_app_cli_task_standard_pretool_transcript_capture.md",
+        "cortex_codex_app_cli_task_standard_raw_vs_silent_artifact_readout.md",
         "cortex_codex_app_cli_task_standard_spine.md",
+        "cortex_codex_app_cli_task_standard_stack_publication_hygiene.md",
+        "cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md",
+        "cortex_codex_app_cli_task_standard_stop_gating_live_run.md",
         "cortex_codex_app_cli_value_ablation_audit.md",
         "cortex_openai_operator_debt_control_enactment.md",
         "cortex_openai_operator_output_quality_fixture_refresh.md",
@@ -959,6 +1191,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_openai_operator_verification_debt_continuation.md",
             "cortex_openai_operator_visible_intervention_hardened_rerun.md",
             "cortex_openai_operator_visible_intervention_live_probe.md",
+            "cortex_semantic_contraction_audit.md",
             "cortex_task_standard_executive_doctrine_math_refinement.md",
             "cortex_task_standard_sre_correspondence_reconciliation.md",
             "cortex_visible_intervention_product_perception_hardening.md",
@@ -1792,7 +2025,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-run"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -1818,8 +2051,8 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-run"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-capture-boundary-remediation"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
 
 
 def test_openai_operator_visible_intervention_live_probe_records_scoped_success() -> None:
@@ -1844,8 +2077,8 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-run"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-capture-boundary-remediation"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
 
 
 def test_visible_intervention_product_perception_hardening_records_structural_gate() -> None:
@@ -1869,8 +2102,8 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-run"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-capture-boundary-remediation"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
 
 
 def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -> None:
@@ -1893,8 +2126,8 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-run"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-capture-boundary-remediation"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
 
 
 def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
@@ -1917,8 +2150,8 @@ def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-run"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-capture-boundary-remediation"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
 
 
 def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
@@ -1936,13 +2169,13 @@ def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
     assert "a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc" in text
     assert "No product perception claim" in text
     assert "No model-output behavior-lift claim" in text
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-capture-boundary-remediation"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     assert "recon/cortex_codex_app_cli_hook_native_stop_live_canary.md" in docs_index
     assert (
         "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-run"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
 
 
 def test_codex_app_cli_product_perception_loop_records_structural_gate0() -> None:
@@ -2006,10 +2239,10 @@ def test_codex_app_cli_product_event_capture_remediation_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-live-run"
+        "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-task-standard-capture-boundary-remediation"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
 
 
@@ -2033,10 +2266,10 @@ def test_codex_app_cli_stop_continuation_resolution_loop_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-live-run"
+        "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-task-standard-capture-boundary-remediation"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
 
 
@@ -2062,10 +2295,10 @@ def test_codex_app_cli_hook_native_behavior_comparison_records_live_baseline_gat
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-live-run"
+        "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-task-standard-capture-boundary-remediation"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
 
 
@@ -2090,9 +2323,9 @@ def test_codex_app_cli_astro_three_arm_fixture_refresh_records_mixed_signal() ->
         "docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-run"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-task-standard-capture-boundary-remediation"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
 
 
@@ -2118,8 +2351,8 @@ def test_codex_app_cli_value_ablation_audit_records_requirement_perception_decis
         "docs/recon/cortex_codex_app_cli_value_ablation_audit.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-run"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-capture-boundary-remediation"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
 
 
 def test_codex_app_cli_task_standard_spine_records_structural_product_spine() -> None:
@@ -2145,9 +2378,9 @@ def test_codex_app_cli_task_standard_spine_records_structural_product_spine() ->
         "docs/recon/cortex_codex_app_cli_task_standard_spine.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-run"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-task-standard-capture-boundary-remediation"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
 
 
@@ -2175,8 +2408,8 @@ def test_codex_app_cli_task_standard_live_probe_records_structural_gate0() -> No
         "docs/recon/cortex_codex_app_cli_task_standard_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-run"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-capture-boundary-remediation"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
 
 
 def test_codex_app_cli_task_standard_live_run_records_capture_failure() -> None:
@@ -2187,8 +2420,9 @@ def test_codex_app_cli_task_standard_live_run_records_capture_failure() -> None:
     assert "Surface: product / live proof" in text
     assert "Probe date: 2026-05-05" in text
     assert "Verdict: fail" in text
-    assert "signed UserPromptSubmit context was emitted" in text
-    assert "did not produce a prework task-standard block" in text
+    assert "flat Cortex-internal `{\"context\": ...}` payload" in text
+    assert "not as Codex's\nnative `hookSpecificOutput.additionalContext` shape" in text
+    assert "did not\nproduce a prework task-standard block" in text
     assert "`hook_rows`: 7" in text
     assert "`context_rows`: 1" in text
     assert "`standard_capture_rows`: 0" in text
@@ -2205,11 +2439,624 @@ def test_codex_app_cli_task_standard_live_run_records_capture_failure() -> None:
         "docs/recon/cortex_codex_app_cli_task_standard_live_run.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-run"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-task-standard-capture-boundary-remediation"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
+
+
+def test_codex_app_cli_hook_contract_capture_boundary_remediation_records_structural_fix() -> None:
+    text = _read(CODEX_APP_CLI_HOOK_CONTRACT_CAPTURE_BOUNDARY_REMEDIATION_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product / structural proof" in text
+    assert "Verdict: structural pass" in text
+    assert "hookSpecificOutput.additionalContext" in text
+    assert "`{\"decision\":\"block\",\"reason\":\"...\"}`" in text
+    assert "`--disable-stop-blocks`" in text
+    assert "The old flat `{\"context\": ...}` shape is rejected" in text
+    assert "No live Codex rerun was performed" in text
+    assert "Queue `codex-app-cli-task-standard-context-live-rerun`" in text
+    assert (
+        "recon/cortex_codex_app_cli_hook_contract_capture_boundary_remediation.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_hook_contract_capture_boundary_remediation.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    )
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+
+
+def test_codex_app_cli_task_standard_context_live_rerun_records_partial_delivery() -> None:
+    text = _read(CODEX_APP_CLI_TASK_STANDARD_CONTEXT_LIVE_RERUN_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product / live proof" in text
+    assert "Verdict: partial_delivery_only" in text
+    assert "hookSpecificOutput.additionalContext" in text
+    assert "standard_capture_rows`: 0" in text
+    assert "first_tool_index`: 2" in text
+    assert "first_standard_capture_index`: null" in text
+    assert "prework_standard_capture`: false" in text
+    assert "Work standard: Create `cortex_task_standard_live.txt`" in text
+    assert "Likely misses: Wrong filename" in text
+    assert "Closure evidence: Command output shows" in text
+    assert "transcript_path" in text
+    assert "Stop-block suppression worked" in text
+    assert "No `TaskStandardSpine.standard_items` were captured" in text
+    assert (
+        "Queue `codex-app-cli-task-standard-pretool-transcript-capture`"
+        in text
+    )
+    assert (
+        "recon/cortex_codex_app_cli_task_standard_context_live_rerun.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_task_standard_context_live_rerun.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    )
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+
+
+def test_codex_app_cli_communication_boundary_audit_records_proof_ladder() -> None:
+    text = _read(CODEX_APP_CLI_COMMUNICATION_BOUNDARY_AUDIT_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product / lab proof" in text
+    assert "Verdict: structural_proof_boundary_issue_localized_to_codex_app_cli" in text
+    assert "`host_stdout_contract_ok`" in text
+    assert "`host_attached_context_observed`" in text
+    assert "`model_assimilation_observed`" in text
+    assert "`state_capture_observed`" in text
+    assert "`gate_used_captured_state`" in text
+    assert "`behavior_lift_claim_allowed`" in text
+    assert "`host_contract_mismatch`" in text
+    assert "`lifecycle_config_mismatch`" in text
+    assert "`temporal_capture_mismatch`" in text
+    assert "`live_vs_gate0_mismatch`" in text
+    assert "`workflow_health_closeout_coupling`" in text
+    assert "`mechanical_success`" in text
+    assert "`product_evidence_success`" in text
+    assert "`partial_evidence_only`" in text
+    assert "[features].codex_hooks = false" in text
+    assert "Queue `codex-app-cli-task-standard-pretool-transcript-capture`" in text
+    assert (
+        "recon/cortex_codex_app_cli_communication_boundary_audit_and_hardening.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_communication_boundary_audit_and_hardening.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    )
+    work_note = status["work_today"]["note"].lower()
+    assert "failure_context_ignored" in work_note
+    assert "task_standard_exactness" in work_note
+    assert "next model tool did not perform the named direct check" in work_note
+    assert "no broad behavior lift" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+
+
+def test_codex_app_cli_task_standard_pretool_transcript_capture_records_state_capture() -> None:
+    text = _read(CODEX_APP_CLI_TASK_STANDARD_PRETOOL_TRANSCRIPT_CAPTURE_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product + lab proof" in text
+    assert "Date: 2026-05-05" in text
+    assert "PreToolUse" in text
+    assert "PostToolUse` as fallback" in text
+    assert "assistant-authored" in text
+    assert "before the first tool/function call" in text
+    assert "Developer\ncontext, user prompt text, tool calls, tool outputs" in text
+    assert "state_capture_observed=true" in text
+    assert "gate_used_captured_state=false" in text
+    assert "behavior_lift_claim_allowed=false" in text
+    assert "run_20260505T195300Z" in text
+    assert "No model-visible text changed" not in text
+    assert "does not earn live rerun success" in text
+    assert "Queue `codex-app-cli-task-standard-live-capture-rerun`" in text
+    assert (
+        "recon/cortex_codex_app_cli_task_standard_pretool_transcript_capture.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_task_standard_pretool_transcript_capture.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    )
+    work_note = status["work_today"]["note"].lower()
+    assert "failure_context_ignored" in work_note
+    assert "task_standard_exactness" in work_note
+    assert "next model tool did not perform the named direct check" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+
+
+def test_codex_app_cli_task_standard_live_capture_rerun_records_pass() -> None:
+    text = _read(CODEX_APP_CLI_TASK_STANDARD_LIVE_CAPTURE_RERUN_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product + lab proof" in text
+    assert "Date: 2026-05-05" in text
+    assert "`pass_prework_standard_capture`" in text
+    assert "run_20260505T213824Z" in text
+    assert "host_attached_context_observed=true" in text
+    assert "model_assimilation_observed=true" in text
+    assert "state_capture_observed=true" in text
+    assert "gate_used_captured_state=false" in text
+    assert "behavior_lift_claim_allowed=false" in text
+    assert "first_standard_capture_index=2" in text
+    assert "first_tool_index=2" in text
+    assert "pretool-transcript-standard" in text
+    assert "Stop blocks were disabled" in text
+    assert "not counted as model-visible\ngate use" in text
+    assert "task-standard Stop-gating live probe" in text
+    assert (
+        "recon/cortex_codex_app_cli_task_standard_live_capture_rerun.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_task_standard_live_capture_rerun.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    )
+    work_note = status["work_today"]["note"].lower()
+    assert "failure_context_ignored" in work_note
+    assert "next model tool did not perform the named direct check" in work_note
+    assert "no broad behavior lift" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+
+
+def test_codex_app_cli_task_standard_stop_gating_calibration_records_pass() -> None:
+    text = _read(CODEX_APP_CLI_TASK_STANDARD_STOP_GATING_CALIBRATION_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product + lab proof" in text
+    assert "Verdict: `pass_gating_calibrated`" in text
+    assert "`premature_closure_gap`" in text
+    assert "`clean_evidenced_closure`" in text
+    assert "run_20260505T213824Z" in text
+    assert "latest_live_capture_replay_does_not_overblock=true" in text
+    assert "a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc" in text
+    assert "No live Codex Stop-gating evidence" in text
+    assert "Queue `codex-app-cli-task-standard-stop-gating-live-run`" in text
+    assert (
+        "recon/cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    )
+    work_note = status["work_today"]["note"].lower()
+    assert "failure_context_ignored" in work_note
+    assert "task_standard_exactness" in work_note
+    assert "no broad behavior lift" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+
+
+def test_codex_app_cli_task_standard_stop_gating_live_run_records_gate_use() -> None:
+    text = _read(CODEX_APP_CLI_TASK_STANDARD_STOP_GATING_LIVE_RUN_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product + lab proof" in text
+    assert "Verdict: `pass_gating_observed`" in text
+    assert "run_20260505T222615Z" in text
+    assert "hookSpecificOutput.additionalContext" in text
+    assert "exact one-line file" in text
+    assert "`ls`, `wc -l`,\n  `cat -A`, and `cmp`" in text
+    assert "pressure_below_visible_threshold" in text
+    assert "No paired behavior lift" in text
+    assert "Queue `codex-app-cli-task-standard-behavior-comparison`" in text
+    assert (
+        "recon/cortex_codex_app_cli_task_standard_stop_gating_live_run.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_task_standard_stop_gating_live_run.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    )
+    work_note = status["work_today"]["note"].lower()
+    assert "failure_context_ignored" in work_note
+    assert "next model tool did not perform the named direct check" in work_note
+    assert "no broad behavior lift" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+
+
+def test_codex_app_cli_task_standard_behavior_comparison_harness_records_gate0() -> None:
+    text = _read(CODEX_APP_CLI_TASK_STANDARD_BEHAVIOR_COMPARISON_HARNESS_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product + lab proof" in text
+    assert "Verdict: structural Gate 0 passed" in text
+    assert "`raw_codex`" in text
+    assert "`silent_task_standard`" in text
+    assert "`active_task_standard`" in text
+    assert "`--disable-stop-blocks`" in text
+    assert "did not use\n  `--disable-model-visible-blocks`" in text
+    assert "No live behavior lift" in text
+    assert "Queue `codex-app-cli-task-standard-behavior-comparison-live-run`" in text
+    assert (
+        "recon/cortex_codex_app_cli_task_standard_behavior_comparison_harness.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_task_standard_behavior_comparison_harness.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    )
+    work_note = status["work_today"]["note"].lower()
+    assert "failure_context_ignored" in work_note
+    assert "task_standard_exactness" in work_note
+    assert "next model tool did not perform the named direct check" in work_note
+    assert "no broad behavior lift" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+
+
+def test_codex_app_cli_lifecycle_actuator_map_records_event_control_order() -> None:
+    text = _read(CODEX_APP_CLI_LIFECYCLE_ACTUATOR_MAP_PATH)
+    tracker = _read(EXECUTIVE_RUNTIME_TRACKER_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product architecture + doctrine/status" in text
+    assert "Verdict: `map_landed`; implementation remains queued." in text
+    assert "`SessionStart`: session/workspace context through additionalContext" in text
+    assert "`UserPromptSubmit`: prospective task-set formation through additionalContext" in text
+    assert "`PreToolUse`: hard motor deny/block only" in text
+    assert "additionalContext is not a supported model-context surface" in text
+    assert "`PermissionRequest`: approval-bound route control" in text
+    assert "`PostToolUse`: strongest next implementation target" in text
+    assert "`Stop`: late closure continuation through block/reason" in text
+    assert "Queue `codex-app-cli-posttooluse-task-standard-next-step-correction`." in text
+    assert "specific to product-visible mismatch" in text
+    assert "no third-agent voice" in text
+    assert 'no generic "verify more" advice' in text
+    assert "clean-control denial as a high-severity overblock" in text
+    assert "Sinkhorn/transport remains deferred" in text
+    assert "no runtime behavior change" in text
+    assert "no PostToolUse behavior\nproof" in text
+    assert "no PreToolUse motor-inhibition proof" in text
+    assert "no Sinkhorn implementation" in text
+    assert (
+        "recon/cortex_codex_app_cli_lifecycle_actuator_map.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_lifecycle_actuator_map.md"
+        in status["active_docs"]
+    )
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+    assert "product host actuator + lab proof" == status["next_product_train"]["surface"]
+    assert "phase-aware gate 0" in status["next_product_train"]["why_now"].lower()
+    assert "failed missing-artifact precondition" in status["next_product_train"][
+        "why_now"
+    ].lower()
+    assert "failure_context_ignored" in tracker
+    assert "PostToolUse next-action effect remains unearned" in tracker
+    assert "PreToolUse motor inhibition should follow only as action blocking" in tracker
+    assert "Sinkhorn-style transport belongs later" in tracker
+
+
+def test_codex_app_cli_posttooluse_task_standard_next_step_correction_records_gate0() -> None:
+    text = _read(CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_NEXT_STEP_CORRECTION_PATH)
+    tracker = _read(EXECUTIVE_RUNTIME_TRACKER_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product host actuator + lab proof" in text
+    assert "Verdict: `pass_posttooluse_gate0`; implementation remains Gate-0 only." in text
+    assert "--enable-posttooluse-task-standard-context" in text
+    assert "one Codex-native PostToolUse context" in text
+    assert "specific captured task-standard item is unresolved" in text
+    assert "flag disabled stayed silent" in text
+    assert "clean-evidenced work\nstayed silent" in text
+    assert "blocker/waiting/unrelated-tool controls stayed silent" in text
+    assert "No live\nCodex run was executed" in text
+    assert "SRE law" in text
+    assert "Sinkhorn/transport" in text
+    assert "PreToolUse motor inhibition" in text
+    assert "Not earned: live behavior lift" in text
+    assert (
+        "recon/cortex_codex_app_cli_posttooluse_task_standard_next_step_correction.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_next_step_correction.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    )
+    work_note = status["work_today"]["note"].lower()
+    assert "failure_context_ignored" in work_note
+    assert "next model tool did not perform the named direct check" in work_note
+    assert "not a three-arm behavior comparison" in work_note
+    assert "signed text" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+    assert "product host actuator + lab proof" == status["next_product_train"]["surface"]
+    assert "artifact creation as a prerequisite" in status["next_product_train"][
+        "primary_metric"
+    ].lower()
+    assert "pre-artifact context spend" in status["next_product_train"][
+        "kill_rule"
+    ].lower()
+    assert "three-arm behavior comparison" in status["next_product_train"]["guardrail"].lower()
+    assert "pretooluse denial" in status["next_product_train"]["guardrail"].lower()
+    assert "sinkhorn/transport" in status["next_product_train"]["guardrail"].lower()
+    assert "return to lifecycle-actuator design" in status["next_product_train"][
+        "kill_rule"
+    ].lower()
+    assert "failure_context_ignored" in tracker
+    assert "not a three-arm behavior comparison" in tracker
+
+
+def test_codex_app_cli_posttooluse_task_standard_calibration_decision_queues_narrow_probe() -> None:
+    text = _read(CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_CALIBRATION_DECISION_PATH)
+    tracker = _read(EXECUTIVE_RUNTIME_TRACKER_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product architecture + lab proof review" in text
+    assert "Verdict: `decision_queue_narrow_live_posttooluse_probe`." in text
+    assert "queues a narrow live PostToolUse actuator probe" in text
+    assert "does not queue a three-arm\nbehavior comparison" in text
+    assert "pass_posttooluse_gate0" in text
+    assert "hookSpecificOutput.additionalContext" in text
+    assert "Clean-evidenced, blocker, waiting-on-user, unrelated-tool" in text
+    assert "Live execution remains approval-gated" in text
+    assert "not approved until the stack is published or merged" in text
+    assert "Not earned: live behavior lift" in text
+    assert "PreToolUse motor inhibition" in text
+    assert (
+        "recon/cortex_codex_app_cli_posttooluse_task_standard_calibration_decision.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_calibration_decision.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    )
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+    assert "product host actuator + lab proof" == status["next_product_train"]["surface"]
+    assert "product-visible artifact or candidate output exists" in status[
+        "next_product_train"
+    ]["executive_benefit"]
+    assert "artifact creation as a prerequisite" in status["next_product_train"][
+        "primary_metric"
+    ].lower()
+    assert "phase-aware gate 0" in status["next_product_train"]["why_now"].lower()
+    assert "failure_context_ignored" in tracker
+
+
+def test_codex_app_cli_task_standard_stack_publication_hygiene_blocks_live_until_clean() -> None:
+    text = _read(CODEX_APP_CLI_TASK_STANDARD_STACK_PUBLICATION_HYGIENE_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: workflow / product-proof hygiene" in text
+    assert "Verdict: `stack_publication_hygiene_required_before_live_probe`." in text
+    assert "codex/20260506-020000-task-standard-stack-publication-hygiene" in text
+    assert "narrow PostToolUse live probe remains queued but not approved" in text
+    assert "must not use `--require-pass`" in text
+    assert (
+        "recon/cortex_codex_app_cli_task_standard_stack_publication_hygiene.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_task_standard_stack_publication_hygiene.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    )
+    work_note = status["work_today"]["note"].lower()
+    assert "failure_context_ignored" in work_note
+    assert "later exactness checks came through the existing stop continuation loop" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+
+
+def test_codex_app_cli_posttooluse_task_standard_narrow_live_probe_is_harness_ready_not_run() -> None:
+    text = _read(CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_NARROW_LIVE_PROBE_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product host actuator + live-proof harness" in text
+    assert "Verdict: `live_probe_harness_ready_not_run`." in text
+    assert "--task-standard-posttooluse-live" in text
+    assert "CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved" in text
+    assert "The live command was not run" in text.replace("\n", " ")
+    assert (
+        "recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    )
+    work_note = status["work_today"]["note"].lower()
+    assert "next model tool did not perform the named direct check" in work_note
+    assert "later exactness checks came through the existing stop continuation loop" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+    assert "do not tune" in status["next_product_train"][
+        "guardrail"
+    ].lower()
+
+
+def test_codex_app_cli_posttooluse_task_standard_narrow_live_run_records_negative_result() -> None:
+    text = _read(CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_NARROW_LIVE_RUN_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product live proof" in text
+    assert "Verdict: `failure_context_ignored`." in text
+    assert "CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved" in text
+    assert "task_standard_posttooluse_live_20260507T100836Z" in text
+    assert "next_model_tool_did_not_run_named_direct_check" in text
+    assert "0 PostToolUse contexts" in text
+    assert "Stop continuation loop" in text
+    assert "next-step actuator effect" in text
+    assert "No broad Cortex behavior lift" in text
+    assert "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision" in text
+    assert (
+        "recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    )
+    work_note = status["work_today"]["note"].lower()
+    assert "failure_context_ignored" in work_note
+    assert "next model tool did not perform the named direct check" in work_note
+    assert "stop continuation loop" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+    assert "product host actuator + lab proof" == status["next_product_train"]["surface"]
+    assert "product-visible artifact or candidate output exists" in status[
+        "next_product_train"
+    ]["executive_benefit"].lower()
+    assert "phase-aware gate 0" in status["next_product_train"][
+        "why_now"
+    ].lower()
+    assert "failed missing-artifact precondition" in status[
+        "next_product_train"
+    ]["why_now"].lower()
+    assert "artifact creation as a prerequisite" in status[
+        "next_product_train"
+    ]["primary_metric"].lower()
+    assert "do not tune" in status["next_product_train"]["guardrail"].lower()
+
+
+def test_codex_app_cli_posttooluse_task_standard_architecture_decision_queues_phase_aware_gate0() -> None:
+    text = _read(CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_ACTUATOR_ARCHITECTURE_DECISION_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product architecture decision" in text
+    assert "Verdict: `decision_queue_phase_aware_posttooluse_calibration_gate0`." in text
+    assert "task_standard_posttooluse_live_20260507T100836Z" in text
+    assert "PostToolUse timing/selection failure" in text
+    assert "host delivery: passed" in text
+    assert "task-standard capture: passed" in text
+    assert "clean/control overcontrol: passed" in text
+    assert "immediate next-action effect: failed" in text
+    assert "failed precondition" in text
+    assert "artifact creation rather than direct\n  verification" in text
+    assert "Stop continuation" in text
+    assert "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0" in text
+    assert "product-visible artifact or candidate output exists" in text
+    assert "closure before the named direct check still fails" in text
+    assert "no PostToolUse next-action effect claim" in text
+    assert "no authorization to tune" in text
+    assert (
+        "recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    )
+    work_note = status["work_today"]["note"].lower()
+    assert "timing/selection failure" in work_note
+    assert "missing-artifact precondition" in work_note
+    assert "stop continuation remains the only live-proven" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+    assert "product host actuator + lab proof" == status["next_product_train"]["surface"]
+    assert "phase-aware gate 0" in status["next_product_train"]["why_now"].lower()
+    assert "no live codex" in status["next_product_train"]["guardrail"].lower()
 
 
 def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
@@ -2286,7 +3133,7 @@ def test_task_standard_executive_doctrine_math_refinement_is_recorded() -> None:
     )
     assert "recon/cortex_task_standard_executive_doctrine_math_refinement.md" in docs_index
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-task-standard-live-run"
+        "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
     )
 
 
@@ -2504,6 +3351,7 @@ def test_status_registry_is_complete_and_stable() -> None:
         "bootstrap",
         "product_goal",
         "identity",
+        "doc_roles",
         "executive_completion",
         "bio_to_code_matrix",
         "math_to_code_rules",
@@ -2614,48 +3462,43 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
     assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "codex-app-cli-task-standard-live-run"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
     work_note = status["work_today"]["note"].lower()
-    assert "approved isolated codex cli task-standard probe" in work_note
-    assert "signed userpromptsubmit context payload was emitted once" in work_note
-    assert "did not earn prework standard capture" in work_note
-    assert "existing stop verification text fired" in work_note
-    assert status["next_product_train"]["slug"] == "codex-app-cli-task-standard-capture-boundary-remediation"
-    assert "product" == status["next_product_train"]["surface"]
-    assert "capture boundary" in status["next_product_train"][
+    assert "failure_context_ignored" in work_note
+    assert "task_standard_exactness" in work_note
+    assert "next model tool did not perform the named direct check" in work_note
+    assert "not a three-arm behavior comparison" in work_note
+    assert "later exactness checks came through the existing stop continuation loop" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    )
+    assert "product host actuator + lab proof" == status["next_product_train"]["surface"]
+    assert "product-visible artifact or candidate output exists" in status[
+        "next_product_train"
+    ][
         "executive_benefit"
-    ].lower()
-    assert "did not produce a prework standard block" in status["next_product_train"][
-        "executive_benefit"
-    ].lower()
-    assert "existing stop verification text confounded" in status["next_product_train"][
-        "executive_benefit"
-    ].lower()
-    assert "approved live task-standard run produced a fail verdict" in status["next_product_train"][
+    ]
+    assert "phase-aware gate 0" in status["next_product_train"]["why_now"].lower()
+    assert "failed missing-artifact precondition" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "no prework standard was captured" in status["next_product_train"][
-        "why_now"
-    ].lower()
-    assert "existing stop text fired" in status["next_product_train"][
-        "why_now"
-    ].lower()
-    assert "context assimilation" in status["next_product_train"][
+    assert "artifact creation as a prerequisite" in status["next_product_train"][
         "primary_metric"
     ].lower()
-    assert "no runtime snapshot" in status["next_product_train"][
-        "primary_metric"
-    ].lower()
-    assert "no unapproved model-visible text" in status["next_product_train"][
-        "primary_metric"
-    ].lower()
-    assert "do not change the signed task-standard text" in status["next_product_train"][
+    assert "three-arm behavior comparison" in status["next_product_train"][
         "guardrail"
     ].lower()
-    assert "different lawful host delivery path" in status["next_product_train"][
+    assert "sinkhorn/transport" in status["next_product_train"][
+        "guardrail"
+    ].lower()
+    assert "pretooluse denial" in status["next_product_train"][
+        "guardrail"
+    ].lower()
+    assert "pre-artifact context spend" in status["next_product_train"][
         "kill_rule"
     ].lower()
-    assert "isolated no-stop-block measurement" in status["next_product_train"][
+    assert "return to lifecycle-actuator design" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -2742,9 +3585,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`codex-app-cli-task-standard-live-run`" in text
-    assert "- Next product train after the current focus: `codex-app-cli-task-standard-capture-boundary-remediation`" in text
-    assert "- Train: `codex-app-cli-task-standard-capture-boundary-remediation`" in text
+    assert "`codex-app-cli-posttooluse-task-standard-actuator-architecture-decision`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0`" in text
+    assert "- Train: `codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()

@@ -35,6 +35,7 @@ class OpenAICodexLifecycleEvent(str, Enum):
 class OpenAICodexLifecycleDirectiveAction(str, Enum):
     STAY_SILENT = "stay_silent"
     ALLOW = "allow"
+    ADD_ADDITIONAL_CONTEXT = "add_additional_context"
     BLOCK_WITH_IDENTITY_CONTINUOUS_TEXT = "block_with_identity_continuous_text"
 
 

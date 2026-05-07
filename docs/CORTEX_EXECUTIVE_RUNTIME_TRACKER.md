@@ -140,6 +140,64 @@ already handling the task correctly.
 The next strategic direction is upstream executive control, not
 renderer-first work.
 
+For the current Codex App/CLI task-standard train, the scored-lexical offline
+readiness gate was the last substrate-first seam before an actuator reset. The
+no-spend raw-vs-silent artifact readout then found a narrow signal:
+`silent_task_standard` beat `raw_codex` on `task_standard_exactness`
+evidence-recovery in 5/5 paired trials, while output quality was mixed and
+truth-gap had a material goal-continuity regression. That justifies an actuator
+map constrained to exactness/evidence recovery; it does not justify another
+live behavior comparison, broad Cortex lift, or Sinkhorn.
+
+The lifecycle actuator map is now the product architecture baseline: Codex
+lifecycle surfaces are ordered by the control they actually exert over the
+model's next input, output, tool result, or allowed action, not by hook-count
+coverage.
+
+The Codex App/CLI event map should be treated as:
+
+- SessionStart: session/workspace context only.
+- UserPromptSubmit: prospective task-set formation.
+- PreToolUse: hard motor deny/block only; do not design it as coaching text
+  because Codex does not support additionalContext there.
+- PermissionRequest: approval-bound route control.
+- PostToolUse: strongest near-term next-step correction surface because it can
+  replace or annotate completed tool feedback before the next model step.
+- Stop: late closure continuation.
+
+The PostToolUse task-standard next-step correction Gate 0 has now passed
+structurally without live spend. A gated Codex-host path can add
+PostToolUse `additionalContext` when product-visible verification/readback
+evidence leaves a specific captured work-standard or closure-evidence item
+unresolved, while flag-disabled, clean evidenced, blocker/waiting, and
+unrelated-tool controls stay silent. This is still Gate-0 proof only: it does
+not earn live behavior lift, does not activate defaults, and does not justify a
+three-arm live rerun by itself.
+
+The PostToolUse calibration decision accepted a narrow live actuator probe as
+the next product seam, not Sinkhorn and not a three-arm behavior comparison.
+The approved narrow live probe then produced `failure_context_ignored`: a
+specific PostToolUse `additionalContext` reached Codex CLI in the mismatch
+case and clean/blocker/waiting/unrelated controls received no PostToolUse
+context, but the next model tool did not run the named direct check before
+closure. Later exactness checks came through the existing Stop continuation
+loop, so PostToolUse next-action effect remains unearned. The next product seam
+is an architecture decision about actuator timing and model-I/O leverage, not a
+text, fixture, matcher, or policy remediation seam.
+The architecture decision classifies that result as PostToolUse
+timing/selection failure: the context fired after a failed missing-artifact
+precondition, so the next legitimate model action was artifact creation rather
+than direct verification. The next product seam is no-live phase-aware
+PostToolUse calibration Gate 0: reserve context until a product-visible
+artifact or candidate output exists and a required standard item remains
+unresolved, while keeping closure-before-direct-check as a failure.
+PreToolUse motor inhibition should follow only as action blocking, not as a
+model-visible advice surface, and false-deny clean-control risk must be treated
+as a future kill-rule risk. Sinkhorn-style transport belongs later as the
+`D_std` mass-conservation operator only if PostToolUse or PreToolUse actuators
+show signal and one-event-overcredits-many-items remains load-bearing after
+pairwise scores are trustworthy.
+
 The likely missing coupling is a runtime estimate of resolution deficit:
 expected uncertainty reduction owed by recent forward commitments minus
 realized evidence, continuity, certification, retraction, or blocker progress.
@@ -153,6 +211,63 @@ Cortex has a task-local anchor: an unsupported claim, a missing evidence
 obligation, a continuity gap, a capability boundary, or a verified-work
 preservation risk. If control pressure exists without an anchor, Cortex should
 route, degrade, inspect, or stay silent rather than invent generic advice.
+
+## Semantic Contraction Discipline
+
+Cortex should get smaller by removing duplicate policy and stale surfaces, not
+by minifying readable code. Semantic contraction means collapsing duplicate
+law into one owner, retiring inactive proof paths, archiving or role-demoting
+retained context that no longer governs current work, and deleting host/runtime
+copy-paste only when behavior-preservation proof or explicit retirement
+evidence exists.
+
+Current size pressure is material: `cortex/**` is about 43.6K Python LOC, with
+`cortex/hosts` about 21.6K LOC. The largest contraction risk centers are the
+four host `runtime.py` files, per-host `session_io.py` parallelism,
+`cortex/hosts/openai/codex_app_cli_hook_coordinator.py`, and large SRE/AUX
+modules that can accumulate duplicate policy paths.
+
+After a run of additive product seams, planning should schedule or explicitly
+waive a contraction audit before the next large actuator, substrate, or
+host-kernel expansion. Future architecture/product seams should report LOC
+added/deleted, duplicate policy removed, the owner module after the change,
+and whether the seam added a new policy path, consolidated one, or left
+explicit contraction debt. Raw LOC reduction is not success; removal of
+duplicate policy or retired surfaces while preserving Cortex law, host
+distinction, and proof coverage is success.
+
+## Audit-Survivor Future Backlog
+
+This section is a serious candidate backlog, not casual brainstorming and not
+a second roadmap. Future agents must consider these candidates when planning
+architecture work because they survived broad repo/code review as plausible
+paths toward a stronger Cortex. They still become current work only when a
+specific seam is promoted into `internal/truth/cortex_status.json::next_product_train`
+or the current train. To remove or demote a row, land a tracker/status/recon
+update that names the code-grounded reason.
+
+| Candidate seam | Why it matters for the future Cortex shape | Promotion gate | Current state |
+| --- | --- | --- | --- |
+| `cortex-semantic-contraction-audit` | Cortex should not grow by default; the audit produced a deletion/consolidation map with owners, behavior-preservation proof requirements, and candidate seams. | Use `docs/recon/cortex_semantic_contraction_audit.md` as evidence only; no deletion until a seam proves behavior is preserved or the surface is explicitly retired in status/recon. | `evidence_landed` |
+| `workflow-connectivity-trace-reachability` | Closeout already requires `connectivity_trace`, but shape validation is not enough; product seams should mechanically prove a path to model input/output. | Queue when workflow work is allowed; start with deterministic reach classes before call-graph crawling. | `queueable_now` |
+| `recon-frontmatter-indexer` | Recon docs are the audit memory of earned and forbidden claims; structured fields would make live evidence, verdicts, hosts, actuators, and families queryable instead of grep-only. | Target `doc_roles.recon_evidence`; keep narrative primary and schema supporting. | `queueable_now` |
+| `sre-output-law-rendering-contract` | Model-visible Cortex output should be constructively lawful, not protected only by template discipline and forbidden-term checks. | Extend the existing `cortex/sre/interventions.py` rendering path; no new model-visible wording without regression proof. | `queueable_now` |
+| `core-proof-obligation-test-factories` | Core packet proof obligations should be executable checks where possible, so packet law does not rely only on prose and spot tests. | Start with bounded deterministic factories; add Hypothesis only after dependency and strategy cost are justified. | `queueable_after_probe` |
+| `host-runtime-kernel-extraction-audit` | The four host runtime files carry large parallel structures; a future Cortex should share law without flattening host-native realization. | First land an audit that measures exact helper equivalence and host-specific divergences; migrate only after that evidence. | `queueable_after_probe` |
+| `driver-session-io-common-kernel-audit` | Per-host commitment, neutral, and session I/O paths look highly parallel; a future seam should find the smallest shared helper layer without flattening host vocabulary. | Compare host drivers and session I/O round trips; no collapse until per-host fixture proof preserves behavior. | `queueable_after_probe` |
+| `coordinator-actuator-boundary-extraction` | `codex_app_cli_hook_coordinator.py` is the OpenAI Codex App/CLI pressure point for actuator growth; per-event actuator modules may keep policy ownership clearer. | Extract only after current task-standard questions settle; require no model-visible text change and Gate 0 replay proof. | `queueable_after_probe` |
+| `recon-archive-retirement-pass` | Lab/recon/doc active surfaces should not accumulate forever; inactive proof paths need explicit archive or retention decisions. | Queue after structured recon indexing or equivalent active-doc evidence; generated docs and role maps must stay exact. | `queueable_after_probe` |
+| `sre-aux-policy-concentration-audit` | Large SRE/AUX modules may contain duplicate policy paths, but SRE and AUX ownership must remain distinct and AUX must stay removable. | Audit specific duplicated rules first; no SRE/AUX consolidation without packet-law citation and proof coverage. | `research_backlog` |
+| `posttooluse-phase-aware-calibration` | PostToolUse is the strongest near-term Codex App/CLI next-step actuator, but it must fire at the phase where the named check is actionable. | Queue after the current PostToolUse architecture decision; prove Gate 0 without live spend before another live probe. | `queueable_after_probe` |
+| `pretooluse-motor-inhibition-gate0` | PreToolUse deny is the lifecycle lever for action inhibition, which is closer to executive control than late Stop repair. | Reverify current Codex hook semantics, require typed output-law reason text, and treat any clean-control deny as high-severity overcontrol. | `research_backlog` |
+| `bayesian-kill-rule-shadow` | Behavior-lift decisions should eventually use posterior uncertainty rather than only fixed 4/5 trial thresholds, while preserving hard clean-control overblock rules. | Run as replay-only shadow first; it must not produce easier lift claims on historical runs. | `research_backlog` |
+| `task-standard-semantic-alignment` | Lexical task-standard matching may hit a synonym wall; semantic or transport methods may eventually be needed for robust evidence allocation. | Defer until actuator timing is no longer the bottleneck and replay proves pairwise alignment or mass allocation is load-bearing. | `research_backlog` |
+
+The queueable discipline rows remain the current best low-risk candidates.
+Rows produced by the semantic contraction audit are serious candidate seams,
+not deletion permission. The later rows are important future-shape pressure,
+but they must not bypass the promotion gates just because they are
+mathematically attractive.
 
 ## Use In Future Planning
 

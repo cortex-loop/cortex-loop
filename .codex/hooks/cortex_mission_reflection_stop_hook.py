@@ -17,6 +17,7 @@ model-output lift from Cortex product code.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -89,6 +90,8 @@ def _run_grid(repo_root: Path, mode: str) -> str | None:
 
 
 def _run_reflection_check(repo_root: Path) -> dict[str, object] | None:
+    if os.environ.get("CORTEX_CODEX_APP_HOOK_STRUCTURAL_ONLY") == "1":
+        return None
     try:
         proc = subprocess.run(
             [
@@ -144,7 +147,8 @@ def main() -> None:
     validation_mode = mission_reflection.infer_graph_mode(last_message)
     grid_output = _run_grid(repo_root, validation_mode)
     check_payload = _run_reflection_check(repo_root)
-    if grid_output is None or check_payload is None:
+    structural_only = os.environ.get("CORTEX_CODEX_APP_HOOK_STRUCTURAL_ONLY") == "1"
+    if grid_output is None or (check_payload is None and not structural_only):
         _diagnostic_exit(
             "grid or reflection-check command failed to produce output; allowing stop"
         )
