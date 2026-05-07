@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-task-standard-context-loop-trace-remediation`
-### Next Product Train
 - Slug: `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun`
-- Surface: `product live proof`
-- Why now: The no-live context-loop trace Gate 0 passed after the prior live rerun failed on repeated PostToolUse contexts and ambiguous `call_*`/`item_*` trace joining; future traces may use exact refs or unique diagnostic fingerprints. Clean/control silence, phase-aware timing, firing-boundary remediation, overcontrol remediation, causal trace IDs, and shared SRE-owned tool-evidence classification are preserved. A live rerun is now the next required evidence step, but only with explicit current-turn live approval.
+### Next Product Train
+- Slug: `codex-app-cli-posttooluse-task-standard-closure-reporting-architecture-decision`
+- Surface: `product architecture decision`
+- Why now: The latest approved live rerun removed the previous structural blockers: exactly one PostToolUse context was emitted, the trace joined by unique `tool_event_fingerprint`, the next terminal action matched the requested direct check, clean/control cases stayed silent, root config stayed unchanged, and no runtime snapshot loaded. The only failing criterion was final closure reporting, so the next seam should be a no-live architecture decision rather than another live run or policy/text edit.
 
 ### Research Lines Under Evaluation
 
