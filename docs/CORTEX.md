@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-task-standard-actuator-architecture-decision`
-### Next Product Train
 - Slug: `codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0`
-- Surface: `product host actuator + lab proof`
-- Why now: The architecture decision classified the `failure_context_ignored` live result as timing/selection failure: PostToolUse context fired after a failed missing-artifact precondition, so the next legitimate model action was artifact creation rather than the named direct check. Phase-aware Gate 0 is the smallest no-live proof before another live run.
+### Next Product Train
+- Slug: `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run`
+- Surface: `product host actuator + live proof`
+- Why now: Phase-aware Gate 0 passed without live spend: context no longer fires on failed missing-artifact preconditions, it fires after a successful candidate artifact references a captured path-like anchor with unresolved closure evidence, and clean/control cases stay silent. The next needed evidence is a narrow live run, not a three-arm behavior comparison.
 
 ### Research Lines Under Evaluation
 

@@ -74,6 +74,14 @@ _POSTTOOLUSE_TASK_STANDARD_CONTEXT_TEMPLATE = (
 )
 _POSTTOOLUSE_TASK_STANDARD_CONTEXT_SPAN_LIMIT = 180
 _POSTTOOLUSE_TASK_STANDARD_CONTEXT_SESSION_LIMIT = 2
+_POSTTOOLUSE_MISSING_ARTIFACT_MARKERS = (
+    "no such file or directory",
+    "cannot stat",
+    "does not exist",
+    "open: no such file",
+    "open: no such file or directory",
+    "no such file",
+)
 _TOOL_VERIFICATION_MARKERS = (
     " test",
     "tests",
@@ -1413,11 +1421,23 @@ def _posttooluse_task_standard_context_decision(
             context_text=None,
             reason="no_tool_event_text",
         )
-    if not _tool_event_has_verification_marker(tool_text):
+    has_verification_marker = _tool_event_has_verification_marker(tool_text)
+    candidate_artifact_created = _posttooluse_candidate_artifact_created(
+        spine,
+        payload,
+        tool_text,
+    )
+    if not has_verification_marker and not candidate_artifact_created:
         return _PostToolUseTaskStandardContextDecision(
             item_id=None,
             context_text=None,
             reason="no_verification_marker",
+        )
+    if has_verification_marker and _posttooluse_missing_candidate_artifact(tool_text):
+        return _PostToolUseTaskStandardContextDecision(
+            item_id=None,
+            context_text=None,
+            reason="pre_artifact_candidate_missing",
         )
     if _tool_event_looks_failed(payload, tool_text):
         return _PostToolUseTaskStandardContextDecision(
@@ -1425,10 +1445,25 @@ def _posttooluse_task_standard_context_decision(
             context_text=None,
             reason="tool_event_failed",
         )
+    if not (
+        candidate_artifact_created
+        or (has_verification_marker and _tool_event_looks_successful(payload, tool_text))
+    ):
+        return _PostToolUseTaskStandardContextDecision(
+            item_id=None,
+            context_text=None,
+            reason="no_candidate_artifact_or_readback",
+        )
     item = _first_unresolved_required_standard_item(
         spine,
         already_context_item_ids=already_context_item_ids,
     )
+    if item is None and candidate_artifact_created and not has_verification_marker:
+        item = _first_required_standard_item_by_kind(
+            spine,
+            kind=TaskStandardItemKind.CLOSURE_EVIDENCE,
+            already_context_item_ids=already_context_item_ids,
+        )
     if item is None:
         return _PostToolUseTaskStandardContextDecision(
             item_id=None,
@@ -1441,6 +1476,62 @@ def _posttooluse_task_standard_context_decision(
         context_text=context_text,
         reason="unresolved_task_standard_item_after_tool",
     )
+
+
+def _posttooluse_missing_candidate_artifact(tool_text: str) -> bool:
+    return any(marker in tool_text for marker in _POSTTOOLUSE_MISSING_ARTIFACT_MARKERS)
+
+
+def _posttooluse_candidate_artifact_created(
+    spine: TaskStandardSpine,
+    payload: OpenAICodexHookPayload,
+    tool_text: str,
+) -> bool:
+    if _tool_event_looks_failed(payload, tool_text):
+        return False
+    if not _tool_event_looks_successful(payload, tool_text):
+        return False
+    path_anchors = _posttooluse_standard_path_anchors(spine)
+    if not path_anchors:
+        return False
+    return any(
+        _posttooluse_tool_creates_path_anchor(tool_text, path_anchor)
+        for path_anchor in path_anchors
+    )
+
+
+def _posttooluse_standard_path_anchors(spine: TaskStandardSpine) -> tuple[str, ...]:
+    anchors: list[str] = []
+    for item in spine.all_items:
+        anchors.extend(
+            anchor.lower()
+            for anchor in _posttooluse_path_anchors(item.text)
+            if anchor.strip()
+        )
+    return tuple(dict.fromkeys(anchors))
+
+
+def _posttooluse_path_anchors(text: str) -> tuple[str, ...]:
+    return tuple(
+        dict.fromkeys(
+            anchor.strip()
+            for anchor in re.findall(r"[A-Za-z0-9_./-]+\.[A-Za-z0-9_./-]+", text)
+            if anchor.strip()
+        )
+    )
+
+
+def _posttooluse_tool_creates_path_anchor(tool_text: str, path_anchor: str) -> bool:
+    escaped = re.escape(path_anchor)
+    creation_patterns = (
+        rf">\s*{escaped}\b",
+        rf"tee\s+(?:-[A-Za-z]+\s+)*{escaped}\b",
+        rf"touch\s+{escaped}\b",
+        rf"cat\s+>\s*{escaped}\b",
+        rf"cp\s+\S+\s+{escaped}\b",
+        rf"mv\s+\S+\s+{escaped}\b",
+    )
+    return any(re.search(pattern, tool_text) for pattern in creation_patterns)
 
 
 def _first_unresolved_required_standard_item(
@@ -1456,6 +1547,19 @@ def _first_unresolved_required_standard_item(
         for item in spine.standard_items:
             if item.kind is kind and not item.has_aligned_evidence and item.item_id not in already:
                 return item
+    return None
+
+
+def _first_required_standard_item_by_kind(
+    spine: TaskStandardSpine,
+    *,
+    kind: TaskStandardItemKind,
+    already_context_item_ids: tuple[str, ...],
+) -> TaskStandardItem | None:
+    already = set(already_context_item_ids)
+    for item in spine.standard_items:
+        if item.kind is kind and item.item_id not in already:
+            return item
     return None
 
 

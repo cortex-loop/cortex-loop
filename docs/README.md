@@ -215,6 +215,9 @@ Active docs:
 - [Cortex Codex App/CLI PostToolUse Task-Standard Actuator Architecture Decision](recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md) —
   decision classifying the negative live result as PostToolUse timing/selection
   failure and queuing no-live phase-aware calibration
+- [Cortex Codex App/CLI PostToolUse Task-Standard Phase-Aware Calibration Gate 0](recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_calibration_gate0.md) —
+  no-live structural proof that PostToolUse context waits for candidate
+  artifact creation and keeps pre-artifact/control cases silent
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed
