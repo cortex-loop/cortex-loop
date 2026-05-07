@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass
-from enum import Enum
 from typing import Any, Protocol
 
 from cortex.sre.task_standard import (
@@ -16,6 +14,18 @@ from cortex.sre.task_standard import (
     TaskStandardSpine,
     external_scoring_boundary_terms,
     task_standard_closure_satisfied,
+)
+from cortex.sre.tool_evidence import (
+    ToolEvidenceClassification,
+    ToolEvidenceObservation,
+    ToolEvidencePhase,
+    classify_tool_evidence,
+    tool_evidence_has_verification_marker,
+    tool_evidence_looks_failed,
+    tool_evidence_looks_successful,
+    tool_evidence_path_anchors_from_texts,
+    tool_evidence_phase_completed,
+    tool_evidence_text,
 )
 
 from .codex_app_cli_lifecycle import OpenAICodexLifecycleEvent
@@ -28,53 +38,6 @@ _POSTTOOLUSE_TASK_STANDARD_CONTEXT_TEMPLATE = (
 )
 _POSTTOOLUSE_TASK_STANDARD_CONTEXT_SPAN_LIMIT = 180
 _POSTTOOLUSE_TASK_STANDARD_CONTEXT_SESSION_LIMIT = 2
-_POSTTOOLUSE_MISSING_ARTIFACT_MARKERS = (
-    "no such file or directory",
-    "cannot stat",
-    "does not exist",
-    "open: no such file",
-    "open: no such file or directory",
-    "no such file",
-)
-_POSTTOOLUSE_PHASE_FAILED_OPTION_RE = re.compile(
-    r"(^|\n)\s*[^\n]{0,160}\b(?:illegal|invalid|unrecognized|unknown) option\b",
-)
-_POSTTOOLUSE_PHASE_FAILED_USAGE_RE = re.compile(r"(^|\n)\s*usage:\s+\S+")
-_TOOL_VERIFICATION_MARKERS = (
-    " test",
-    "tests",
-    "pytest",
-    "unittest",
-    "vitest",
-    "jest",
-    "build",
-    "lint",
-    "typecheck",
-    "tsc",
-    "mypy",
-    "ruff",
-    "cargo test",
-    "go test",
-    "check",
-    "verify",
-    "cat ",
-    "$(cat",
-    "\\\"cat",
-    " wc ",
-    "wc -l",
-    "\\\"wc",
-    "grep",
-    "stat ",
-    "\\\"stat",
-    "[ -f",
-    "test -f",
-    "file_ok",
-    "content_ok",
-    "content=",
-    "lines=",
-    "exists",
-    "matches exactly",
-)
 
 
 class _CodexToolPayload(Protocol):
@@ -85,44 +48,8 @@ class _CodexToolPayload(Protocol):
     error: str | None
 
 
-class PostToolUseTaskStandardPhase(str, Enum):
-    NO_TOOL_EVENT_TEXT = "no_tool_event_text"
-    PRE_ARTIFACT_MISSING = "pre_artifact_missing"
-    FAILED_CHECK = "failed_check"
-    FAILED_TOOL = "failed_tool"
-    CANDIDATE_ARTIFACT_CREATED = "candidate_artifact_created"
-    READBACK_COMPLETED = "readback_completed"
-    MARKERLESS = "markerless"
-    UNRELATED_OR_GENERIC = "unrelated_or_generic"
-
-
-@dataclass(frozen=True, slots=True)
-class PostToolUseTaskStandardPhaseResult:
-    phase: PostToolUseTaskStandardPhase
-    tool_text: str
-    has_verification_marker: bool = False
-    candidate_artifact_created: bool = False
-
-    @property
-    def silence_reason(self) -> str:
-        if self.phase is PostToolUseTaskStandardPhase.NO_TOOL_EVENT_TEXT:
-            return "no_tool_event_text"
-        if self.phase is PostToolUseTaskStandardPhase.PRE_ARTIFACT_MISSING:
-            return "pre_artifact_candidate_missing"
-        if self.phase is PostToolUseTaskStandardPhase.FAILED_CHECK:
-            return "phase_check_failed"
-        if self.phase is PostToolUseTaskStandardPhase.FAILED_TOOL:
-            return "tool_event_failed"
-        if self.phase is PostToolUseTaskStandardPhase.MARKERLESS:
-            return "no_verification_marker"
-        return "no_candidate_artifact_or_readback"
-
-    @property
-    def context_eligible(self) -> bool:
-        return self.phase in {
-            PostToolUseTaskStandardPhase.CANDIDATE_ARTIFACT_CREATED,
-            PostToolUseTaskStandardPhase.READBACK_COMPLETED,
-        }
+PostToolUseTaskStandardPhase = ToolEvidencePhase
+PostToolUseTaskStandardPhaseResult = ToolEvidenceClassification
 
 
 @dataclass(frozen=True, slots=True)
@@ -212,64 +139,11 @@ def classify_posttooluse_task_standard_phase(
     spine: TaskStandardSpine,
     payload: _CodexToolPayload,
 ) -> PostToolUseTaskStandardPhaseResult:
-    tool_text = tool_event_text(payload).lower()
-    if not tool_text:
-        return PostToolUseTaskStandardPhaseResult(
-            phase=PostToolUseTaskStandardPhase.NO_TOOL_EVENT_TEXT,
-            tool_text=tool_text,
+    return classify_tool_evidence(
+        _tool_evidence_observation_for_payload(
+            payload,
+            path_anchors=_posttooluse_standard_path_anchors(spine),
         )
-    has_verification_marker = tool_event_has_verification_marker(tool_text)
-    phase_completed = posttooluse_phase_tool_response_completed(payload, tool_text)
-    candidate_artifact_created = (
-        phase_completed and _posttooluse_candidate_artifact_created(spine, tool_text)
-    )
-    if not has_verification_marker and not candidate_artifact_created:
-        return PostToolUseTaskStandardPhaseResult(
-            phase=PostToolUseTaskStandardPhase.MARKERLESS,
-            tool_text=tool_text,
-            has_verification_marker=has_verification_marker,
-            candidate_artifact_created=candidate_artifact_created,
-        )
-    if has_verification_marker and _posttooluse_missing_candidate_artifact(tool_text):
-        return PostToolUseTaskStandardPhaseResult(
-            phase=PostToolUseTaskStandardPhase.PRE_ARTIFACT_MISSING,
-            tool_text=tool_text,
-            has_verification_marker=has_verification_marker,
-            candidate_artifact_created=candidate_artifact_created,
-        )
-    if _posttooluse_phase_check_failed(tool_text):
-        return PostToolUseTaskStandardPhaseResult(
-            phase=PostToolUseTaskStandardPhase.FAILED_CHECK,
-            tool_text=tool_text,
-            has_verification_marker=has_verification_marker,
-            candidate_artifact_created=candidate_artifact_created,
-        )
-    if tool_event_looks_failed(payload, tool_text):
-        return PostToolUseTaskStandardPhaseResult(
-            phase=PostToolUseTaskStandardPhase.FAILED_TOOL,
-            tool_text=tool_text,
-            has_verification_marker=has_verification_marker,
-            candidate_artifact_created=candidate_artifact_created,
-        )
-    if candidate_artifact_created:
-        return PostToolUseTaskStandardPhaseResult(
-            phase=PostToolUseTaskStandardPhase.CANDIDATE_ARTIFACT_CREATED,
-            tool_text=tool_text,
-            has_verification_marker=has_verification_marker,
-            candidate_artifact_created=True,
-        )
-    if has_verification_marker and phase_completed:
-        return PostToolUseTaskStandardPhaseResult(
-            phase=PostToolUseTaskStandardPhase.READBACK_COMPLETED,
-            tool_text=tool_text,
-            has_verification_marker=has_verification_marker,
-            candidate_artifact_created=False,
-        )
-    return PostToolUseTaskStandardPhaseResult(
-        phase=PostToolUseTaskStandardPhase.UNRELATED_OR_GENERIC,
-        tool_text=tool_text,
-        has_verification_marker=has_verification_marker,
-        candidate_artifact_created=False,
     )
 
 
@@ -278,69 +152,62 @@ def tool_event_has_verification_evidence(
     *,
     active_verification_expectation: bool = False,
 ) -> bool:
-    text = tool_event_text(payload).lower()
+    observation = _tool_evidence_observation_for_payload(payload)
+    text = observation.lowered_text
     if not text:
         return False
-    if not tool_event_has_verification_marker(text):
+    if not tool_evidence_has_verification_marker(
+        text,
+        count_completion_status=False,
+    ):
         return False
     if tool_event_looks_failed(payload, text):
         return False
-    return active_verification_expectation or tool_event_looks_successful(payload, text)
+    return active_verification_expectation or tool_evidence_looks_successful(text)
+
+
+def _tool_evidence_observation_for_payload(
+    payload: _CodexToolPayload,
+    *,
+    path_anchors: tuple[str, ...] = (),
+) -> ToolEvidenceObservation:
+    return ToolEvidenceObservation.from_tool_parts(
+        hook_event_name=payload.hook_event_name.value,
+        tool_name=payload.tool_name,
+        tool_input=payload.tool_input,
+        tool_response=payload.tool_response,
+        error=payload.error,
+        path_anchors=path_anchors,
+        count_completion_status_as_verification_marker=False,
+    )
 
 
 def tool_event_has_verification_marker(normalized_tool_text: str) -> bool:
-    return any(marker in normalized_tool_text for marker in _TOOL_VERIFICATION_MARKERS)
+    return tool_evidence_has_verification_marker(
+        normalized_tool_text,
+        count_completion_status=False,
+    )
 
 
 def tool_event_text(payload: _CodexToolPayload) -> str:
-    return " ".join(
-        value
-        for value in (
-            payload.tool_name or "",
-            _json_value_text(payload.tool_input),
-            _json_value_text(payload.tool_response),
-        )
-        if value
+    return tool_evidence_text(
+        payload.tool_name,
+        payload.tool_input,
+        payload.tool_response,
     )
 
 
 def tool_event_looks_successful(payload: _CodexToolPayload, text: str) -> bool:
-    if payload.hook_event_name is not OpenAICodexLifecycleEvent.POST_TOOL_USE:
-        return False
-    if "\"exit_code\":0" in text or "\"exit_code\": 0" in text:
-        return True
-    if "\"status\":\"completed\"" in text or "\"status\": \"completed\"" in text:
-        return True
-    return any(
-        marker in text
-        for marker in (
-            "file_ok",
-            "content_ok",
-            " passed",
-            "success",
-            "ok",
-            "matches exactly",
-        )
+    return (
+        payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE
+        and tool_evidence_looks_successful(text)
     )
 
 
 def tool_event_looks_failed(payload: _CodexToolPayload, text: str) -> bool:
-    if payload.error:
-        return True
-    return any(
-        marker in text
-        for marker in (
-            "\"exit_code\":1",
-            "\"exit_code\": 1",
-            "\"exit_code\":2",
-            "\"exit_code\": 2",
-            "failed",
-            "failure",
-            "traceback",
-            "error:",
-            "content_mismatch",
-            "not found",
-        )
+    return tool_evidence_looks_failed(
+        text,
+        error_present=bool(payload.error),
     )
 
 
@@ -348,18 +215,13 @@ def posttooluse_phase_tool_response_completed(
     payload: _CodexToolPayload,
     tool_text: str,
 ) -> bool:
-    if tool_event_looks_failed(payload, tool_text):
-        return False
-    if _posttooluse_missing_candidate_artifact(tool_text):
-        return False
-    if _posttooluse_phase_check_failed(tool_text):
-        return False
-    return tool_event_looks_successful(
-        payload,
-        tool_text,
-    ) or (
-        payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE
-        and payload.tool_response is not None
+    return tool_evidence_phase_completed(
+        ToolEvidenceObservation(
+            tool_text=tool_text,
+            hook_event_name=payload.hook_event_name.value,
+            tool_response_present=payload.tool_response is not None,
+            error_present=bool(payload.error),
+        )
     )
 
 
@@ -423,63 +285,10 @@ def posttooluse_product_anchors(text: str) -> tuple[str, ...]:
     return tuple(dict.fromkeys(anchor.strip() for anchor in anchors if anchor.strip()))
 
 
-def _posttooluse_missing_candidate_artifact(tool_text: str) -> bool:
-    return any(marker in tool_text for marker in _POSTTOOLUSE_MISSING_ARTIFACT_MARKERS)
-
-
-def _posttooluse_phase_check_failed(tool_text: str) -> bool:
-    diagnostic_text = tool_text.replace("\\n", "\n")
-    return bool(
-        _POSTTOOLUSE_PHASE_FAILED_OPTION_RE.search(diagnostic_text)
-        or _POSTTOOLUSE_PHASE_FAILED_USAGE_RE.search(diagnostic_text)
-    )
-
-
-def _posttooluse_candidate_artifact_created(
-    spine: TaskStandardSpine,
-    tool_text: str,
-) -> bool:
-    path_anchors = _posttooluse_standard_path_anchors(spine)
-    if not path_anchors:
-        return False
-    return any(
-        _posttooluse_tool_creates_path_anchor(tool_text, path_anchor)
-        for path_anchor in path_anchors
-    )
-
-
 def _posttooluse_standard_path_anchors(spine: TaskStandardSpine) -> tuple[str, ...]:
-    anchors: list[str] = []
-    for item in spine.all_items:
-        anchors.extend(
-            anchor.lower()
-            for anchor in _posttooluse_path_anchors(item.text)
-            if anchor.strip()
-        )
-    return tuple(dict.fromkeys(anchors))
-
-
-def _posttooluse_path_anchors(text: str) -> tuple[str, ...]:
-    return tuple(
-        dict.fromkeys(
-            anchor.strip()
-            for anchor in re.findall(r"[A-Za-z0-9_./-]+\.[A-Za-z0-9_./-]+", text)
-            if anchor.strip()
-        )
+    return tool_evidence_path_anchors_from_texts(
+        tuple(item.text for item in spine.all_items)
     )
-
-
-def _posttooluse_tool_creates_path_anchor(tool_text: str, path_anchor: str) -> bool:
-    escaped = re.escape(path_anchor)
-    creation_patterns = (
-        rf">\s*{escaped}\b",
-        rf"tee\s+(?:-[A-Za-z]+\s+)*{escaped}\b",
-        rf"touch\s+{escaped}\b",
-        rf"cat\s+>\s*{escaped}\b",
-        rf"cp\s+\S+\s+{escaped}\b",
-        rf"mv\s+\S+\s+{escaped}\b",
-    )
-    return any(re.search(pattern, tool_text) for pattern in creation_patterns)
 
 
 def _first_unresolved_required_standard_item(
@@ -509,9 +318,3 @@ def _first_required_standard_item_by_kind(
         if item.kind is kind and item.item_id not in already:
             return item
     return None
-
-
-def _json_value_text(value: Any) -> str:
-    if value is None:
-        return ""
-    return json.dumps(value, sort_keys=True, separators=(",", ":"))

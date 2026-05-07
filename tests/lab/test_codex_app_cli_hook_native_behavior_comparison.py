@@ -24,6 +24,7 @@ from lab.codex_app_cli_hook_native_behavior_comparison import (
     run_task_standard_posttooluse_gate0,
     run_task_standard_posttooluse_live_probe,
     run_task_standard_posttooluse_overcontrol_gate0,
+    run_task_standard_posttooluse_shared_tool_evidence_gate0,
     run_task_standard_raw_vs_silent_artifact_readout,
     run_task_standard_three_arm_gate0_probe,
     run_task_standard_three_arm_live,
@@ -376,6 +377,32 @@ def test_task_standard_posttooluse_actuator_trace_gate0_uses_hook_chronology(
     assert historical_trace["ambiguous"] is True
     assert historical_trace["preceding_tool"] is None
     assert historical_trace["next_tool_after_context"] is None
+
+
+def test_task_standard_posttooluse_shared_tool_evidence_gate0(
+    tmp_path: Path,
+) -> None:
+    report = run_task_standard_posttooluse_shared_tool_evidence_gate0(
+        output_root=tmp_path,
+    )
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_posttooluse_shared_tool_evidence_gate0"
+    assert report["live_trials_ran"] is False
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["next_product_train"] == (
+        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+    )
+    boundary_results = report["boundary_results"]
+    assert boundary_results["shared_classifier_detects_pre_artifact_missing"] is True
+    assert boundary_results["shared_classifier_detects_failed_check"] is True
+    assert boundary_results["shared_classifier_detects_candidate_artifact"] is True
+    assert boundary_results["shared_classifier_detects_readback"] is True
+    assert boundary_results["shared_classifier_detects_markerless"] is True
+    assert boundary_results["sre_task_standard_generic_check_preserved"] is True
+    assert boundary_results["sre_task_standard_aligned_readback_preserved"] is True
+    assert boundary_results["status_completion_marker_is_not_host_phase_marker"] is True
+    assert boundary_results["prior_causal_trace_gate0_preserved"] is True
 
 
 def test_task_standard_posttooluse_live_refuses_without_explicit_approval(
@@ -787,6 +814,7 @@ def test_behavior_comparison_harness_does_not_use_forbidden_sources() -> None:
     assert "--task-standard-posttooluse-phase-aware-gate0" in source
     assert "--task-standard-posttooluse-overcontrol-gate0" in source
     assert "--task-standard-posttooluse-actuator-trace-gate0" in source
+    assert "--task-standard-posttooluse-shared-tool-evidence-gate0" in source
 
 
 def _trial(

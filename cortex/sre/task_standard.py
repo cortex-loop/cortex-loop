@@ -16,6 +16,11 @@ from dataclasses import dataclass, field, replace
 from enum import Enum
 from typing import Any, Mapping
 
+from cortex.sre.tool_evidence import (
+    ToolEvidenceObservation,
+    classify_tool_evidence,
+)
+
 
 TASK_STANDARD_FORMATION_TEXT = (
     "Let me put the standard down before I start, in three compact lines "
@@ -418,6 +423,10 @@ def record_task_standard_evidence(
             text_excerpt=_excerpt(tool_text),
         )
         return _append_evidence(spine, evidence), evidence
+    tool_observation = classify_tool_evidence(
+        ToolEvidenceObservation(tool_text=tool_text)
+    )
+    has_verification_marker = tool_observation.has_verification_marker
 
     alignment_corpus = tuple(
         item.text for item in spine.all_items
@@ -436,10 +445,7 @@ def record_task_standard_evidence(
         for item in spine.standard_items
         if item.kind is TaskStandardItemKind.CLOSURE_EVIDENCE
         and _closure_evidence_action_aligns(item.text, normalized_tool_text)
-        and (
-            directly_aligned_item_ids
-            or _generic_verification_markers_present(normalized_tool_text)
-        )
+        and (directly_aligned_item_ids or has_verification_marker)
     )
     aligned_item_ids = tuple(
         dict.fromkeys((*directly_aligned_item_ids, *closure_evidence_item_ids))
@@ -450,7 +456,7 @@ def record_task_standard_evidence(
             if _closure_claim_markers_present(normalized_tool_text)
             else TaskStandardEvidenceClass.STANDARD_ALIGNED
         )
-    elif _generic_verification_markers_present(normalized_tool_text):
+    elif has_verification_marker:
         evidence_class = TaskStandardEvidenceClass.GENERIC_CHECK
     else:
         evidence_class = TaskStandardEvidenceClass.UNRELATED_ACTIVITY
@@ -751,38 +757,6 @@ def _closure_evidence_action_aligns(
     item_tokens = set(_meaningful_tokens(item_text))
     tool_tokens = set(_meaningful_tokens(normalized_tool_text))
     return bool(item_tokens & tool_tokens & _ACTION_TOKENS)
-
-
-def _generic_verification_markers_present(text: str) -> bool:
-    return any(
-        marker in text
-        for marker in (
-            " test ",
-            " tests ",
-            " pytest ",
-            " unittest ",
-            " vitest ",
-            " jest ",
-            " build ",
-            " lint ",
-            " typecheck ",
-            " tsc ",
-            " mypy ",
-            " ruff ",
-            " check ",
-            " verify ",
-            " cat ",
-            " wc ",
-            " grep ",
-            " stat ",
-            " exit_code 0 ",
-            " passed ",
-            " success ",
-            " content_ok ",
-            " file_ok ",
-            " exists ",
-        )
-    )
 
 
 def _closure_claim_markers_present(text: str) -> bool:

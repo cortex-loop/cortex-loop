@@ -240,6 +240,10 @@ Active docs:
   structural proof that PostToolUse live readout joins context rows to stdout
   commands by stable tool-event reference and marks missing historical joins
   ambiguous instead of inferring by ordinal position
+- [Cortex Codex App/CLI PostToolUse Shared Tool-Evidence Classification](recon/cortex_codex_app_cli_posttooluse_shared_tool_evidence_classification.md) —
+  no-live proof that SRE task-standard evidence and the Codex PostToolUse
+  actuator consume one typed classifier for missing, failed, candidate,
+  readback, markerless, and completion phases before the next live rerun
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed
