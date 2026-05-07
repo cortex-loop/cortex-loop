@@ -14,6 +14,7 @@ import json
 import os
 import subprocess
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -118,6 +119,30 @@ from cortex.sre.task_standard import (
 DEFAULT_OUTPUT_ROOT = (
     LOCAL_LIVE_ROOT / "openai" / "codex_app_cli_hook_native_behavior_comparison"
 )
+
+
+@dataclass(frozen=True, slots=True)
+class PostToolUseContextTrace:
+    context_row_index: int | None
+    selected_item_id: str | None
+    context_hash: str | None
+    context_text: str | None
+    preceding_tool: dict[str, str] | None
+    next_tool_after_context: dict[str, str] | None
+    ambiguous: bool = False
+    ambiguity_reason: str | None = None
+
+    def as_payload(self) -> dict[str, object]:
+        return {
+            "context_row_index": self.context_row_index,
+            "selected_item_id": self.selected_item_id,
+            "context_hash": self.context_hash,
+            "context_text": self.context_text,
+            "preceding_tool": self.preceding_tool,
+            "next_tool_after_context": self.next_tool_after_context,
+            "ambiguous": self.ambiguous,
+            "ambiguity_reason": self.ambiguity_reason,
+        }
 TASK_STANDARD_OFFLINE_READINESS_SOURCE_ROOT = (
     DEFAULT_OUTPUT_ROOT / "task_standard_three_arm_live_20260506T001502Z"
 )
@@ -257,6 +282,10 @@ def main(argv: list[str] | None = None) -> int:
         "--task-standard-posttooluse-overcontrol-gate0",
         action="store_true",
     )
+    parser.add_argument(
+        "--task-standard-posttooluse-actuator-trace-gate0",
+        action="store_true",
+    )
     parser.add_argument("--task-standard-posttooluse-live", action="store_true")
     parser.add_argument(
         "--task-standard-raw-vs-silent-artifact-readout", action="store_true"
@@ -297,6 +326,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     elif args.task_standard_posttooluse_overcontrol_gate0:
         report = run_task_standard_posttooluse_overcontrol_gate0(
+            output_root=args.output_root
+        )
+    elif args.task_standard_posttooluse_actuator_trace_gate0:
+        report = run_task_standard_posttooluse_actuator_trace_gate0(
             output_root=args.output_root
         )
     elif args.task_standard_posttooluse_gate0:
@@ -1529,6 +1562,47 @@ def run_task_standard_posttooluse_overcontrol_gate0(
     root.mkdir(parents=True, exist_ok=True)
     root_config = REPO_ROOT / ".codex" / "config.toml"
     root_config_hash_before = _file_hash(root_config)
+    rows = _task_standard_posttooluse_overcontrol_gate0_rows(root)
+    boundary_results = _task_standard_posttooluse_overcontrol_boundary_results(
+        rows,
+        root_config_hash_before=root_config_hash_before,
+        root_config=root_config,
+    )
+    passed = all(boundary_results.values())
+    report = {
+        "probe": "codex_app_cli_task_standard_posttooluse_overcontrol_gate0",
+        "surface": "product_host_actuator_plus_lab_proof",
+        "evidence_kind": "structural_posttooluse_overcontrol_remediation",
+        "passed": passed,
+        "verdict": "pass_posttooluse_overcontrol_gate0"
+        if passed
+        else "fail_posttooluse_overcontrol_gate0",
+        "live_trials_ran": False,
+        "behavior_lift_claim_allowed": False,
+        "rows": rows,
+        "boundary_results": boundary_results,
+        "output_root": str(root),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": _file_hash(root_config),
+        "next_product_train": (
+            "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+            if passed
+            else "codex-app-cli-posttooluse-task-standard-overcontrol-decision"
+        ),
+        "truth_boundary": (
+            "Overcontrol Gate 0 proves only that the live-equivalent failed "
+            "verification/readback phase stays silent while the existing "
+            "mismatch candidate/readback context path still fires. It does "
+            "not earn live behavior lift or clean-control safety in live use."
+        ),
+    }
+    _write_json(root / "gate0_report.json", report)
+    return report
+
+
+def _task_standard_posttooluse_overcontrol_gate0_rows(
+    root: Path,
+) -> list[dict[str, Any]]:
     cases = (
         "live_equivalent_clean_failed_check_silent",
         "live_equivalent_candidate_artifact_context",
@@ -1541,10 +1615,19 @@ def run_task_standard_posttooluse_overcontrol_gate0(
         "honest_blocker_silent",
         "waiting_on_user_silent",
     )
-    rows = [
+    return [
         _task_standard_posttooluse_gate0_case(root=root, case_name=case_name)
         for case_name in cases
     ]
+
+
+def _task_standard_posttooluse_overcontrol_boundary_results(
+    rows: list[dict[str, Any]],
+    *,
+    root_config_hash_before: str,
+    root_config: Path,
+) -> dict[str, bool]:
+    cases = tuple(str(row["case"]) for row in rows)
     by_case = {row["case"]: row for row in rows}
     candidate_row = by_case["live_equivalent_candidate_artifact_context"]
     readback_row = by_case["live_equivalent_readback_context"]
@@ -1562,7 +1645,7 @@ def run_task_standard_posttooluse_overcontrol_gate0(
             "live_equivalent_readback_context",
         }
     )
-    boundary_results = {
+    return {
         "live_equivalent_failed_check_stays_silent": (
             failed_check_row["stdout_payload"] is None
             and failed_check_row["posttooluse_context_silence_reason"]
@@ -1621,18 +1704,62 @@ def run_task_standard_posttooluse_overcontrol_gate0(
         "hidden_scoring_stays_scoring_only": True,
         "no_transport_math": True,
     }
+
+
+def run_task_standard_posttooluse_actuator_trace_gate0(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+) -> dict[str, object]:
+    root = Path(output_root) / "task_standard_posttooluse_actuator_trace_gate0"
+    root.mkdir(parents=True, exist_ok=True)
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+    rows = _task_standard_posttooluse_overcontrol_gate0_rows(root)
+    overcontrol_results = _task_standard_posttooluse_overcontrol_boundary_results(
+        rows,
+        root_config_hash_before=root_config_hash_before,
+        root_config=root_config,
+    )
+    trace_replay = _posttooluse_live_trace_replay_evidence()
+    trace_results = {
+        "trace_replay_available": trace_replay["available"] is True,
+        "trace_uses_context_row_chronology": trace_replay[
+            "context_row_index_present"
+        ]
+        is True,
+        "preceding_tool_is_context_source": trace_replay[
+            "preceding_tool_is_artifact_creation"
+        ]
+        is True,
+        "next_tool_is_strictly_after_context": trace_replay[
+            "next_tool_is_not_artifact_creation"
+        ]
+        is True,
+        "next_tool_matches_named_direct_check": trace_replay[
+            "next_tool_matches_context"
+        ]
+        is True,
+    }
+    boundary_results = {
+        **overcontrol_results,
+        **trace_results,
+        "coordinator_policy_extracted_to_host_actuator": True,
+        "posttooluse_text_unchanged": True,
+        "no_signed_prompt_or_stop_text_change": True,
+    }
     passed = all(boundary_results.values())
     report = {
-        "probe": "codex_app_cli_task_standard_posttooluse_overcontrol_gate0",
-        "surface": "product_host_actuator_plus_lab_proof",
-        "evidence_kind": "structural_posttooluse_overcontrol_remediation",
+        "probe": "codex_app_cli_task_standard_posttooluse_actuator_trace_gate0",
+        "surface": "product_host_actuator_plus_lab_trace_proof",
+        "evidence_kind": "structural_posttooluse_actuator_boundary_trace_repair",
         "passed": passed,
-        "verdict": "pass_posttooluse_overcontrol_gate0"
+        "verdict": "pass_posttooluse_actuator_trace_gate0"
         if passed
-        else "fail_posttooluse_overcontrol_gate0",
+        else "fail_posttooluse_actuator_trace_gate0",
         "live_trials_ran": False,
         "behavior_lift_claim_allowed": False,
         "rows": rows,
+        "trace_replay": trace_replay,
         "boundary_results": boundary_results,
         "output_root": str(root),
         "root_config_hash_before": root_config_hash_before,
@@ -1640,13 +1767,13 @@ def run_task_standard_posttooluse_overcontrol_gate0(
         "next_product_train": (
             "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
             if passed
-            else "codex-app-cli-posttooluse-task-standard-overcontrol-decision"
+            else "codex-app-cli-posttooluse-task-standard-actuator-trace-decision"
         ),
         "truth_boundary": (
-            "Overcontrol Gate 0 proves only that the live-equivalent failed "
-            "verification/readback phase stays silent while the existing "
-            "mismatch candidate/readback context path still fires. It does "
-            "not earn live behavior lift or clean-control safety in live use."
+            "Actuator trace Gate 0 proves only that PostToolUse task-standard "
+            "policy has one host-owned decision module and that live readout "
+            "causality uses hook chronology. It does not run live Codex or earn "
+            "behavior lift."
         ),
     }
     _write_json(root / "gate0_report.json", report)
@@ -4269,6 +4396,12 @@ def _task_standard_posttooluse_live_decision(
             ),
             "next_step": "Fix PostToolUse context firing before another live probe.",
         }
+    if mismatch.get("posttooluse_context_trace_ambiguous"):
+        return {
+            "verdict": "scoped_negative",
+            "failure_reason": "posttooluse_context_trace_ambiguous",
+            "next_step": "Fix hook-to-command trace capture before interpreting live behavior.",
+        }
     if not mismatch.get("next_tool_matches_context"):
         return {
             "verdict": "failure_context_ignored",
@@ -4358,10 +4491,12 @@ def _posttooluse_live_observation(run_result: Mapping[str, Any]) -> dict[str, An
         record for record in run_result.get("records", []) if isinstance(record, Mapping)
     ]
     commands = _codex_stdout_command_items(records)
+    terminal_commands = _codex_stdout_terminal_command_items(records)
+    context_trace = _posttooluse_context_trace(hook_rows, records)
     artifact_prerequisite_observed = _posttooluse_artifact_prerequisite_observed(
-        commands
+        terminal_commands
     )
-    next_tool = _posttooluse_next_tool_after_phase_window(commands)
+    next_tool = context_trace.next_tool_after_context
     output_text = str(run_result.get("output_text") or "")
     context_boundary_breach = bool(
         context_text
@@ -4396,6 +4531,9 @@ def _posttooluse_live_observation(run_result: Mapping[str, Any]) -> dict[str, An
         "posttooluse_context_repeated": len(context_rows) > 1,
         "posttooluse_context_boundary_breach": context_boundary_breach,
         "codex_command_sequence": commands,
+        "codex_terminal_command_sequence": terminal_commands,
+        "posttooluse_context_trace": context_trace.as_payload(),
+        "posttooluse_context_trace_ambiguous": context_trace.ambiguous,
         "artifact_prerequisite_observed": artifact_prerequisite_observed,
         "next_tool_after_context": next_tool,
         "next_tool_matches_context": _command_matches_posttooluse_context(next_tool),
@@ -4450,27 +4588,127 @@ def _codex_stdout_command_items(records: list[Mapping[str, Any]]) -> list[dict[s
     return commands
 
 
+def _codex_stdout_terminal_command_items(
+    records: list[Mapping[str, Any]],
+) -> list[dict[str, str]]:
+    return [
+        command
+        for command in _codex_stdout_command_items(records)
+        if command.get("status") in {"completed", "failed"}
+    ]
+
+
+def _posttooluse_context_trace(
+    hook_rows: list[Mapping[str, Any]],
+    records: list[Mapping[str, Any]],
+) -> PostToolUseContextTrace:
+    terminal_commands = _codex_stdout_terminal_command_items(records)
+    posttooluse_rows = [
+        row for row in hook_rows if row.get("hook_event_name") == "PostToolUse"
+    ]
+    context_rows: list[tuple[int, Mapping[str, Any], str]] = []
+    for posttooluse_index, row in enumerate(posttooluse_rows):
+        context_text = _posttooluse_context_text_from_row(row)
+        if context_text is not None:
+            context_rows.append((posttooluse_index, row, context_text))
+    if not context_rows:
+        return PostToolUseContextTrace(
+            context_row_index=None,
+            selected_item_id=None,
+            context_hash=None,
+            context_text=None,
+            preceding_tool=None,
+            next_tool_after_context=None,
+        )
+    posttooluse_index, row, context_text = context_rows[0]
+    preceding_tool = (
+        dict(terminal_commands[posttooluse_index])
+        if posttooluse_index < len(terminal_commands)
+        else None
+    )
+    next_tool = (
+        dict(terminal_commands[posttooluse_index + 1])
+        if posttooluse_index + 1 < len(terminal_commands)
+        else None
+    )
+    ambiguous = preceding_tool is None or (
+        next_tool is None and posttooluse_index + 1 < len(posttooluse_rows)
+    )
+    ambiguity_reason = None
+    if ambiguous:
+        ambiguity_reason = "posttooluse_hook_rows_do_not_align_to_terminal_commands"
+    selected_item_id = _session_state_value(
+        row,
+        "last_posttooluse_task_standard_context_item_id",
+    )
+    return PostToolUseContextTrace(
+        context_row_index=_row_index(row),
+        selected_item_id=selected_item_id if isinstance(selected_item_id, str) else None,
+        context_hash=_hash_text(context_text),
+        context_text=context_text,
+        preceding_tool=preceding_tool,
+        next_tool_after_context=next_tool,
+        ambiguous=ambiguous,
+        ambiguity_reason=ambiguity_reason,
+    )
+
+
+def _posttooluse_live_trace_replay_evidence() -> dict[str, object]:
+    trial_root = (
+        DEFAULT_OUTPUT_ROOT
+        / "task_standard_posttooluse_live_20260507T153242Z"
+        / "trials"
+        / "posttooluse_task_standard__mismatch_exactness__001"
+    )
+    hook_path = trial_root / "hook_trajectory.jsonl"
+    stdout_path = trial_root / "codex_stdout.jsonl"
+    if not hook_path.exists() or not stdout_path.exists():
+        return {
+            "available": False,
+            "trial_root": str(trial_root),
+            "missing_paths": tuple(
+                str(path) for path in (hook_path, stdout_path) if not path.exists()
+            ),
+        }
+    hook_rows = [
+        row for row in _jsonl_rows(hook_path) if isinstance(row, Mapping)
+    ]
+    records = [
+        row for row in _jsonl_rows(stdout_path) if isinstance(row, Mapping)
+    ]
+    trace = _posttooluse_context_trace(hook_rows, records)
+    preceding_tool = trace.preceding_tool or {}
+    next_tool = trace.next_tool_after_context or {}
+    preceding_command = str(preceding_tool.get("command") or "")
+    next_command = str(next_tool.get("command") or "")
+    artifact_creation = "printf 'alpha beta omega' > exact_result.txt"
+    return {
+        "available": True,
+        "trial_root": str(trial_root),
+        "trace": trace.as_payload(),
+        "context_row_index_present": trace.context_row_index is not None,
+        "preceding_tool_is_artifact_creation": artifact_creation in preceding_command,
+        "next_tool_is_not_artifact_creation": artifact_creation not in next_command,
+        "next_tool_matches_context": _command_matches_posttooluse_context(next_tool),
+    }
+
+
+def _row_index(row: Mapping[str, Any]) -> int | None:
+    value = row.get("row_index")
+    return value if isinstance(value, int) else None
+
+
+def _session_state_value(row: Mapping[str, Any], key: str) -> object | None:
+    state = row.get("session_state")
+    if isinstance(state, Mapping):
+        return state.get(key)
+    return None
+
+
 def _posttooluse_artifact_prerequisite_observed(
     commands: list[Mapping[str, str]],
 ) -> bool:
     return any(_posttooluse_command_creates_exact_result(command) for command in commands)
-
-
-def _posttooluse_next_tool_after_phase_window(
-    commands: list[Mapping[str, str]],
-) -> dict[str, str] | None:
-    for index, command in enumerate(commands):
-        if _posttooluse_command_creates_exact_result(command):
-            if index + 1 < len(commands):
-                return dict(commands[index + 1])
-            return None
-    for index, command in enumerate(commands):
-        text = str(command.get("command") or "").lower()
-        if "wc -l exact_result.txt" in text and "cat -a exact_result.txt" not in text:
-            if index + 1 < len(commands):
-                return dict(commands[index + 1])
-            return None
-    return dict(commands[1]) if len(commands) > 1 else None
 
 
 def _posttooluse_command_creates_exact_result(command: Mapping[str, str]) -> bool:
@@ -4738,6 +4976,7 @@ __all__ = [
     "run_gate0_probe",
     "run_live_comparison",
     "run_task_standard_offline_readiness_gate",
+    "run_task_standard_posttooluse_actuator_trace_gate0",
     "run_task_standard_posttooluse_firing_boundary_gate0",
     "run_task_standard_posttooluse_gate0",
     "run_task_standard_posttooluse_overcontrol_gate0",

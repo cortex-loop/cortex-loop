@@ -19,6 +19,7 @@ from lab.codex_app_cli_hook_native_behavior_comparison import (
     run_live_comparison,
     run_task_standard_offline_readiness_gate,
     run_task_standard_posttooluse_firing_boundary_gate0,
+    run_task_standard_posttooluse_actuator_trace_gate0,
     run_task_standard_posttooluse_phase_aware_gate0,
     run_task_standard_posttooluse_gate0,
     run_task_standard_posttooluse_live_probe,
@@ -342,6 +343,33 @@ def test_task_standard_posttooluse_overcontrol_gate0_keeps_failed_clean_check_si
     ]
 
 
+def test_task_standard_posttooluse_actuator_trace_gate0_uses_hook_chronology(
+    tmp_path: Path,
+) -> None:
+    report = run_task_standard_posttooluse_actuator_trace_gate0(output_root=tmp_path)
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_posttooluse_actuator_trace_gate0"
+    assert report["live_trials_ran"] is False
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["next_product_train"] == (
+        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+    )
+    boundary_results = report["boundary_results"]
+    assert boundary_results["live_equivalent_failed_check_stays_silent"] is True
+    assert boundary_results["mismatch_candidate_still_emits_context"] is True
+    assert boundary_results["trace_uses_context_row_chronology"] is True
+    assert boundary_results["preceding_tool_is_context_source"] is True
+    assert boundary_results["next_tool_is_strictly_after_context"] is True
+    trace = report["trace_replay"]["trace"]
+    assert "printf 'alpha beta omega' > exact_result.txt" in trace["preceding_tool"][
+        "command"
+    ]
+    assert "printf 'alpha beta omega' > exact_result.txt" not in trace[
+        "next_tool_after_context"
+    ]["command"]
+
+
 def test_task_standard_posttooluse_live_refuses_without_explicit_approval(
     tmp_path: Path,
     monkeypatch,
@@ -437,6 +465,19 @@ def test_task_standard_posttooluse_live_decision_verdicts() -> None:
     assert comparison._task_standard_posttooluse_live_decision(ignored)[
         "verdict"
     ] == "failure_context_ignored"
+
+    trace_ambiguous = [
+        _posttooluse_live_row(
+            "mismatch_exactness",
+            context_count=1,
+            trace_ambiguous=True,
+        )
+    ]
+    trace_decision = comparison._task_standard_posttooluse_live_decision(
+        trace_ambiguous
+    )
+    assert trace_decision["verdict"] == "scoped_negative"
+    assert trace_decision["failure_reason"] == "posttooluse_context_trace_ambiguous"
 
     overcontrol = [
         _posttooluse_live_row(
@@ -737,6 +778,7 @@ def test_behavior_comparison_harness_does_not_use_forbidden_sources() -> None:
     assert "--task-standard-raw-vs-silent-artifact-readout" in source
     assert "--task-standard-posttooluse-phase-aware-gate0" in source
     assert "--task-standard-posttooluse-overcontrol-gate0" in source
+    assert "--task-standard-posttooluse-actuator-trace-gate0" in source
 
 
 def _trial(
@@ -808,6 +850,7 @@ def _posttooluse_live_row(
     artifact_prerequisite: bool = False,
     preartifact_context: bool = False,
     boundary_breach: bool = False,
+    trace_ambiguous: bool = False,
 ) -> dict[str, object]:
     return {
         "case": case,
@@ -821,6 +864,7 @@ def _posttooluse_live_row(
         "posttooluse_context_count": context_count,
         "artifact_prerequisite_observed": artifact_prerequisite,
         "posttooluse_context_after_preartifact_check": preartifact_context,
+        "posttooluse_context_trace_ambiguous": trace_ambiguous,
         "next_tool_matches_context": next_tool,
         "final_closure_reports_context_evidence": final_evidence,
     }
