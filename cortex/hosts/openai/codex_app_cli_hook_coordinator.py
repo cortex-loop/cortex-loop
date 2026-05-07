@@ -82,6 +82,13 @@ _POSTTOOLUSE_MISSING_ARTIFACT_MARKERS = (
     "open: no such file or directory",
     "no such file",
 )
+_POSTTOOLUSE_PHASE_FAILED_CHECK_MARKERS = (
+    "illegal option",
+    "invalid option",
+    "unrecognized option",
+    "unknown option",
+    "usage:",
+)
 _TOOL_VERIFICATION_MARKERS = (
     " test",
     "tests",
@@ -1439,6 +1446,12 @@ def _posttooluse_task_standard_context_decision(
             context_text=None,
             reason="pre_artifact_candidate_missing",
         )
+    if _posttooluse_phase_check_failed(tool_text):
+        return _PostToolUseTaskStandardContextDecision(
+            item_id=None,
+            context_text=None,
+            reason="phase_check_failed",
+        )
     if _tool_event_looks_failed(payload, tool_text):
         return _PostToolUseTaskStandardContextDecision(
             item_id=None,
@@ -1485,6 +1498,10 @@ def _posttooluse_missing_candidate_artifact(tool_text: str) -> bool:
     return any(marker in tool_text for marker in _POSTTOOLUSE_MISSING_ARTIFACT_MARKERS)
 
 
+def _posttooluse_phase_check_failed(tool_text: str) -> bool:
+    return any(marker in tool_text for marker in _POSTTOOLUSE_PHASE_FAILED_CHECK_MARKERS)
+
+
 def _posttooluse_candidate_artifact_created(
     spine: TaskStandardSpine,
     payload: OpenAICodexHookPayload,
@@ -1508,6 +1525,8 @@ def _posttooluse_phase_tool_response_completed(
     if _tool_event_looks_failed(payload, tool_text):
         return False
     if _posttooluse_missing_candidate_artifact(tool_text):
+        return False
+    if _posttooluse_phase_check_failed(tool_text):
         return False
     return _tool_event_looks_successful(
         payload,

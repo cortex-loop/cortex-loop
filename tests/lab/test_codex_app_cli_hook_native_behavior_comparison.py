@@ -22,6 +22,7 @@ from lab.codex_app_cli_hook_native_behavior_comparison import (
     run_task_standard_posttooluse_phase_aware_gate0,
     run_task_standard_posttooluse_gate0,
     run_task_standard_posttooluse_live_probe,
+    run_task_standard_posttooluse_overcontrol_gate0,
     run_task_standard_raw_vs_silent_artifact_readout,
     run_task_standard_three_arm_gate0_probe,
     run_task_standard_three_arm_live,
@@ -303,6 +304,42 @@ def test_task_standard_posttooluse_firing_boundary_gate0_accepts_live_equivalent
     assert "direct evidence for:" in text
     assert "product-visible" not in text
     assert "verify more" not in text.lower()
+
+
+def test_task_standard_posttooluse_overcontrol_gate0_keeps_failed_clean_check_silent(
+    tmp_path: Path,
+) -> None:
+    report = run_task_standard_posttooluse_overcontrol_gate0(output_root=tmp_path)
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_posttooluse_overcontrol_gate0"
+    assert report["live_trials_ran"] is False
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["next_product_train"] == (
+        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+    )
+    assert (
+        report["boundary_results"]["live_equivalent_failed_check_stays_silent"]
+        is True
+    )
+    assert report["boundary_results"]["mismatch_candidate_still_emits_context"] is True
+    assert report["boundary_results"]["mismatch_readback_still_emits_context"] is True
+    assert report["boundary_results"]["clean_and_control_cases_stay_silent"] is True
+    assert report["boundary_results"]["pre_artifact_check_stays_silent"] is True
+    assert report["boundary_results"]["marker_miss_is_private"] is True
+    assert report["boundary_results"]["failed_candidate_stays_silent"] is True
+    assert report["boundary_results"]["no_stop_block_or_pretool_deny"] is True
+    by_case = {row["case"]: row for row in report["rows"]}
+    failed_check = by_case["live_equivalent_clean_failed_check_silent"]
+    assert failed_check["stdout_payload"] is None
+    assert failed_check["posttooluse_context_silence_reason"] == "phase_check_failed"
+    candidate_payload = by_case["live_equivalent_candidate_artifact_context"][
+        "stdout_payload"
+    ]
+    assert candidate_payload["hookSpecificOutput"]["hookEventName"] == "PostToolUse"
+    assert "direct evidence for:" in candidate_payload["hookSpecificOutput"][
+        "additionalContext"
+    ]
 
 
 def test_task_standard_posttooluse_live_refuses_without_explicit_approval(
@@ -699,6 +736,7 @@ def test_behavior_comparison_harness_does_not_use_forbidden_sources() -> None:
     assert "--disable-stop-blocks" in source
     assert "--task-standard-raw-vs-silent-artifact-readout" in source
     assert "--task-standard-posttooluse-phase-aware-gate0" in source
+    assert "--task-standard-posttooluse-overcontrol-gate0" in source
 
 
 def _trial(

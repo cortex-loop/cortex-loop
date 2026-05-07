@@ -230,6 +230,9 @@ Active docs:
   live negative evidence that the remediated phase-aware actuator now emits in
   the mismatch case but overcontrols a clean-evidenced control, queuing no-live
   overcontrol remediation
+- [Cortex Codex App/CLI PostToolUse Task-Standard Overcontrol Remediation](recon/cortex_codex_app_cli_posttooluse_task_standard_overcontrol_remediation.md) —
+  no-live proof that live-equivalent failed verification/readback diagnostics
+  stay silent while mismatch candidate/readback PostToolUse contexts still fire
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed
