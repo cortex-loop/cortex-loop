@@ -176,21 +176,14 @@ three-arm live rerun by itself.
 
 The PostToolUse calibration decision accepted a narrow live actuator probe as
 the next product seam, not Sinkhorn and not a three-arm behavior comparison.
-The probe is constrained to `task_standard_exactness` / evidence recovery: a
-specific unresolved standard item after product-visible tool evidence should
-produce PostToolUse `additionalContext`, and the next model step should repair
-that exact evidence gap without over-controlling clean cases. Live execution
-still requires explicit current-turn approval and must not use `--require-pass`
-because negative verdicts are valid evidence. The PostToolUse text must remain
-specific to a product-visible mismatch and obey Cortex output law: no
-third-agent voice, no internal labels, no hidden verifier facts, and no generic
-"verify more" advice. The PostToolUse narrow live probe harness is now
-approval-gated: `--task-standard-posttooluse-live` refuses without
-`CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, records
-pass/no-context/ignored-context/overcontrol/scoped-negative/fail verdicts, and
-does not authorize broad behavior-lift claims. The live run remains separate
-future work requiring explicit current-turn approval and must not use
-`--require-pass`.
+The approved narrow live probe then produced `failure_context_ignored`: a
+specific PostToolUse `additionalContext` reached Codex CLI in the mismatch
+case and clean/blocker/waiting/unrelated controls received no PostToolUse
+context, but the next model tool did not run the named direct check before
+closure. Later exactness checks came through the existing Stop continuation
+loop, so PostToolUse next-action effect remains unearned. The next product seam
+is an architecture decision about actuator timing and model-I/O leverage, not a
+text, fixture, matcher, or policy remediation seam.
 PreToolUse motor inhibition should follow only as action blocking, not as a
 model-visible advice surface, and false-deny clean-control risk must be treated
 as a future kill-rule risk. Sinkhorn-style transport belongs later as the

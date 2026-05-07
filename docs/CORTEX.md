@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-task-standard-narrow-live-probe`
-### Next Product Train
 - Slug: `codex-app-cli-posttooluse-task-standard-narrow-live-run`
-- Surface: `product live proof`
-- Why now: The no-spend narrow-live-probe harness seam added `--task-standard-posttooluse-live`, the approval env, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running live. Three-arm behavior comparison remains paused; the next step is only the explicitly approved narrow live run.
+### Next Product Train
+- Slug: `codex-app-cli-posttooluse-task-standard-actuator-architecture-decision`
+- Surface: `product architecture decision`
+- Why now: The narrow live run emitted Codex-native PostToolUse additionalContext without overcontrolling controls, but the mismatch next tool did not run the named direct check and later repair happened through Stop continuation. The precommitted verdict rule for `failure_context_ignored` requires an architecture decision before text or policy tuning.
 
 ### Research Lines Under Evaluation
 

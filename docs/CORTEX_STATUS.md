@@ -57,7 +57,7 @@ Subsystem boundaries: Core owns commitment/provenance/dispatch truth; SRE owns r
 
 Grounding rule: any product claim, plan, or implementation seam must name identity/current truth, a code owner, a proof surface, and the model-I/O path. If the relevant code was not read, say so before taking a position.
 
-Current train: `codex-app-cli-posttooluse-task-standard-narrow-live-probe`. Next train: `codex-app-cli-posttooluse-task-standard-narrow-live-run`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
+Current train: `codex-app-cli-posttooluse-task-standard-narrow-live-run`. Next train: `codex-app-cli-posttooluse-task-standard-actuator-architecture-decision`. Shipping default: `openai.codex_app_cli`. Keep Cortex truth, brain-wiring truth, conformance truth, shipping truth, and live behavior-lift claims separate; structural proof alone does not earn model-output lift.
 
 ## Live Product Truth
 
@@ -67,9 +67,9 @@ Current train: `codex-app-cli-posttooluse-task-standard-narrow-live-probe`. Next
 
 ## Current Focus
 
-- Current tracked train: `codex-app-cli-posttooluse-task-standard-narrow-live-probe`
-- Active quality/risk focus: This no-spend implementation seam adds the approval-gated narrow PostToolUse live probe harness for `task_standard_exactness` / evidence recovery, not a three-arm behavior comparison: CLI `--task-standard-posttooluse-live`, approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, product-only subject config checks, live report fields, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail. No live Codex command ran because approval was not provided. Boundary: no signed UserPromptSubmit text, Stop text, SRE law, scored matcher, threshold, fixture, scoring, root-hook, hidden-verifier, Sinkhorn/transport, PreToolUse, or PermissionRequest change is part of this seam.
-- Next product train after the current focus: `codex-app-cli-posttooluse-task-standard-narrow-live-run`
+- Current tracked train: `codex-app-cli-posttooluse-task-standard-narrow-live-run`
+- Active quality/risk focus: The approved narrow live PostToolUse task-standard probe, not a three-arm behavior comparison, ran on `task_standard_exactness` / evidence recovery and produced `failure_context_ignored`: one specific PostToolUse additionalContext was emitted in the mismatch case, controls received zero PostToolUse contexts, but the next model tool did not perform the named direct check before closure. Later exactness checks came through the existing Stop continuation loop. Boundary: no broad behavior lift, output-quality lift, truth-gap lift, exactness-only value lift, signed text, Stop text, SRE law, scored matcher, threshold, fixture, scoring, root-hook, hidden-verifier, Sinkhorn/transport, PreToolUse, or PermissionRequest change is earned or allowed by this seam.
+- Next product train after the current focus: `codex-app-cli-posttooluse-task-standard-actuator-architecture-decision`
 
 ## Bio-To-Code Matrix
 
@@ -214,13 +214,13 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 
 ## Next Product Train
 
-- Train: `codex-app-cli-posttooluse-task-standard-narrow-live-run`
-- Surface: product live proof
-- Executive benefit: Execute the approval-gated PostToolUse task-standard narrow live probe now that the harness can test whether Codex-native PostToolUse additionalContext changes the next model step on the earned `task_standard_exactness` / evidence-recovery surface.
-- Why now: The no-spend narrow-live-probe harness seam added `--task-standard-posttooluse-live`, the approval env, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running live. Three-arm behavior comparison remains paused; the next step is only the explicitly approved narrow live run.
-- Primary metric: With explicit current-turn approval only, run `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved python3 lab/codex_app_cli_hook_native_behavior_comparison.py --task-standard-posttooluse-live` without `--require-pass`; negative verdicts are valid evidence. Claim only narrow actuator evidence if the mismatch case emits one specific PostToolUse context, the next model tool performs the named direct check before closure, clean controls stay silent, root config and runtime snapshot boundaries hold, and hidden scoring remains absent.
-- Guardrail: Do not run without explicit current-turn approval. Do not broaden to output-quality/truth-gap lift, run a three-arm behavior comparison, tune signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport, PreToolUse denial, or PermissionRequest policy.
-- Kill rule: If live PostToolUse context is ignored, produces generic verification behavior, over-controls clean cases, repeats context loops, or requires text/policy tuning after seeing results, record the negative verdict and stop for architecture decision rather than repairing fixtures or broadening claims.
+- Train: `codex-app-cli-posttooluse-task-standard-actuator-architecture-decision`
+- Surface: product architecture decision
+- Executive benefit: Decide whether the PostToolUse actuator timing/selection is the right next model-I/O lever for `task_standard_exactness` after live evidence showed context delivery but no immediate next-action effect.
+- Why now: The narrow live run emitted Codex-native PostToolUse additionalContext without overcontrolling controls, but the mismatch next tool did not run the named direct check and later repair happened through Stop continuation. The precommitted verdict rule for `failure_context_ignored` requires an architecture decision before text or policy tuning.
+- Primary metric: Read the `failure_context_ignored` live run artifacts under `.cortex/live_validation/openai/codex_app_cli_hook_native_behavior_comparison/task_standard_posttooluse_live_20260507T100836Z/`, classify whether the failure is actuator timing, context content, model assimilation, harness measurement, or Stop-dominance, and choose exactly one next implementation path without changing runtime behavior in the decision seam.
+- Guardrail: Do not tune signed UserPromptSubmit text, PostToolUse text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport, PreToolUse denial, or PermissionRequest policy in the decision seam. Three-arm behavior comparison remains paused.
+- Kill rule: If the architecture decision cannot identify a model-I/O path likely to improve next-action behavior beyond Stop continuation, stop PostToolUse live probing and return to lifecycle-actuator design rather than forcing another run.
 
 ## Research Lines Under Evaluation
 
@@ -294,6 +294,8 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
   Purpose: Records that the narrow PostToolUse live probe is queued but blocked until the task-standard stack is published or merged cleanly.
 - `Codex App/CLI PostToolUse task-standard narrow live probe harness` -> `docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md`
   Purpose: Records the approval-gated live probe mode and that the live command was not run without explicit current-turn approval.
+- `Codex App/CLI PostToolUse task-standard narrow live run` -> `docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md`
+  Purpose: Records the approved narrow live PostToolUse actuator result: context emitted in the mismatch case, controls stayed free of PostToolUse context, but the next model tool did not perform the named direct check before closure.
 
 ## Blocked Moves
 
@@ -396,4 +398,5 @@ Workflow gates marked `required` are contractual gates checked by `repo_workflow
 - `docs/recon/cortex_codex_app_cli_raw_vs_silent_artifact_readout_roadmap_update.md`
 - `docs/recon/cortex_codex_app_cli_task_standard_stack_publication_hygiene.md`
 - `docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md`
+- `docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md`
 - `docs/recon/claude_code_desktop_lifecycle_spine_branch_disposition.md`

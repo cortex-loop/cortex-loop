@@ -204,6 +204,9 @@ Active docs:
 - [Cortex Codex App/CLI PostToolUse Task-Standard Narrow Live Probe](recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md) —
   approval-gated live probe harness for narrow PostToolUse exactness evidence,
   not a live run or broad behavior-lift claim
+- [Cortex Codex App/CLI PostToolUse Task-Standard Narrow Live Run](recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md) —
+  live negative evidence that PostToolUse context was delivered without
+  earning immediate next-action repair, queuing an architecture decision
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch
