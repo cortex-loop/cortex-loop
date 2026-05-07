@@ -575,6 +575,23 @@ def test_executive_runtime_tracker_keeps_product_goal_and_live_truths_visible() 
     assert "brake EMA" in text
     assert "AUX priors" in text
     assert "internal tags" in text
+    assert "Audit-Survivor Future Backlog" in text
+    assert "serious candidate backlog, not casual brainstorming" in text
+    assert "must consider these candidates" in text
+    assert "To remove or demote a row" in text
+    assert "`workflow-connectivity-trace-reachability`" in text
+    assert "`recon-frontmatter-indexer`" in text
+    assert "`sre-output-law-rendering-contract`" in text
+    assert "`core-proof-obligation-test-factories`" in text
+    assert "`host-runtime-kernel-extraction-audit`" in text
+    assert "`posttooluse-phase-aware-calibration`" in text
+    assert "`pretooluse-motor-inhibition-gate0`" in text
+    assert "`bayesian-kill-rule-shadow`" in text
+    assert "`task-standard-semantic-alignment`" in text
+    assert "`queueable_now`" in text
+    assert "`queueable_after_probe`" in text
+    assert "`research_backlog`" in text
+    assert "mathematically attractive" in text
     assert "If the answer starts with \"which hook can we use?\"" in text
 
 
