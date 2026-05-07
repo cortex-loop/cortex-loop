@@ -4,14 +4,12 @@ Surface: product
 
 This directory index is product-first and single-truth-first.
 
-Active docs:
+Document roles are machine-readable in
+`internal/truth/cortex_status.json::doc_roles` and rendered in
+`docs/CORTEX_STATUS.md`. This index is an inventory, not a second roadmap.
+
+Authority and generated views:
 - [CORTEX](CORTEX.md) — canonical narrative authority
-- [Cortex Executive Runtime Tracker](CORTEX_EXECUTIVE_RUNTIME_TRACKER.md) —
-  product planning tracker for live-model executive-function achievement
-- [Cortex Executive Runtime Program Spec](CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md) —
-  control-object, metric, and falsification spec for the first runtime program
-- [Cortex Executive Runtime Phase 5 Readiness](CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md) —
-  evidence-accounting gate before the OpenAI silent-control live probe
 - [Current Status](CORTEX_STATUS.md)
 - [CORTEX Core](CORTEX_V2_CORE_2.md)
 - [CORTEX SRE](CORTEX_V2_SRE_2.md)
@@ -19,6 +17,19 @@ Active docs:
 - [Repo Workflow](internal/REPO_WORKFLOW.md)
 - [Mission Reflection Contract](internal/MISSION_REFLECTION_CONTRACT.md)
 - [Anti-Drift Rules](internal/ANTI_DRIFT_RULES.md)
+
+Planning scoreboard and retained context:
+- [Cortex Executive Runtime Tracker](CORTEX_EXECUTIVE_RUNTIME_TRACKER.md) —
+  product planning scoreboard for live-model executive-function achievement;
+  subordinate to `internal/truth/cortex_status.json`
+- [Cortex Executive Runtime Program Spec](CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md) —
+  retained control-object, metric, and falsification spec; not current roadmap
+  authority
+- [Cortex Executive Runtime Phase 5 Readiness](CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md) —
+  retained evidence-accounting gate from an earlier program phase; not current
+  roadmap authority
+
+Support context and evidence:
 - [Claude Code Desktop Cortex Plugin Design](cortex_plugin/DESIGN.md) —
   v1 full-lifecycle plugin architecture for Claude Code Desktop's Code tab
 - [Claude Code Desktop Cortex Host Adapter](cortex_plugin/ADAPTER.md) —

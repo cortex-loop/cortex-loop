@@ -854,6 +854,41 @@ def test_active_doc_allowlist_matches_status_registry() -> None:
     assert actual == expected
 
 
+def test_document_role_map_covers_docs_without_turning_context_into_roadmap() -> None:
+    status = _load_status()
+    role_map = status["doc_roles"]
+    roles = role_map["roles"]
+    role_paths: dict[str, set[str]] = {
+        role["id"]: set(role["paths"])
+        for role in roles
+    }
+    all_role_paths = [path for role in roles for path in role["paths"]]
+
+    assert "status registry remains the operational roadmap authority" in role_map["summary"]
+    assert len(all_role_paths) == len(set(all_role_paths))
+    assert set(all_role_paths) == set(status["active_docs"])
+
+    assert role_paths["identity_authority"] == {"docs/CORTEX.md"}
+    assert role_paths["generated_operational_view"] == {"docs/CORTEX_STATUS.md"}
+    assert role_paths["planning_scoreboard"] == {"docs/CORTEX_EXECUTIVE_RUNTIME_TRACKER.md"}
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" in role_paths["retained_context"]
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PHASE_5_READINESS.md" in role_paths["retained_context"]
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" not in role_paths["planning_scoreboard"]
+    assert "docs/CORTEX_EXECUTIVE_RUNTIME_PROGRAM_SPEC.md" not in role_paths["identity_authority"]
+    assert "docs/internal/REPO_WORKFLOW.md" in role_paths["workflow_authority"]
+    assert "docs/recon/cortex_codex_app_cli_task_standard_live_run.md" in role_paths["recon_evidence"]
+
+    readme = _read(DOCS_INDEX_PATH)
+    status_doc = _read(STATUS_DOC_PATH)
+    assert "Document roles are machine-readable" in readme
+    assert "not current roadmap authority" in readme.replace("\n  ", " ")
+    assert "## Document Authority Map" in status_doc
+    assert "`retained_context`" in status_doc
+    assert "Do not queue work from these docs directly" in status_doc
+    assert "## Active Docs Inventory" in status_doc
+    assert "Authority comes from the Document Authority Map" in status_doc
+
+
 def test_anti_drift_rules_pin_fixture_to_law_product_spine() -> None:
     text = _read(ANTI_DRIFT_RULES_PATH)
 
@@ -2504,6 +2539,7 @@ def test_status_registry_is_complete_and_stable() -> None:
         "bootstrap",
         "product_goal",
         "identity",
+        "doc_roles",
         "executive_completion",
         "bio_to_code_matrix",
         "math_to_code_rules",
