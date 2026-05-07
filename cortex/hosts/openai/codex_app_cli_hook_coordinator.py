@@ -1447,7 +1447,10 @@ def _posttooluse_task_standard_context_decision(
         )
     if not (
         candidate_artifact_created
-        or (has_verification_marker and _tool_event_looks_successful(payload, tool_text))
+        or (
+            has_verification_marker
+            and _posttooluse_phase_tool_response_completed(payload, tool_text)
+        )
     ):
         return _PostToolUseTaskStandardContextDecision(
             item_id=None,
@@ -1487,9 +1490,7 @@ def _posttooluse_candidate_artifact_created(
     payload: OpenAICodexHookPayload,
     tool_text: str,
 ) -> bool:
-    if _tool_event_looks_failed(payload, tool_text):
-        return False
-    if not _tool_event_looks_successful(payload, tool_text):
+    if not _posttooluse_phase_tool_response_completed(payload, tool_text):
         return False
     path_anchors = _posttooluse_standard_path_anchors(spine)
     if not path_anchors:
@@ -1497,6 +1498,23 @@ def _posttooluse_candidate_artifact_created(
     return any(
         _posttooluse_tool_creates_path_anchor(tool_text, path_anchor)
         for path_anchor in path_anchors
+    )
+
+
+def _posttooluse_phase_tool_response_completed(
+    payload: OpenAICodexHookPayload,
+    tool_text: str,
+) -> bool:
+    if _tool_event_looks_failed(payload, tool_text):
+        return False
+    if _posttooluse_missing_candidate_artifact(tool_text):
+        return False
+    return _tool_event_looks_successful(
+        payload,
+        tool_text,
+    ) or (
+        payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE
+        and payload.tool_response is not None
     )
 
 
