@@ -1027,6 +1027,68 @@ def test_posttooluse_task_standard_context_stays_silent_when_clean() -> None:
     assert not result.session_state.posttooluse_task_standard_context_item_ids
 
 
+def test_posttooluse_task_standard_context_stays_silent_on_failed_phase_check() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    transcript_path = Path("/tmp/codex-task-standard-posttooluse-phase-failed.jsonl")
+    _write_transcript(
+        transcript_path,
+        _assistant_message_row(_posttooluse_exactness_standard_block()),
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Create exact_result.txt with exact alpha beta omega content.",
+        ),
+        state_store=store,
+        task_standard_text_enabled=True,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PreToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={
+                "command": (
+                    "printf %s 'alpha beta omega' > exact_result.txt\n"
+                    "wc -l exact_result.txt\n"
+                    "cat -A exact_result.txt"
+                )
+            },
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={
+                "command": (
+                    "printf %s 'alpha beta omega' > exact_result.txt\n"
+                    "wc -l exact_result.txt\n"
+                    "cat -A exact_result.txt"
+                )
+            },
+            tool_response=(
+                "cat: illegal option -- A\n"
+                "usage: cat [-belnstuv] [file ...]\n"
+                "       0 exact_result.txt\n"
+            ),
+        ),
+        state_store=store,
+        posttooluse_task_standard_context_enabled=True,
+    )
+
+    assert result.directive.action is OpenAICodexLifecycleDirectiveAction.ALLOW
+    assert result.host_response.stdout_payload is None
+    assert not result.session_state.posttooluse_task_standard_context_item_ids
+    assert (
+        result.session_state.last_posttooluse_task_standard_context_silence_reason
+        == "phase_check_failed"
+    )
+
+
 def test_posttooluse_task_standard_context_reports_marker_miss_privately() -> None:
     store = OpenAICodexInMemoryStateStore()
     transcript_path = Path("/tmp/codex-task-standard-posttooluse-markerless.jsonl")
