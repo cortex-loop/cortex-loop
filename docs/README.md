@@ -252,6 +252,10 @@ Active docs:
   no-live proof that PostToolUse task-standard context opens one active repair
   lease and future trace joins use exact refs or unique diagnostic fingerprints
   without ordinal fallback
+- [Cortex Codex App/CLI PostToolUse Task-Standard Phase-Aware Narrow Live Rerun After Context-Loop Trace Remediation](recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun_after_context_loop_trace_remediation.md) —
+  live negative evidence that context delivery, unique-fingerprint trace
+  joining, and next-tool direct checking worked, but final closure did not
+  report the context evidence
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed
