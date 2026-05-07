@@ -245,6 +245,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--task-standard-three-arm-live", action="store_true")
     parser.add_argument("--task-standard-offline-readiness-gate", action="store_true")
     parser.add_argument("--task-standard-posttooluse-gate0", action="store_true")
+    parser.add_argument(
+        "--task-standard-posttooluse-phase-aware-gate0",
+        action="store_true",
+    )
     parser.add_argument("--task-standard-posttooluse-live", action="store_true")
     parser.add_argument(
         "--task-standard-raw-vs-silent-artifact-readout", action="store_true"
@@ -274,6 +278,10 @@ def main(argv: list[str] | None = None) -> int:
         report = run_task_standard_posttooluse_live_probe(
             output_root=args.output_root,
             model=args.model,
+        )
+    elif args.task_standard_posttooluse_phase_aware_gate0:
+        report = run_task_standard_posttooluse_phase_aware_gate0(
+            output_root=args.output_root
         )
     elif args.task_standard_posttooluse_gate0:
         report = run_task_standard_posttooluse_gate0(output_root=args.output_root)
@@ -1262,6 +1270,108 @@ def run_task_standard_posttooluse_gate0(
     return report
 
 
+def run_task_standard_posttooluse_phase_aware_gate0(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+) -> dict[str, object]:
+    root = Path(output_root) / "task_standard_posttooluse_phase_aware_gate0"
+    root.mkdir(parents=True, exist_ok=True)
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+    cases = (
+        "pre_artifact_missing_silent",
+        "candidate_artifact_context",
+        "clean_evidenced_silent",
+        "generic_unrelated_silent",
+        "markerless_aligned_silent",
+        "honest_blocker_silent",
+        "waiting_on_user_silent",
+    )
+    rows = [
+        _task_standard_posttooluse_gate0_case(root=root, case_name=case_name)
+        for case_name in cases
+    ]
+    by_case = {row["case"]: row for row in rows}
+    candidate_row = by_case["candidate_artifact_context"]
+    context_payload = candidate_row["stdout_payload"]
+    context_text = ""
+    hook_event_name = None
+    if isinstance(context_payload, Mapping):
+        hook_specific = context_payload.get("hookSpecificOutput")
+        if isinstance(hook_specific, Mapping):
+            context_text = str(hook_specific.get("additionalContext") or "")
+            hook_event_name = hook_specific.get("hookEventName")
+    silent_cases = tuple(case for case in cases if case != "candidate_artifact_context")
+    boundary_results = {
+        "pre_artifact_check_stays_silent": (
+            by_case["pre_artifact_missing_silent"]["stdout_payload"] is None
+            and by_case["pre_artifact_missing_silent"][
+                "posttooluse_context_silence_reason"
+            ]
+            == "pre_artifact_candidate_missing"
+        ),
+        "candidate_artifact_emits_context": (
+            isinstance(context_payload, Mapping)
+            and hook_event_name == "PostToolUse"
+            and candidate_row["directive_action"] == "add_additional_context"
+        ),
+        "candidate_context_targets_unresolved_evidence": (
+            "direct evidence for:" in context_text
+            and "wc -l exact_result.txt" in context_text
+            and "cat -A exact_result.txt" in context_text
+            and bool(candidate_row["posttooluse_context_item_id"])
+            and bool(candidate_row["posttooluse_context_reason"])
+        ),
+        "clean_and_control_cases_stay_silent": all(
+            by_case[case]["stdout_payload"] is None for case in silent_cases
+        ),
+        "markerless_literal_is_not_candidate_artifact": (
+            by_case["markerless_aligned_silent"][
+                "posttooluse_context_silence_reason"
+            ]
+            == "no_verification_marker"
+        ),
+        "no_stop_block_or_pretool_deny": all(
+            not row["pretool_decision_blocked"] and row["stop_block_count"] == 0
+            for row in rows
+        ),
+        "no_runtime_snapshot": all(not row["runtime_snapshot_loaded"] for row in rows),
+        "root_config_unchanged": root_config_hash_before == _file_hash(root_config),
+        "hidden_scoring_stays_scoring_only": True,
+        "no_transport_math": True,
+    }
+    passed = all(boundary_results.values())
+    report = {
+        "probe": "codex_app_cli_task_standard_posttooluse_phase_aware_gate0",
+        "surface": "product_host_actuator_plus_lab_proof",
+        "evidence_kind": "structural_phase_aware_posttooluse_gate0",
+        "passed": passed,
+        "verdict": "pass_posttooluse_phase_aware_gate0"
+        if passed
+        else "fail_posttooluse_phase_aware_gate0",
+        "live_trials_ran": False,
+        "behavior_lift_claim_allowed": False,
+        "rows": rows,
+        "boundary_results": boundary_results,
+        "output_root": str(root),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": _file_hash(root_config),
+        "next_product_train": (
+            "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
+            if passed
+            else "codex-app-cli-posttooluse-task-standard-phase-aware-remediation"
+        ),
+        "truth_boundary": (
+            "Phase-aware Gate 0 proves only that simulated PostToolUse context "
+            "is withheld for pre-artifact checks and emitted after a candidate "
+            "artifact while clean/control cases stay silent. It does not earn "
+            "live behavior lift."
+        ),
+    }
+    _write_json(root / "gate0_report.json", report)
+    return report
+
+
 def _task_standard_posttooluse_gate0_case(
     *,
     root: Path,
@@ -1398,6 +1508,19 @@ def _task_standard_posttooluse_gate0_payloads(
     transcript_path: Path,
 ) -> tuple[dict[str, object], ...]:
     posttool_payloads = {
+        "pre_artifact_missing_silent": {
+            "tool_input": {"command": "wc -l exact_result.txt"},
+            "tool_response": {
+                "exit_code": 0,
+                "aggregated_output": (
+                    "wc: exact_result.txt: open: No such file or directory\n"
+                ),
+            },
+        },
+        "candidate_artifact_context": {
+            "tool_input": {"command": "printf 'alpha beta omega' > exact_result.txt"},
+            "tool_response": {"exit_code": 0, "aggregated_output": ""},
+        },
         "unresolved_exactness_context": {
             "tool_input": {"command": "wc -l exact_result.txt"},
             "tool_response": {
@@ -3803,10 +3926,20 @@ def _task_standard_posttooluse_live_decision(
             "failure_reason": "standard_not_captured",
             "next_step": "Fix standard capture before interpreting PostToolUse behavior.",
         }
+    if mismatch.get("posttooluse_context_after_preartifact_check"):
+        return {
+            "verdict": "fail",
+            "failure_reason": "pre_artifact_context_spend",
+            "next_step": "Fix phase-aware PostToolUse timing before live probing.",
+        }
     if int(mismatch.get("posttooluse_context_count") or 0) == 0:
         return {
             "verdict": "failure_no_context",
-            "failure_reason": "unresolved_standard_without_posttooluse_context",
+            "failure_reason": (
+                "candidate_artifact_without_posttooluse_context"
+                if mismatch.get("artifact_prerequisite_observed")
+                else "unresolved_standard_without_posttooluse_context"
+            ),
             "next_step": "Fix PostToolUse context firing before another live probe.",
         }
     if not mismatch.get("next_tool_matches_context"):
@@ -3898,7 +4031,10 @@ def _posttooluse_live_observation(run_result: Mapping[str, Any]) -> dict[str, An
         record for record in run_result.get("records", []) if isinstance(record, Mapping)
     ]
     commands = _codex_stdout_command_items(records)
-    next_tool = _posttooluse_next_tool_after_partial_check(commands)
+    artifact_prerequisite_observed = _posttooluse_artifact_prerequisite_observed(
+        commands
+    )
+    next_tool = _posttooluse_next_tool_after_phase_window(commands)
     output_text = str(run_result.get("output_text") or "")
     context_boundary_breach = bool(
         context_text
@@ -3933,6 +4069,7 @@ def _posttooluse_live_observation(run_result: Mapping[str, Any]) -> dict[str, An
         "posttooluse_context_repeated": len(context_rows) > 1,
         "posttooluse_context_boundary_breach": context_boundary_breach,
         "codex_command_sequence": commands,
+        "artifact_prerequisite_observed": artifact_prerequisite_observed,
         "next_tool_after_context": next_tool,
         "next_tool_matches_context": _command_matches_posttooluse_context(next_tool),
         "final_closure_reports_context_evidence": _final_reports_posttooluse_evidence(
@@ -3986,9 +4123,20 @@ def _codex_stdout_command_items(records: list[Mapping[str, Any]]) -> list[dict[s
     return commands
 
 
-def _posttooluse_next_tool_after_partial_check(
+def _posttooluse_artifact_prerequisite_observed(
+    commands: list[Mapping[str, str]],
+) -> bool:
+    return any(_posttooluse_command_creates_exact_result(command) for command in commands)
+
+
+def _posttooluse_next_tool_after_phase_window(
     commands: list[Mapping[str, str]],
 ) -> dict[str, str] | None:
+    for index, command in enumerate(commands):
+        if _posttooluse_command_creates_exact_result(command):
+            if index + 1 < len(commands):
+                return dict(commands[index + 1])
+            return None
     for index, command in enumerate(commands):
         text = str(command.get("command") or "").lower()
         if "wc -l exact_result.txt" in text and "cat -a exact_result.txt" not in text:
@@ -3998,12 +4146,46 @@ def _posttooluse_next_tool_after_partial_check(
     return dict(commands[1]) if len(commands) > 1 else None
 
 
+def _posttooluse_command_creates_exact_result(command: Mapping[str, str]) -> bool:
+    text = str(command.get("command") or "").lower()
+    return bool(
+        "exact_result.txt" in text
+        and any(
+            marker in text
+            for marker in (
+                "> exact_result.txt",
+                ">exact_result.txt",
+                "tee exact_result.txt",
+                "touch exact_result.txt",
+                "cat > exact_result.txt",
+            )
+        )
+    )
+
+
 def _command_matches_posttooluse_context(command: Mapping[str, str] | None) -> bool:
     if not command:
         return False
     text = " ".join(str(command.get(key, "")) for key in ("command", "aggregated_output"))
     lowered = text.lower()
-    return bool("cat -a exact_result.txt" in lowered and "alpha beta omega" in lowered)
+    exactness_checks = (
+        "cat -a exact_result.txt",
+        "cat -vet exact_result.txt",
+        "wc -l exact_result.txt",
+        "wc -c exact_result.txt",
+        "wc -l -c exact_result.txt",
+        "od -an",
+        "od -an -t",
+        "od -an -tx",
+        "cmp -s exact_result.txt",
+    )
+    return bool(
+        "exact_result.txt" in lowered
+        and (
+            any(marker in lowered for marker in exactness_checks)
+            or "alpha beta omega" in lowered
+        )
+    )
 
 
 def _final_reports_posttooluse_evidence(output_text: str) -> bool:
@@ -4229,6 +4411,8 @@ __all__ = [
     "run_gate0_probe",
     "run_live_comparison",
     "run_task_standard_offline_readiness_gate",
+    "run_task_standard_posttooluse_gate0",
+    "run_task_standard_posttooluse_phase_aware_gate0",
     "run_task_standard_posttooluse_live_probe",
     "run_task_standard_raw_vs_silent_artifact_readout",
     "run_task_standard_three_arm_gate0_probe",

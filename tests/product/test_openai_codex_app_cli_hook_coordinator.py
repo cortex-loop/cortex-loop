@@ -725,6 +725,113 @@ def test_posttooluse_task_standard_context_emits_specific_next_step() -> None:
     )
 
 
+def test_posttooluse_task_standard_context_waits_on_missing_artifact() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    transcript_path = Path("/tmp/codex-task-standard-posttooluse-missing.jsonl")
+    _write_transcript(
+        transcript_path,
+        _assistant_message_row(_posttooluse_exactness_standard_block()),
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Create exact_result.txt with exact alpha beta omega content.",
+        ),
+        state_store=store,
+        task_standard_text_enabled=True,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PreToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={"command": "wc -l exact_result.txt"},
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={"command": "wc -l exact_result.txt"},
+            tool_response={
+                "exit_code": 0,
+                "aggregated_output": (
+                    "wc: exact_result.txt: open: No such file or directory\n"
+                ),
+            },
+        ),
+        state_store=store,
+        posttooluse_task_standard_context_enabled=True,
+    )
+
+    assert result.directive.action is OpenAICodexLifecycleDirectiveAction.ALLOW
+    assert result.host_response.stdout_payload is None
+    assert not result.session_state.posttooluse_task_standard_context_item_ids
+    assert (
+        result.session_state.last_posttooluse_task_standard_context_silence_reason
+        == "pre_artifact_candidate_missing"
+    )
+
+
+def test_posttooluse_task_standard_context_emits_after_candidate_artifact() -> None:
+    store = OpenAICodexInMemoryStateStore()
+    transcript_path = Path("/tmp/codex-task-standard-posttooluse-candidate.jsonl")
+    _write_transcript(
+        transcript_path,
+        _assistant_message_row(_posttooluse_exactness_standard_block()),
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="UserPromptSubmit",
+            prompt="Create exact_result.txt with exact alpha beta omega content.",
+        ),
+        state_store=store,
+        task_standard_text_enabled=True,
+    )
+    handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PreToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={"command": "printf 'alpha beta omega' > exact_result.txt"},
+        ),
+        state_store=store,
+    )
+
+    result = handle_openai_codex_hook_payload(
+        _base_payload(
+            hook_event_name="PostToolUse",
+            transcript_path=str(transcript_path),
+            tool_name="Bash",
+            tool_input={"command": "printf 'alpha beta omega' > exact_result.txt"},
+            tool_response={"exit_code": 0, "aggregated_output": ""},
+        ),
+        state_store=store,
+        posttooluse_task_standard_context_enabled=True,
+    )
+
+    payload = result.host_response.stdout_payload
+    assert (
+        result.directive.action
+        is OpenAICodexLifecycleDirectiveAction.ADD_ADDITIONAL_CONTEXT
+    )
+    assert isinstance(payload, dict)
+    text = payload["hookSpecificOutput"]["additionalContext"]
+    assert payload["hookSpecificOutput"]["hookEventName"] == "PostToolUse"
+    assert "direct evidence for:" in text
+    assert "wc -l exact_result.txt" in text
+    assert "cat -A exact_result.txt" in text
+    assert "product-visible" not in text
+    assert "verify more" not in text.lower()
+    assert result.session_state.posttooluse_task_standard_context_item_ids
+    assert result.session_state.last_posttooluse_task_standard_context_reason == (
+        "unresolved_task_standard_item_after_tool"
+    )
+
+
 def test_posttooluse_task_standard_context_stays_silent_when_clean() -> None:
     store = OpenAICodexInMemoryStateStore()
     transcript_path = Path("/tmp/codex-task-standard-posttooluse-clean.jsonl")

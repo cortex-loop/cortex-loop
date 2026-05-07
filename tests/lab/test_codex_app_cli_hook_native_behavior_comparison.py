@@ -18,6 +18,7 @@ from lab.codex_app_cli_hook_native_behavior_comparison import (
     run_gate0_probe,
     run_live_comparison,
     run_task_standard_offline_readiness_gate,
+    run_task_standard_posttooluse_phase_aware_gate0,
     run_task_standard_posttooluse_gate0,
     run_task_standard_posttooluse_live_probe,
     run_task_standard_raw_vs_silent_artifact_readout,
@@ -215,6 +216,42 @@ def test_task_standard_posttooluse_gate0_emits_only_specific_context(
     assert by_case["waiting_on_user_silent"]["stdout_payload"] is None
 
 
+def test_task_standard_posttooluse_phase_aware_gate0_waits_for_candidate(
+    tmp_path: Path,
+) -> None:
+    report = run_task_standard_posttooluse_phase_aware_gate0(output_root=tmp_path)
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_posttooluse_phase_aware_gate0"
+    assert report["live_trials_ran"] is False
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["boundary_results"]["pre_artifact_check_stays_silent"] is True
+    assert report["boundary_results"]["candidate_artifact_emits_context"] is True
+    assert (
+        report["boundary_results"]["candidate_context_targets_unresolved_evidence"]
+        is True
+    )
+    assert report["boundary_results"]["clean_and_control_cases_stay_silent"] is True
+    assert report["boundary_results"]["markerless_literal_is_not_candidate_artifact"] is True
+    assert report["boundary_results"]["no_stop_block_or_pretool_deny"] is True
+    by_case = {row["case"]: row for row in report["rows"]}
+    assert by_case["pre_artifact_missing_silent"]["stdout_payload"] is None
+    assert (
+        by_case["pre_artifact_missing_silent"][
+            "posttooluse_context_silence_reason"
+        ]
+        == "pre_artifact_candidate_missing"
+    )
+    context_payload = by_case["candidate_artifact_context"]["stdout_payload"]
+    assert context_payload["hookSpecificOutput"]["hookEventName"] == "PostToolUse"
+    text = context_payload["hookSpecificOutput"]["additionalContext"]
+    assert "wc -l exact_result.txt" in text
+    assert "cat -A exact_result.txt" in text
+    assert "product-visible" not in text
+    assert "verify more" not in text.lower()
+    assert "Cortex" not in text
+
+
 def test_task_standard_posttooluse_live_refuses_without_explicit_approval(
     tmp_path: Path,
     monkeypatch,
@@ -280,6 +317,31 @@ def test_task_standard_posttooluse_live_decision_verdicts() -> None:
     assert comparison._task_standard_posttooluse_live_decision(no_context)[
         "verdict"
     ] == "failure_no_context"
+
+    no_context_after_candidate = [
+        _posttooluse_live_row("mismatch_exactness", artifact_prerequisite=True)
+    ]
+    no_context_decision = comparison._task_standard_posttooluse_live_decision(
+        no_context_after_candidate
+    )
+    assert no_context_decision["verdict"] == "failure_no_context"
+    assert (
+        no_context_decision["failure_reason"]
+        == "candidate_artifact_without_posttooluse_context"
+    )
+
+    preartifact_spend = [
+        _posttooluse_live_row(
+            "mismatch_exactness",
+            context_count=1,
+            preartifact_context=True,
+        )
+    ]
+    preartifact_decision = comparison._task_standard_posttooluse_live_decision(
+        preartifact_spend
+    )
+    assert preartifact_decision["verdict"] == "fail"
+    assert preartifact_decision["failure_reason"] == "pre_artifact_context_spend"
 
     ignored = [_posttooluse_live_row("mismatch_exactness", context_count=1)]
     assert comparison._task_standard_posttooluse_live_decision(ignored)[
@@ -583,6 +645,7 @@ def test_behavior_comparison_harness_does_not_use_forbidden_sources() -> None:
     assert "silent_task_standard" in source
     assert "--disable-stop-blocks" in source
     assert "--task-standard-raw-vs-silent-artifact-readout" in source
+    assert "--task-standard-posttooluse-phase-aware-gate0" in source
 
 
 def _trial(
@@ -651,6 +714,8 @@ def _posttooluse_live_row(
     context_count: int = 0,
     next_tool: bool = False,
     final_evidence: bool = False,
+    artifact_prerequisite: bool = False,
+    preartifact_context: bool = False,
     boundary_breach: bool = False,
 ) -> dict[str, object]:
     return {
@@ -663,6 +728,8 @@ def _posttooluse_live_row(
         "posttooluse_lifecycle_observed": True,
         "captured_standard_item_count": captured,
         "posttooluse_context_count": context_count,
+        "artifact_prerequisite_observed": artifact_prerequisite,
+        "posttooluse_context_after_preartifact_check": preartifact_context,
         "next_tool_matches_context": next_tool,
         "final_closure_reports_context_evidence": final_evidence,
     }

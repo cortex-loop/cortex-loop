@@ -312,6 +312,12 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_ACTUATOR_ARCHITECTURE_DECISION_PATH = (
     / "recon"
     / "cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md"
 )
+CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_GATE0_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_posttooluse_task_standard_phase_aware_calibration_gate0.md"
+)
 CODEX_APP_CLI_TASK_STANDARD_STACK_PUBLICATION_HYGIENE_PATH = (
     REPO_ROOT
     / "docs"
@@ -747,7 +753,7 @@ def test_semantic_contraction_audit_records_candidates_without_runtime_claim() -
     assert "shipping promotion" in text
     assert "status `next_product_train`" in text
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -1163,6 +1169,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md",
         "cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md",
         "cortex_codex_app_cli_posttooluse_task_standard_next_step_correction.md",
+        "cortex_codex_app_cli_posttooluse_task_standard_phase_aware_calibration_gate0.md",
         "cortex_codex_app_cli_product_event_capture_remediation.md",
         "cortex_codex_app_cli_product_perception_live_probe.md",
         "cortex_codex_app_cli_product_perception_loop.md",
@@ -2025,7 +2032,7 @@ def test_openai_operator_output_quality_fixture_refresh_records_hard_fixture() -
         "docs/recon/cortex_openai_operator_output_quality_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
 
 
 def test_openai_operator_verification_debt_continuation_records_gate0_truth() -> None:
@@ -2051,8 +2058,8 @@ def test_openai_operator_verification_debt_continuation_records_gate0_truth() ->
         "docs/recon/cortex_openai_operator_verification_debt_continuation.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
 
 
 def test_openai_operator_visible_intervention_live_probe_records_scoped_success() -> None:
@@ -2077,8 +2084,8 @@ def test_openai_operator_visible_intervention_live_probe_records_scoped_success(
         "docs/recon/cortex_openai_operator_visible_intervention_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
 
 
 def test_visible_intervention_product_perception_hardening_records_structural_gate() -> None:
@@ -2102,8 +2109,8 @@ def test_visible_intervention_product_perception_hardening_records_structural_ga
         "docs/recon/cortex_visible_intervention_product_perception_hardening.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
 
 
 def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -> None:
@@ -2126,8 +2133,8 @@ def test_openai_operator_visible_intervention_hardened_rerun_records_failure() -
         "docs/recon/cortex_openai_operator_visible_intervention_hardened_rerun.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
 
 
 def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
@@ -2150,8 +2157,8 @@ def test_codex_app_cli_stop_activation_probe_records_structural_gate0() -> None:
         "docs/recon/cortex_codex_app_cli_hook_native_stop_activation_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
 
 
 def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
@@ -2169,13 +2176,13 @@ def test_codex_app_cli_stop_live_canary_records_actuator_proof() -> None:
     assert "a384c80463a98828df0de20d5aa2baafda8bb4fa023bd062c2a17e03e7fc04fc" in text
     assert "No product perception claim" in text
     assert "No model-output behavior-lift claim" in text
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     assert "recon/cortex_codex_app_cli_hook_native_stop_live_canary.md" in docs_index
     assert (
         "docs/recon/cortex_codex_app_cli_hook_native_stop_live_canary.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
 
 
 def test_codex_app_cli_product_perception_loop_records_structural_gate0() -> None:
@@ -2239,10 +2246,10 @@ def test_codex_app_cli_product_event_capture_remediation_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2266,10 +2273,10 @@ def test_codex_app_cli_stop_continuation_resolution_loop_records_live_pass() -> 
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2295,10 +2302,10 @@ def test_codex_app_cli_hook_native_behavior_comparison_records_live_baseline_gat
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2323,9 +2330,9 @@ def test_codex_app_cli_astro_three_arm_fixture_refresh_records_mixed_signal() ->
         "docs/recon/cortex_codex_app_cli_astro_three_arm_fixture_refresh.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2351,8 +2358,8 @@ def test_codex_app_cli_value_ablation_audit_records_requirement_perception_decis
         "docs/recon/cortex_codex_app_cli_value_ablation_audit.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
 
 
 def test_codex_app_cli_task_standard_spine_records_structural_product_spine() -> None:
@@ -2378,9 +2385,9 @@ def test_codex_app_cli_task_standard_spine_records_structural_product_spine() ->
         "docs/recon/cortex_codex_app_cli_task_standard_spine.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     assert status["next_product_train"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2408,8 +2415,8 @@ def test_codex_app_cli_task_standard_live_probe_records_structural_gate0() -> No
         "docs/recon/cortex_codex_app_cli_task_standard_live_probe.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
-    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+    assert status["next_product_train"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
 
 
 def test_codex_app_cli_task_standard_live_run_records_capture_failure() -> None:
@@ -2439,10 +2446,10 @@ def test_codex_app_cli_task_standard_live_run_records_capture_failure() -> None:
         "docs/recon/cortex_codex_app_cli_task_standard_live_run.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2468,11 +2475,11 @@ def test_codex_app_cli_hook_contract_capture_boundary_remediation_records_struct
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2507,11 +2514,11 @@ def test_codex_app_cli_task_standard_context_live_rerun_records_partial_delivery
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2547,7 +2554,7 @@ def test_codex_app_cli_communication_boundary_audit_records_proof_ladder() -> No
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     work_note = status["work_today"]["note"].lower()
     assert "failure_context_ignored" in work_note
@@ -2556,7 +2563,7 @@ def test_codex_app_cli_communication_boundary_audit_records_proof_ladder() -> No
     assert "no broad behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2588,7 +2595,7 @@ def test_codex_app_cli_task_standard_pretool_transcript_capture_records_state_ca
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     work_note = status["work_today"]["note"].lower()
     assert "failure_context_ignored" in work_note
@@ -2596,7 +2603,7 @@ def test_codex_app_cli_task_standard_pretool_transcript_capture_records_state_ca
     assert "next model tool did not perform the named direct check" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2629,7 +2636,7 @@ def test_codex_app_cli_task_standard_live_capture_rerun_records_pass() -> None:
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     work_note = status["work_today"]["note"].lower()
     assert "failure_context_ignored" in work_note
@@ -2637,7 +2644,7 @@ def test_codex_app_cli_task_standard_live_capture_rerun_records_pass() -> None:
     assert "no broad behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2664,7 +2671,7 @@ def test_codex_app_cli_task_standard_stop_gating_calibration_records_pass() -> N
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     work_note = status["work_today"]["note"].lower()
     assert "failure_context_ignored" in work_note
@@ -2672,7 +2679,7 @@ def test_codex_app_cli_task_standard_stop_gating_calibration_records_pass() -> N
     assert "no broad behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2699,7 +2706,7 @@ def test_codex_app_cli_task_standard_stop_gating_live_run_records_gate_use() -> 
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     work_note = status["work_today"]["note"].lower()
     assert "failure_context_ignored" in work_note
@@ -2707,7 +2714,7 @@ def test_codex_app_cli_task_standard_stop_gating_live_run_records_gate_use() -> 
     assert "no broad behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2734,7 +2741,7 @@ def test_codex_app_cli_task_standard_behavior_comparison_harness_records_gate0()
         in status["active_docs"]
     )
     assert (
-        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     work_note = status["work_today"]["note"].lower()
     assert "failure_context_ignored" in work_note
@@ -2743,7 +2750,7 @@ def test_codex_app_cli_task_standard_behavior_comparison_harness_records_gate0()
     assert "no broad behavior lift" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2780,12 +2787,12 @@ def test_codex_app_cli_lifecycle_actuator_map_records_event_control_order() -> N
         "docs/recon/cortex_codex_app_cli_lifecycle_actuator_map.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
-    assert "product host actuator + lab proof" == status["next_product_train"]["surface"]
+    assert "product host actuator + live proof" == status["next_product_train"]["surface"]
     assert "phase-aware gate 0" in status["next_product_train"]["why_now"].lower()
     assert "failed missing-artifact precondition" in status["next_product_train"][
         "why_now"
@@ -2825,7 +2832,7 @@ def test_codex_app_cli_posttooluse_task_standard_next_step_correction_records_ga
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     work_note = status["work_today"]["note"].lower()
     assert "failure_context_ignored" in work_note
@@ -2834,19 +2841,19 @@ def test_codex_app_cli_posttooluse_task_standard_next_step_correction_records_ga
     assert "signed text" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
-    assert "product host actuator + lab proof" == status["next_product_train"]["surface"]
-    assert "artifact creation as a prerequisite" in status["next_product_train"][
+    assert "product host actuator + live proof" == status["next_product_train"]["surface"]
+    assert "candidate artifact creation" in status["next_product_train"][
         "primary_metric"
     ].lower()
-    assert "pre-artifact context spend" in status["next_product_train"][
+    assert "firing-boundary remediation" in status["next_product_train"][
         "kill_rule"
     ].lower()
     assert "three-arm behavior comparison" in status["next_product_train"]["guardrail"].lower()
     assert "pretooluse denial" in status["next_product_train"]["guardrail"].lower()
     assert "sinkhorn/transport" in status["next_product_train"]["guardrail"].lower()
-    assert "return to lifecycle-actuator design" in status["next_product_train"][
+    assert "architecture decision" in status["next_product_train"][
         "kill_rule"
     ].lower()
     assert "failure_context_ignored" in tracker
@@ -2880,17 +2887,17 @@ def test_codex_app_cli_posttooluse_task_standard_calibration_decision_queues_nar
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
-    assert "product host actuator + lab proof" == status["next_product_train"]["surface"]
-    assert "product-visible artifact or candidate output exists" in status[
+    assert "product host actuator + live proof" == status["next_product_train"]["surface"]
+    assert "phase-aware PostToolUse task-standard actuator" in status[
         "next_product_train"
     ]["executive_benefit"]
-    assert "artifact creation as a prerequisite" in status["next_product_train"][
+    assert "candidate artifact creation" in status["next_product_train"][
         "primary_metric"
     ].lower()
     assert "phase-aware gate 0" in status["next_product_train"]["why_now"].lower()
@@ -2917,14 +2924,14 @@ def test_codex_app_cli_task_standard_stack_publication_hygiene_blocks_live_until
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     work_note = status["work_today"]["note"].lower()
     assert "failure_context_ignored" in work_note
     assert "later exactness checks came through the existing stop continuation loop" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
 
 
@@ -2948,16 +2955,16 @@ def test_codex_app_cli_posttooluse_task_standard_narrow_live_probe_is_harness_re
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     work_note = status["work_today"]["note"].lower()
     assert "next model tool did not perform the named direct check" in work_note
     assert "later exactness checks came through the existing stop continuation loop" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
-    assert "do not tune" in status["next_product_train"][
+    assert "must not change" in status["next_product_train"][
         "guardrail"
     ].lower()
 
@@ -2987,7 +2994,7 @@ def test_codex_app_cli_posttooluse_task_standard_narrow_live_run_records_negativ
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     work_note = status["work_today"]["note"].lower()
     assert "failure_context_ignored" in work_note
@@ -2995,10 +3002,10 @@ def test_codex_app_cli_posttooluse_task_standard_narrow_live_run_records_negativ
     assert "stop continuation loop" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
-    assert "product host actuator + lab proof" == status["next_product_train"]["surface"]
-    assert "product-visible artifact or candidate output exists" in status[
+    assert "product host actuator + live proof" == status["next_product_train"]["surface"]
+    assert "phase-aware posttooluse task-standard actuator" in status[
         "next_product_train"
     ]["executive_benefit"].lower()
     assert "phase-aware gate 0" in status["next_product_train"][
@@ -3007,10 +3014,10 @@ def test_codex_app_cli_posttooluse_task_standard_narrow_live_run_records_negativ
     assert "failed missing-artifact precondition" in status[
         "next_product_train"
     ]["why_now"].lower()
-    assert "artifact creation as a prerequisite" in status[
+    assert "candidate artifact creation" in status[
         "next_product_train"
     ]["primary_metric"].lower()
-    assert "do not tune" in status["next_product_train"]["guardrail"].lower()
+    assert "must not change" in status["next_product_train"]["guardrail"].lower()
 
 
 def test_codex_app_cli_posttooluse_task_standard_architecture_decision_queues_phase_aware_gate0() -> None:
@@ -3044,7 +3051,7 @@ def test_codex_app_cli_posttooluse_task_standard_architecture_decision_queues_ph
     )
     assert (
         status["work_today"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
     work_note = status["work_today"]["note"].lower()
     assert "timing/selection failure" in work_note
@@ -3052,11 +3059,64 @@ def test_codex_app_cli_posttooluse_task_standard_architecture_decision_queues_ph
     assert "stop continuation remains the only live-proven" in work_note
     assert (
         status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
+    )
+    assert "product host actuator + live proof" == status["next_product_train"]["surface"]
+    assert "phase-aware gate 0" in status["next_product_train"]["why_now"].lower()
+    assert "explicit current-turn approval" in status["next_product_train"]["guardrail"]
+
+
+def test_codex_app_cli_posttooluse_phase_aware_gate0_records_structural_pass() -> None:
+    text = _read(CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_GATE0_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product host actuator + lab proof" in text
+    assert "Verdict: `pass_posttooluse_phase_aware_gate0`." in text
+    assert "task_standard_posttooluse_phase_aware_gate0/gate0_report.json" in text
+    assert "pre_artifact_candidate_missing" in text
+    assert "successful candidate artifact creation" in text
+    assert "`exact_result.txt`" in text
+    assert "`wc -l exact_result.txt`" in text
+    assert "`cat -A exact_result.txt`" in text
+    assert "clean evidenced work stayed silent" in text
+    assert "markerless\n  literal-only controls stayed silent" in text
+    assert "no live Codex run was executed" in text
+    assert "no live behavior lift" in text
+    assert "no exactness value lift" in text
+    assert "no signed UserPromptSubmit text edit" in text
+    assert "no PostToolUse text edit" in text
+    assert "no Stop text edit" in text
+    assert "no SRE law" in text
+    assert "Sinkhorn/transport" in text
+    assert "PreToolUse denial" in text
+    assert "PermissionRequest" in text
+    assert "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run" in text
+    assert (
+        "recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_calibration_gate0.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_calibration_gate0.md"
+        in status["active_docs"]
+    )
+    assert (
+        status["work_today"]["slug"]
         == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
-    assert "product host actuator + lab proof" == status["next_product_train"]["surface"]
-    assert "phase-aware gate 0" in status["next_product_train"]["why_now"].lower()
-    assert "no live codex" in status["next_product_train"]["guardrail"].lower()
+    work_note = status["work_today"]["note"].lower()
+    assert "pre_artifact_candidate_missing" in work_note
+    assert "candidate artifact creation" in work_note
+    assert "no behavior lift" in work_note
+    assert (
+        status["next_product_train"]["slug"]
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
+    )
+    assert "product host actuator + live proof" == status["next_product_train"]["surface"]
+    assert "explicit current-turn approval" in status["next_product_train"]["guardrail"]
+    assert "`--require-pass`" in status["next_product_train"]["guardrail"]
+    assert "three-arm behavior comparison" in status["next_product_train"]["guardrail"].lower()
+    assert "exactness-only paired value probe" in status["next_product_train"]["kill_rule"]
 
 
 def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
@@ -3133,7 +3193,7 @@ def test_task_standard_executive_doctrine_math_refinement_is_recorded() -> None:
     )
     assert "recon/cortex_task_standard_executive_doctrine_math_refinement.md" in docs_index
     assert status["work_today"]["slug"] == (
-        "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+        "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     )
 
 
@@ -3462,7 +3522,7 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
     assert entry["slug"] != status["next_product_train"]["slug"]
-    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-actuator-architecture-decision"
+    assert status["work_today"]["slug"] == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
     work_note = status["work_today"]["note"].lower()
     assert "failure_context_ignored" in work_note
     assert "task_standard_exactness" in work_note
@@ -3471,19 +3531,19 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "later exactness checks came through the existing stop continuation loop" in work_note
     assert (
         status["next_product_train"]["slug"]
-        == "codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0"
+        == "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run"
     )
-    assert "product host actuator + lab proof" == status["next_product_train"]["surface"]
-    assert "product-visible artifact or candidate output exists" in status[
+    assert "product host actuator + live proof" == status["next_product_train"]["surface"]
+    assert "phase-aware posttooluse task-standard actuator" in status[
         "next_product_train"
     ][
         "executive_benefit"
-    ]
+    ].lower()
     assert "phase-aware gate 0" in status["next_product_train"]["why_now"].lower()
     assert "failed missing-artifact precondition" in status["next_product_train"][
         "why_now"
     ].lower()
-    assert "artifact creation as a prerequisite" in status["next_product_train"][
+    assert "candidate artifact creation" in status["next_product_train"][
         "primary_metric"
     ].lower()
     assert "three-arm behavior comparison" in status["next_product_train"][
@@ -3495,10 +3555,10 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "pretooluse denial" in status["next_product_train"][
         "guardrail"
     ].lower()
-    assert "pre-artifact context spend" in status["next_product_train"][
+    assert "firing-boundary remediation" in status["next_product_train"][
         "kill_rule"
     ].lower()
-    assert "return to lifecycle-actuator design" in status["next_product_train"][
+    assert "architecture decision" in status["next_product_train"][
         "kill_rule"
     ].lower()
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
@@ -3585,9 +3645,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`codex-app-cli-posttooluse-task-standard-actuator-architecture-decision`" in text
-    assert "- Next product train after the current focus: `codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0`" in text
-    assert "- Train: `codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0`" in text
+    assert "`codex-app-cli-posttooluse-task-standard-phase-aware-calibration-gate0`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run`" in text
+    assert "- Train: `codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-run`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
