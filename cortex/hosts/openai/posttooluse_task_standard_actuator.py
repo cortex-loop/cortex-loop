@@ -97,6 +97,12 @@ def posttooluse_task_standard_context_decision(
             context_text=None,
             reason="posttooluse_context_session_cap_reached",
         )
+    if already_context_item_ids:
+        return PostToolUseTaskStandardContextDecision(
+            item_id=None,
+            context_text=None,
+            reason="posttooluse_context_active_context_pending",
+        )
     phase = classify_posttooluse_task_standard_phase(spine, payload)
     if not phase.context_eligible:
         return PostToolUseTaskStandardContextDecision(

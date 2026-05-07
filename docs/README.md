@@ -248,6 +248,10 @@ Active docs:
   live negative evidence that the shared-classifier rerun failed on repeated
   PostToolUse context and ambiguous hook/stdout event-ref joining, queuing
   no-live context-loop and trace remediation
+- [Cortex Codex App/CLI PostToolUse Task-Standard Context-Loop Trace Remediation](recon/cortex_codex_app_cli_posttooluse_task_standard_context_loop_trace_remediation.md) —
+  no-live proof that PostToolUse task-standard context opens one active repair
+  lease and future trace joins use exact refs or unique diagnostic fingerprints
+  without ordinal fallback
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed

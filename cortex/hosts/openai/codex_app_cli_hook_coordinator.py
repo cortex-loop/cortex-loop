@@ -12,7 +12,10 @@ workflow guardrails, or render hook-local prompt strings.
 from __future__ import annotations
 
 import hashlib
+import fcntl
 import json
+import os
+import shlex
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from pathlib import Path
@@ -159,6 +162,12 @@ class OpenAICodexHookPayload:
             "has_transcript_backed_assistant_turn": self.has_transcript_backed_assistant_turn,
             "tool_name": self.tool_name,
             "tool_use_id": self.tool_use_id,
+            "tool_event_fingerprint": codex_tool_event_fingerprint(
+                tool_name=self.tool_name,
+                tool_input=self.tool_input,
+                tool_response=self.tool_response,
+                error=self.error,
+            ),
             "tool_input_present": self.tool_input is not None,
             "tool_response_present": self.tool_response is not None,
             "error_present": self.error is not None,
@@ -579,10 +588,15 @@ class OpenAICodexJsonStateStore:
 
     def save(self, state: OpenAICodexSessionState) -> None:
         self.root.mkdir(parents=True, exist_ok=True)
+        self._write_state_atomic(state)
+
+    def _write_state_atomic(self, state: OpenAICodexSessionState) -> None:
         path = self._path_for(state.session_id)
-        with path.open("w", encoding="utf-8") as handle:
+        tmp_path = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+        with tmp_path.open("w", encoding="utf-8") as handle:
             json.dump(state.as_payload(), handle, sort_keys=True, indent=2)
             handle.write("\n")
+        tmp_path.replace(path)
 
     def record_event(
         self,
@@ -590,19 +604,128 @@ class OpenAICodexJsonStateStore:
         *,
         posttooluse_task_standard_context_enabled: bool = False,
     ) -> OpenAICodexSessionState:
-        state = _updated_state(
-            self.load(payload.session_id),
-            payload,
-            posttooluse_task_standard_context_enabled=(
-                posttooluse_task_standard_context_enabled
-            ),
-        )
-        self.save(state)
-        return state
+        self.root.mkdir(parents=True, exist_ok=True)
+        lock_path = self._lock_path_for(payload.session_id)
+        with lock_path.open("a+", encoding="utf-8") as lock_handle:
+            fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+            try:
+                state = _updated_state(
+                    self.load(payload.session_id),
+                    payload,
+                    posttooluse_task_standard_context_enabled=(
+                        posttooluse_task_standard_context_enabled
+                    ),
+                )
+                self._write_state_atomic(state)
+                return state
+            finally:
+                fcntl.flock(lock_handle.fileno(), fcntl.LOCK_UN)
 
     def _path_for(self, session_id: str) -> Path:
         digest = hashlib.sha256(session_id.encode("utf-8")).hexdigest()[:32]
         return self.root / f"session-{digest}.json"
+
+    def _lock_path_for(self, session_id: str) -> Path:
+        digest = hashlib.sha256(session_id.encode("utf-8")).hexdigest()[:32]
+        return self.root / f"session-{digest}.lock"
+
+
+def codex_tool_event_fingerprint(
+    *,
+    tool_name: str | None,
+    tool_input: Any,
+    tool_response: Any,
+    error: str | None = None,
+    status: str | None = None,
+) -> str | None:
+    command = _normalized_tool_command(tool_input)
+    output = _normalized_tool_output(tool_response)
+    normalized_status = _normalized_tool_status(
+        tool_response=tool_response,
+        error=error,
+        status=status,
+    )
+    if (
+        normalized_status == "unknown"
+        and not any((tool_name, command, output, error))
+    ):
+        return None
+    payload = {
+        "tool_name": str(tool_name or "").strip().lower(),
+        "command": command,
+        "output": output,
+        "status": normalized_status,
+    }
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _normalized_tool_command(tool_input: Any) -> str:
+    if tool_input is None:
+        return ""
+    value: Any = tool_input
+    if isinstance(tool_input, Mapping):
+        value = tool_input.get("command") or tool_input.get("cmd") or tool_input
+    if not isinstance(value, str):
+        value = json.dumps(value, sort_keys=True, separators=(",", ":"))
+    command = " ".join(value.strip().split())
+    try:
+        parts = shlex.split(command)
+    except ValueError:
+        return command
+    if len(parts) >= 3 and parts[0] in {"/bin/zsh", "zsh", "/bin/bash", "bash"} and parts[1] == "-lc":
+        return " ".join(parts[2].strip().split())
+    return command
+
+
+def _normalized_tool_output(tool_response: Any) -> str:
+    value: Any = tool_response
+    if isinstance(tool_response, Mapping):
+        value = (
+            tool_response.get("aggregated_output")
+            if tool_response.get("aggregated_output") is not None
+            else tool_response.get("output")
+            if tool_response.get("output") is not None
+            else tool_response.get("stdout")
+            if tool_response.get("stdout") is not None
+            else tool_response.get("content")
+            if tool_response.get("content") is not None
+            else ""
+        )
+    if value is None:
+        return ""
+    return "\n".join(str(value).replace("\r\n", "\n").strip().splitlines())
+
+
+def _normalized_tool_status(
+    *,
+    tool_response: Any,
+    error: str | None,
+    status: str | None,
+) -> str:
+    if isinstance(status, str) and status.strip():
+        normalized = status.strip().lower()
+        if normalized in {"completed", "success", "succeeded"}:
+            return "completed"
+        if normalized in {"failed", "error"}:
+            return "failed"
+        return normalized
+    if error:
+        return "failed"
+    if isinstance(tool_response, Mapping):
+        response_status = tool_response.get("status")
+        if isinstance(response_status, str) and response_status.strip():
+            return _normalized_tool_status(
+                tool_response=None,
+                error=None,
+                status=response_status,
+            )
+        exit_code = tool_response.get("exit_code")
+        if isinstance(exit_code, int):
+            return "completed" if exit_code == 0 else "failed"
+    if tool_response is not None:
+        return "completed"
+    return "unknown"
 
 
 def normalize_openai_codex_hook_payload(

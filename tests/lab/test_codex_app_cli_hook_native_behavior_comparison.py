@@ -18,6 +18,7 @@ from lab.codex_app_cli_hook_native_behavior_comparison import (
     run_gate0_probe,
     run_live_comparison,
     run_task_standard_offline_readiness_gate,
+    run_task_standard_posttooluse_context_loop_trace_gate0,
     run_task_standard_posttooluse_firing_boundary_gate0,
     run_task_standard_posttooluse_actuator_trace_gate0,
     run_task_standard_posttooluse_phase_aware_gate0,
@@ -405,6 +406,35 @@ def test_task_standard_posttooluse_shared_tool_evidence_gate0(
     assert boundary_results["prior_causal_trace_gate0_preserved"] is True
 
 
+def test_task_standard_posttooluse_context_loop_trace_gate0(
+    tmp_path: Path,
+) -> None:
+    report = run_task_standard_posttooluse_context_loop_trace_gate0(
+        output_root=tmp_path,
+    )
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_posttooluse_context_loop_trace_gate0"
+    assert report["live_trials_ran"] is False
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["next_product_train"] == (
+        "codex-app-cli-posttooluse-task-standard-phase-aware-narrow-live-rerun"
+    )
+    boundary_results = report["boundary_results"]
+    assert boundary_results["context_loop_first_context_emitted"] is True
+    assert boundary_results["context_loop_second_context_silent"] is True
+    assert boundary_results["context_loop_single_context_item"] is True
+    assert boundary_results["context_loop_active_pending_reason"] is True
+    assert boundary_results["exact_ref_trace_still_non_ambiguous"] is True
+    assert boundary_results["exact_ref_trace_uses_ref_join"] is True
+    assert boundary_results["fingerprint_trace_non_ambiguous"] is True
+    assert boundary_results["fingerprint_trace_uses_fingerprint_join"] is True
+    assert boundary_results["duplicate_fingerprint_marked_ambiguous"] is True
+    assert boundary_results["missing_fingerprint_marked_ambiguous"] is True
+    assert boundary_results["legacy_trace_not_interpreted_without_join"] is True
+    assert boundary_results["no_ordinal_trace_join"] is True
+
+
 def test_task_standard_posttooluse_live_refuses_without_explicit_approval(
     tmp_path: Path,
     monkeypatch,
@@ -500,6 +530,19 @@ def test_task_standard_posttooluse_live_decision_verdicts() -> None:
     assert comparison._task_standard_posttooluse_live_decision(ignored)[
         "verdict"
     ] == "failure_context_ignored"
+
+    repeated = [
+        _posttooluse_live_row(
+            "mismatch_exactness",
+            context_count=2,
+            repeated_context=True,
+        )
+    ]
+    repeated_decision = comparison._task_standard_posttooluse_live_decision(
+        repeated
+    )
+    assert repeated_decision["verdict"] == "fail"
+    assert repeated_decision["failure_reason"] == "repeated_posttooluse_context_loop"
 
     trace_ambiguous = [
         _posttooluse_live_row(
@@ -815,6 +858,7 @@ def test_behavior_comparison_harness_does_not_use_forbidden_sources() -> None:
     assert "--task-standard-posttooluse-overcontrol-gate0" in source
     assert "--task-standard-posttooluse-actuator-trace-gate0" in source
     assert "--task-standard-posttooluse-shared-tool-evidence-gate0" in source
+    assert "--task-standard-posttooluse-context-loop-trace-gate0" in source
 
 
 def _trial(
@@ -887,12 +931,13 @@ def _posttooluse_live_row(
     preartifact_context: bool = False,
     boundary_breach: bool = False,
     trace_ambiguous: bool = False,
+    repeated_context: bool = False,
 ) -> dict[str, object]:
     return {
         "case": case,
         "runtime_snapshot_loaded": False,
         "subject_config_contains_runtime_snapshot": False,
-        "posttooluse_context_repeated": False,
+        "posttooluse_context_repeated": repeated_context,
         "posttooluse_context_boundary_breach": boundary_breach,
         "timed_out": False,
         "posttooluse_lifecycle_observed": True,
