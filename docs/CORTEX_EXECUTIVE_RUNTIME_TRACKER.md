@@ -140,6 +140,64 @@ already handling the task correctly.
 The next strategic direction is upstream executive control, not
 renderer-first work.
 
+For the current Codex App/CLI task-standard train, the scored-lexical offline
+readiness gate was the last substrate-first seam before an actuator reset. The
+no-spend raw-vs-silent artifact readout then found a narrow signal:
+`silent_task_standard` beat `raw_codex` on `task_standard_exactness`
+evidence-recovery in 5/5 paired trials, while output quality was mixed and
+truth-gap had a material goal-continuity regression. That justifies an actuator
+map constrained to exactness/evidence recovery; it does not justify another
+live behavior comparison, broad Cortex lift, or Sinkhorn.
+
+The lifecycle actuator map is now the product architecture baseline: Codex
+lifecycle surfaces are ordered by the control they actually exert over the
+model's next input, output, tool result, or allowed action, not by hook-count
+coverage.
+
+The Codex App/CLI event map should be treated as:
+
+- SessionStart: session/workspace context only.
+- UserPromptSubmit: prospective task-set formation.
+- PreToolUse: hard motor deny/block only; do not design it as coaching text
+  because Codex does not support additionalContext there.
+- PermissionRequest: approval-bound route control.
+- PostToolUse: strongest near-term next-step correction surface because it can
+  replace or annotate completed tool feedback before the next model step.
+- Stop: late closure continuation.
+
+The PostToolUse task-standard next-step correction Gate 0 has now passed
+structurally without live spend. A gated Codex-host path can add
+PostToolUse `additionalContext` when product-visible verification/readback
+evidence leaves a specific captured work-standard or closure-evidence item
+unresolved, while flag-disabled, clean evidenced, blocker/waiting, and
+unrelated-tool controls stay silent. This is still Gate-0 proof only: it does
+not earn live behavior lift, does not activate defaults, and does not justify a
+three-arm live rerun by itself.
+
+The PostToolUse calibration decision accepted a narrow live actuator probe as
+the next product seam, not Sinkhorn and not a three-arm behavior comparison.
+The approved narrow live probe then produced `failure_context_ignored`: a
+specific PostToolUse `additionalContext` reached Codex CLI in the mismatch
+case and clean/blocker/waiting/unrelated controls received no PostToolUse
+context, but the next model tool did not run the named direct check before
+closure. Later exactness checks came through the existing Stop continuation
+loop, so PostToolUse next-action effect remains unearned. The next product seam
+is an architecture decision about actuator timing and model-I/O leverage, not a
+text, fixture, matcher, or policy remediation seam.
+The architecture decision classifies that result as PostToolUse
+timing/selection failure: the context fired after a failed missing-artifact
+precondition, so the next legitimate model action was artifact creation rather
+than direct verification. The next product seam is no-live phase-aware
+PostToolUse calibration Gate 0: reserve context until a product-visible
+artifact or candidate output exists and a required standard item remains
+unresolved, while keeping closure-before-direct-check as a failure.
+PreToolUse motor inhibition should follow only as action blocking, not as a
+model-visible advice surface, and false-deny clean-control risk must be treated
+as a future kill-rule risk. Sinkhorn-style transport belongs later as the
+`D_std` mass-conservation operator only if PostToolUse or PreToolUse actuators
+show signal and one-event-overcredits-many-items remains load-bearing after
+pairwise scores are trustworthy.
+
 The likely missing coupling is a runtime estimate of resolution deficit:
 expected uncertainty reduction owed by recent forward commitments minus
 realized evidence, continuity, certification, retraction, or blocker progress.

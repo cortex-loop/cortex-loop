@@ -10,6 +10,7 @@ domain-specific fixture rules.
 from __future__ import annotations
 
 import hashlib
+import math
 import re
 from dataclasses import dataclass, field, replace
 from enum import Enum
@@ -38,6 +39,59 @@ class TaskStandardEvidenceClass(str, Enum):
     STANDARD_ALIGNED = "standard_aligned"
     GENERIC_CHECK = "generic_check"
     UNRELATED_ACTIVITY = "unrelated_activity"
+
+
+_ALIGNMENT_THRESHOLD = 0.20
+_ALIGNMENT_RECALL_CAP = 12.0
+_TASK_STANDARD_STOPWORDS = {
+    "the",
+    "and",
+    "for",
+    "with",
+    "this",
+    "that",
+    "what",
+    "from",
+    "into",
+    "work",
+    "task",
+    "done",
+    "complete",
+    "completed",
+    "make",
+    "create",
+    "build",
+    "write",
+    "implement",
+    "using",
+    "have",
+    "has",
+    "had",
+    "should",
+    "would",
+    "could",
+    "need",
+    "needs",
+    "must",
+}
+_ACTION_TOKENS = {
+    "cat",
+    "grep",
+    "stat",
+    "wc",
+    "test",
+    "tests",
+    "pytest",
+    "build",
+    "lint",
+    "typecheck",
+    "check",
+    "verify",
+    "inspect",
+    "output",
+    "read",
+    "readback",
+}
 
 
 @dataclass(frozen=True, slots=True)
@@ -289,7 +343,7 @@ def initialize_task_standard_spine(
     *,
     event_ref: str,
 ) -> TaskStandardSpine:
-    """Extract visible task obligations from a UserPromptSubmit payload."""
+    """Extract visible task obligations from host-supplied prompt text."""
 
     if not isinstance(event_ref, str) or not event_ref.strip():
         raise ValueError("initialize_task_standard_spine.event_ref must be non-empty.")
@@ -365,10 +419,30 @@ def record_task_standard_evidence(
         )
         return _append_evidence(spine, evidence), evidence
 
-    aligned_item_ids = tuple(
+    alignment_corpus = tuple(
+        item.text for item in spine.all_items
+    ) + (normalized_tool_text,)
+    directly_aligned_item_ids = tuple(
         item.item_id
         for item in spine.all_items
-        if _texts_align(item.text, normalized_tool_text)
+        if _texts_align(
+            item.text,
+            normalized_tool_text,
+            corpus_texts=alignment_corpus,
+        )
+    )
+    closure_evidence_item_ids = tuple(
+        item.item_id
+        for item in spine.standard_items
+        if item.kind is TaskStandardItemKind.CLOSURE_EVIDENCE
+        and _closure_evidence_action_aligns(item.text, normalized_tool_text)
+        and (
+            directly_aligned_item_ids
+            or _generic_verification_markers_present(normalized_tool_text)
+        )
+    )
+    aligned_item_ids = tuple(
+        dict.fromkeys((*directly_aligned_item_ids, *closure_evidence_item_ids))
     )
     if aligned_item_ids:
         evidence_class = (
@@ -418,11 +492,14 @@ def record_closure_claims(
             ),
         )
     normalized_claim_text = _normalize_text(" ".join(standard_claims))
+    alignment_corpus = tuple(item.text for item in items) + (normalized_claim_text,)
     unmatched_ids: list[str] = []
     updated_items: list[TaskStandardItem] = []
     for item in items:
-        claimed = _texts_align(item.text, normalized_claim_text) or _general_closure_claim(
-            normalized_claim_text
+        claimed = _closure_claims_item(
+            item,
+            normalized_claim_text,
+            corpus_texts=alignment_corpus,
         )
         if claimed and not item.has_aligned_evidence:
             unmatched_ids.append(item.item_id)
@@ -442,15 +519,37 @@ def record_closure_claims(
     )
 
 
-def hidden_verifier_terms() -> tuple[str, ...]:
-    """Strings that are never semantic inputs to the product spine."""
+def task_standard_closure_satisfied(spine: TaskStandardSpine) -> bool:
+    """Return whether claimed task-standard closure is already evidenced."""
+
+    if not isinstance(spine, TaskStandardSpine):
+        actual_type = type(spine).__name__
+        raise TypeError(
+            "task_standard_closure_satisfied.spine must be TaskStandardSpine, "
+            f"got {actual_type}."
+        )
+    if not spine.has_standard or not spine.final_closure_claims:
+        return False
+    if spine.has_unmatched_closure_items:
+        return False
+    claimed_required_items = tuple(
+        item
+        for item in spine.standard_items
+        if item.claimed and item.kind is not TaskStandardItemKind.LIKELY_MISS
+    )
+    return bool(claimed_required_items) and all(
+        item.has_aligned_evidence for item in claimed_required_items
+    )
+
+
+def external_scoring_boundary_terms() -> tuple[str, ...]:
+    """External scoring markers that are never semantic product inputs."""
 
     return (
-        "test-hidden",
         "hidden verifier",
         "hidden_quality",
+        "test-hidden",
         "verifier_only",
-        "scripts/test-hidden.mjs",
     )
 
 
@@ -521,7 +620,7 @@ def _parse_standard_block(
 def _visible_obligation_phrases(prompt_text: str | None) -> tuple[str, ...]:
     if not isinstance(prompt_text, str) or not prompt_text.strip():
         return ()
-    text = _strip_hidden_terms(prompt_text)
+    text = _strip_external_scoring_boundary_terms(prompt_text)
     text = re.sub(r"\s+", " ", text).strip()
     candidates = re.split(r"(?:[.;!?]|\n|\band\b|\bthen\b)", text)
     phrases: list[str] = []
@@ -560,17 +659,98 @@ def _closure_claim_phrases(message: str) -> tuple[str, ...]:
     return tuple(claims)
 
 
-def _texts_align(item_text: str, normalized_other_text: str) -> bool:
+def task_standard_alignment_score(
+    item_text: str,
+    other_text: str,
+    *,
+    corpus_texts: tuple[str, ...] | list[str] = (),
+) -> float:
+    """Return deterministic lexical alignment strength for task-standard text."""
+
+    item_profile = _weighted_lexical_profile(item_text, corpus_texts=corpus_texts)
+    other_profile = _weighted_lexical_profile(other_text, corpus_texts=corpus_texts)
+    if not item_profile or not other_profile:
+        return 0.0
+    overlap_tokens = set(item_profile) & set(other_profile)
+    if not overlap_tokens:
+        return 0.0
+    overlap_weight = sum(
+        min(item_profile[token], other_profile[token]) for token in overlap_tokens
+    )
+    item_weight = sum(item_profile.values())
+    union_weight = sum(
+        max(item_profile.get(token, 0.0), other_profile.get(token, 0.0))
+        for token in set(item_profile) | set(other_profile)
+    )
+    recall = overlap_weight / max(1.0, min(item_weight, _ALIGNMENT_RECALL_CAP))
+    jaccard = overlap_weight / max(1.0, union_weight)
+    anchor_weight = sum(
+        item_profile[token] for token in item_profile if _product_anchor_token(token)
+    )
+    anchor_overlap = sum(
+        min(item_profile[token], other_profile[token])
+        for token in overlap_tokens
+        if _product_anchor_token(token)
+    )
+    anchor_score = (
+        anchor_overlap / max(1.0, min(anchor_weight, _ALIGNMENT_RECALL_CAP))
+        if anchor_weight
+        else 0.0
+    )
+    score = max((0.85 * recall) + (0.15 * jaccard), 0.9 * anchor_score)
+    if len(overlap_tokens) >= 2 and len(item_profile) <= 8:
+        score = max(score, 0.36)
+    if len(overlap_tokens) >= 2 and any(
+        re.search(r"\d", token) or _path_like_token(token) for token in overlap_tokens
+    ):
+        score = max(score, 0.32)
+    return min(1.0, score)
+
+
+def _texts_align(
+    item_text: str,
+    normalized_other_text: str,
+    *,
+    corpus_texts: tuple[str, ...] | list[str] = (),
+) -> bool:
+    return (
+        task_standard_alignment_score(
+            item_text,
+            normalized_other_text,
+            corpus_texts=corpus_texts,
+        )
+        >= _ALIGNMENT_THRESHOLD
+    )
+
+
+def _closure_claims_item(
+    item: TaskStandardItem,
+    normalized_claim_text: str,
+    *,
+    corpus_texts: tuple[str, ...] | list[str] = (),
+) -> bool:
+    if item.kind is TaskStandardItemKind.LIKELY_MISS:
+        return _texts_align(
+            item.text,
+            normalized_claim_text,
+            corpus_texts=corpus_texts,
+        ) and _likely_miss_closure_markers_present(normalized_claim_text)
+    if _texts_align(
+        item.text,
+        normalized_claim_text,
+        corpus_texts=corpus_texts,
+    ):
+        return True
+    return _general_closure_claim(normalized_claim_text)
+
+
+def _closure_evidence_action_aligns(
+    item_text: str,
+    normalized_tool_text: str,
+) -> bool:
     item_tokens = set(_meaningful_tokens(item_text))
-    other_tokens = set(_meaningful_tokens(normalized_other_text))
-    if not item_tokens or not other_tokens:
-        return False
-    overlap = item_tokens & other_tokens
-    if len(overlap) >= 2:
-        return True
-    if len(overlap) == 1 and len(item_tokens) <= 3:
-        return True
-    return False
+    tool_tokens = set(_meaningful_tokens(normalized_tool_text))
+    return bool(item_tokens & tool_tokens & _ACTION_TOKENS)
 
 
 def _generic_verification_markers_present(text: str) -> bool:
@@ -620,6 +800,23 @@ def _closure_claim_markers_present(text: str) -> bool:
     )
 
 
+def _likely_miss_closure_markers_present(text: str) -> bool:
+    return any(
+        marker in text
+        for marker in (
+            " no ",
+            " not ",
+            " without ",
+            " avoided ",
+            " avoid ",
+            " prevents ",
+            " prevented ",
+            " verified ",
+            " confirmed ",
+        )
+    )
+
+
 def _general_closure_claim(text: str) -> bool:
     return _closure_claim_markers_present(f" {text} ")
 
@@ -629,57 +826,138 @@ def _normalize_label(text: str) -> str:
 
 
 def _normalize_text(text: str) -> str:
-    text = _strip_hidden_terms(text)
+    text = _strip_external_scoring_boundary_terms(text)
     text = re.sub(r"[^a-z0-9_./-]+", " ", text.lower())
     return f" {re.sub(r'\\s+', ' ', text).strip()} "
 
 
 def _meaningful_tokens(text: str) -> tuple[str, ...]:
+    return tuple(_lexical_token_weights(text))
+
+
+def _weighted_lexical_profile(
+    text: str,
+    *,
+    corpus_texts: tuple[str, ...] | list[str] = (),
+) -> dict[str, float]:
+    raw_weights = _lexical_token_weights(text)
+    if not raw_weights:
+        return {}
+    corpus = tuple(str(value) for value in corpus_texts if str(value).strip())
+    if not corpus:
+        return raw_weights
+    document_tokens = [
+        set(_lexical_token_weights(corpus_text)) for corpus_text in corpus
+    ]
+    document_count = len(document_tokens)
+    profile: dict[str, float] = {}
+    for token, weight in raw_weights.items():
+        frequency = sum(1 for tokens in document_tokens if token in tokens)
+        dampener = 1.0
+        if document_count > 1 and frequency > 1:
+            dampener = 1.0 / (1.0 + math.log1p(frequency - 1))
+        profile[token] = weight * dampener
+    return profile
+
+
+def _lexical_token_weights(text: str) -> dict[str, float]:
     normalized = _normalize_text(text)
-    stopwords = {
-        "the",
-        "and",
-        "for",
-        "with",
-        "this",
-        "that",
-        "what",
-        "from",
-        "into",
-        "work",
-        "task",
-        "done",
-        "complete",
-        "completed",
-        "make",
-        "create",
-        "build",
-        "write",
-        "implement",
-        "using",
-        "have",
-        "has",
-        "had",
-        "should",
-        "would",
-        "could",
-        "need",
-        "needs",
-        "must",
-    }
-    return tuple(
+    weights: dict[str, float] = {}
+    for token in re.findall(r"[a-z0-9_./-]+", normalized):
+        cleaned = token.strip("._/-")
+        _record_token_weight(weights, cleaned, _base_token_weight(cleaned))
+        for part in re.split(r"[^a-z0-9]+", cleaned):
+            if not part or part == cleaned:
+                continue
+            if re.search(r"\d", part):
+                part_weight = _base_token_weight(part)
+            else:
+                part_weight = min(_base_token_weight(part), 0.85)
+            _record_token_weight(weights, part, part_weight)
+    for phrase in _quoted_literal_phrases(text):
+        _record_token_weight(weights, phrase, 3.5)
+    return weights
+
+
+def _record_token_weight(
+    weights: dict[str, float],
+    token: str,
+    weight: float,
+) -> None:
+    if not _usable_alignment_token(token):
+        return
+    weights[token] = max(weights.get(token, 0.0), weight)
+
+
+def _base_token_weight(token: str) -> float:
+    if not _usable_alignment_token(token):
+        return 0.0
+    if _path_like_token(token):
+        return 4.0
+    if re.search(r"\d", token):
+        return 4.0
+    if "_" in token:
+        return 3.25
+    if "." in token or "/" in token:
+        return 3.0
+    if "-" in token:
+        return 2.5
+    if token in _ACTION_TOKENS:
+        return 2.25
+    if token in {"exact", "content", "line", "lines", "byte", "bytes"}:
+        return 1.5
+    if len(token) >= 12:
+        return 1.35
+    return 1.0
+
+
+def _quoted_literal_phrases(text: str) -> tuple[str, ...]:
+    phrases: list[str] = []
+    for match in re.finditer(r"`([^`]+)`|\"([^\"]+)\"|'([^']+)'", text):
+        phrase = next(group for group in match.groups() if group is not None)
+        normalized = _normalize_text(phrase).strip()
+        if not normalized:
+            continue
+        parts = normalized.split()
+        if 1 <= len(parts) <= 8:
+            phrases.append("_".join(parts))
+    return tuple(phrases)
+
+
+def _usable_alignment_token(token: str) -> bool:
+    return bool(
         token
-        for token in re.findall(r"[a-z0-9_./-]+", normalized)
-        if len(token) >= 3 and token not in stopwords
+        and len(token) >= 3
+        and token not in _TASK_STANDARD_STOPWORDS
+        and not token.isspace()
     )
 
 
-def _strip_hidden_terms(text: str) -> str:
+def _path_like_token(token: str) -> bool:
+    return "/" in token or bool(re.search(r"\.[a-z0-9]{1,8}$", token))
+
+
+def _product_anchor_token(token: str) -> bool:
+    return bool(
+        _path_like_token(token)
+        or re.search(r"\d", token)
+        or "_" in token
+        or token in _ACTION_TOKENS
+    )
+
+
+def _strip_external_scoring_boundary_terms(text: str) -> str:
     if not isinstance(text, str):
         return ""
     cleaned = text
-    for term in hidden_verifier_terms():
+    for term in external_scoring_boundary_terms():
         cleaned = re.sub(re.escape(term), "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(
+        r"\b[a-z0-9_./-]*(?:hidden_quality|test-hidden|verifier_only)[a-z0-9_./-]*\b",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    )
     return cleaned
 
 
@@ -688,7 +966,7 @@ def _compact(text: str) -> str:
 
 
 def _excerpt(text: str) -> str | None:
-    compact = _compact(_strip_hidden_terms(text))
+    compact = _compact(_strip_external_scoring_boundary_terms(text))
     return compact[:240] if compact else None
 
 
@@ -734,9 +1012,11 @@ __all__ = [
     "TaskStandardItem",
     "TaskStandardItemKind",
     "TaskStandardSpine",
-    "hidden_verifier_terms",
+    "external_scoring_boundary_terms",
     "initialize_task_standard_spine",
     "record_closure_claims",
     "record_task_standard_evidence",
     "store_assistant_standard_block",
+    "task_standard_alignment_score",
+    "task_standard_closure_satisfied",
 ]

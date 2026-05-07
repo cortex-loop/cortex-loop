@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass, field, replace
 from enum import Enum
 from pathlib import Path
@@ -33,12 +34,16 @@ from cortex.sre.interventions import (
 from cortex.sre.operator_routing import OperatorRouteProfile
 from cortex.sre.task_standard import (
     TASK_STANDARD_FORMATION_TEXT,
+    TaskStandardEvidence,
     TaskStandardEvidenceClass,
+    TaskStandardItem,
+    TaskStandardItemKind,
     TaskStandardSpine,
     initialize_task_standard_spine,
     record_closure_claims,
     record_task_standard_evidence,
     store_assistant_standard_block,
+    task_standard_closure_satisfied,
 )
 
 from .codex_app_cli_lifecycle import (
@@ -53,6 +58,57 @@ from .codex_app_cli_lifecycle import (
 class OpenAICodexHookHostDecision(str, Enum):
     ALLOW = "allow"
     BLOCK = "block"
+
+
+_CODEX_ADDITIONAL_CONTEXT_EVENTS = frozenset(
+    {
+        "SessionStart",
+        "UserPromptSubmit",
+        "PostToolUse",
+    }
+)
+_POSTTOOLUSE_TASK_STANDARD_CONTEXT_TEMPLATE = (
+    "I still need direct evidence for: {standard_item}. The last tool "
+    "result did not show that exact item. Next step: {next_step} before treating "
+    "this as done."
+)
+_POSTTOOLUSE_TASK_STANDARD_CONTEXT_SPAN_LIMIT = 180
+_POSTTOOLUSE_TASK_STANDARD_CONTEXT_SESSION_LIMIT = 2
+_TOOL_VERIFICATION_MARKERS = (
+    " test",
+    "tests",
+    "pytest",
+    "unittest",
+    "vitest",
+    "jest",
+    "build",
+    "lint",
+    "typecheck",
+    "tsc",
+    "mypy",
+    "ruff",
+    "cargo test",
+    "go test",
+    "check",
+    "verify",
+    "cat ",
+    "$(cat",
+    "\\\"cat",
+    " wc ",
+    "wc -l",
+    "\\\"wc",
+    "grep",
+    "stat ",
+    "\\\"stat",
+    "[ -f",
+    "test -f",
+    "file_ok",
+    "content_ok",
+    "content=",
+    "lines=",
+    "exists",
+    "matches exactly",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -168,6 +224,11 @@ class OpenAICodexSessionState:
     warning_tags: tuple[str, ...] = ()
     lifecycle_counts: tuple[tuple[str, int], ...] = ()
     task_standard_spine: TaskStandardSpine = field(default_factory=TaskStandardSpine)
+    posttooluse_task_standard_context_item_ids: tuple[str, ...] = ()
+    last_posttooluse_task_standard_context_item_id: str | None = None
+    last_posttooluse_task_standard_context_text: str | None = None
+    last_posttooluse_task_standard_context_reason: str | None = None
+    last_posttooluse_task_standard_context_silence_reason: str | None = None
 
     def __post_init__(self) -> None:
         _require_non_empty_string(self.session_id, "OpenAICodexSessionState.session_id")
@@ -185,7 +246,15 @@ class OpenAICodexSessionState:
                 raise ValueError(
                     f"OpenAICodexSessionState.{field_name} must be a non-negative int."
                 )
-        for field_name in ("last_turn_id", "transcript_path", "prompt_text_hash"):
+        for field_name in (
+            "last_turn_id",
+            "transcript_path",
+            "prompt_text_hash",
+            "last_posttooluse_task_standard_context_item_id",
+            "last_posttooluse_task_standard_context_text",
+            "last_posttooluse_task_standard_context_reason",
+            "last_posttooluse_task_standard_context_silence_reason",
+        ):
             value = getattr(self, field_name)
             if value is not None and not isinstance(value, str):
                 actual_type = type(value).__name__
@@ -214,6 +283,14 @@ class OpenAICodexSessionState:
         if any(not (isinstance(tag, str) and tag.strip()) for tag in self.warning_tags):
             raise ValueError(
                 "OpenAICodexSessionState.warning_tags must contain non-empty strings."
+            )
+        if any(
+            not (isinstance(item_id, str) and item_id.strip())
+            for item_id in self.posttooluse_task_standard_context_item_ids
+        ):
+            raise ValueError(
+                "OpenAICodexSessionState.posttooluse_task_standard_context_item_ids "
+                "must contain non-empty strings."
             )
         for item in self.lifecycle_counts:
             if not (
@@ -250,6 +327,21 @@ class OpenAICodexSessionState:
                 for event_name, count in self.lifecycle_counts
             ],
             "task_standard_spine": self.task_standard_spine.as_payload(),
+            "posttooluse_task_standard_context_item_ids": list(
+                self.posttooluse_task_standard_context_item_ids
+            ),
+            "last_posttooluse_task_standard_context_item_id": (
+                self.last_posttooluse_task_standard_context_item_id
+            ),
+            "last_posttooluse_task_standard_context_text": (
+                self.last_posttooluse_task_standard_context_text
+            ),
+            "last_posttooluse_task_standard_context_reason": (
+                self.last_posttooluse_task_standard_context_reason
+            ),
+            "last_posttooluse_task_standard_context_silence_reason": (
+                self.last_posttooluse_task_standard_context_silence_reason
+            ),
         }
 
     @classmethod
@@ -298,7 +390,34 @@ class OpenAICodexSessionState:
             task_standard_spine=TaskStandardSpine.from_payload(
                 payload.get("task_standard_spine")
             ),
+            posttooluse_task_standard_context_item_ids=tuple(
+                str(item_id).strip()
+                for item_id in payload.get(
+                    "posttooluse_task_standard_context_item_ids",
+                    (),
+                )
+                if str(item_id).strip()
+            ),
+            last_posttooluse_task_standard_context_item_id=_optional_string(
+                payload.get("last_posttooluse_task_standard_context_item_id")
+            ),
+            last_posttooluse_task_standard_context_text=_optional_string(
+                payload.get("last_posttooluse_task_standard_context_text")
+            ),
+            last_posttooluse_task_standard_context_reason=_optional_string(
+                payload.get("last_posttooluse_task_standard_context_reason")
+            ),
+            last_posttooluse_task_standard_context_silence_reason=_optional_string(
+                payload.get("last_posttooluse_task_standard_context_silence_reason")
+            ),
         )
+
+
+@dataclass(frozen=True, slots=True)
+class _PostToolUseTaskStandardContextDecision:
+    item_id: str | None
+    context_text: str | None
+    reason: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -375,6 +494,7 @@ class OpenAICodexHookHostResponse:
     decision: OpenAICodexHookHostDecision = OpenAICodexHookHostDecision.ALLOW
     reason: str | None = None
     context: str | None = None
+    context_hook_event_name: str | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.decision, OpenAICodexHookHostDecision):
@@ -401,13 +521,40 @@ class OpenAICodexHookHostResponse:
             raise ValueError("OpenAICodexHookHostResponse.reason is only valid for block.")
         if self.decision is OpenAICodexHookHostDecision.BLOCK and self.context is not None:
             raise ValueError("OpenAICodexHookHostResponse.context is only valid for allow.")
+        if self.context_hook_event_name is not None and not (
+            isinstance(self.context_hook_event_name, str)
+            and self.context_hook_event_name.strip()
+        ):
+            raise ValueError(
+                "OpenAICodexHookHostResponse.context_hook_event_name must be non-empty "
+                "when provided."
+            )
+        if self.context is None and self.context_hook_event_name is not None:
+            raise ValueError(
+                "OpenAICodexHookHostResponse.context_hook_event_name requires context."
+            )
+        if self.context is not None:
+            if self.context_hook_event_name is None:
+                raise ValueError(
+                    "OpenAICodexHookHostResponse.context requires context_hook_event_name."
+                )
+            if self.context_hook_event_name not in _CODEX_ADDITIONAL_CONTEXT_EVENTS:
+                raise ValueError(
+                    "OpenAICodexHookHostResponse.context_hook_event_name does not "
+                    "support additionalContext in Codex."
+                )
 
     @property
-    def stdout_payload(self) -> dict[str, str] | None:
+    def stdout_payload(self) -> dict[str, object] | None:
         if self.decision is OpenAICodexHookHostDecision.BLOCK:
             return {"decision": "block", "reason": self.reason or ""}
         if self.context is not None:
-            return {"context": self.context}
+            return {
+                "hookSpecificOutput": {
+                    "hookEventName": self.context_hook_event_name or "",
+                    "additionalContext": self.context,
+                }
+            }
         return None
 
 
@@ -429,6 +576,7 @@ class OpenAICodexHookCoordinatorResult:
                 "decision": self.host_response.decision.value,
                 "reason_present": self.host_response.reason is not None,
                 "context_present": self.host_response.context is not None,
+                "context_hook_event_name": self.host_response.context_hook_event_name,
             },
         }
 
@@ -443,8 +591,19 @@ class OpenAICodexInMemoryStateStore:
     def save(self, state: OpenAICodexSessionState) -> None:
         self._states[state.session_id] = state
 
-    def record_event(self, payload: OpenAICodexHookPayload) -> OpenAICodexSessionState:
-        state = _updated_state(self.load(payload.session_id), payload)
+    def record_event(
+        self,
+        payload: OpenAICodexHookPayload,
+        *,
+        posttooluse_task_standard_context_enabled: bool = False,
+    ) -> OpenAICodexSessionState:
+        state = _updated_state(
+            self.load(payload.session_id),
+            payload,
+            posttooluse_task_standard_context_enabled=(
+                posttooluse_task_standard_context_enabled
+            ),
+        )
         self.save(state)
         return state
 
@@ -470,8 +629,19 @@ class OpenAICodexJsonStateStore:
             json.dump(state.as_payload(), handle, sort_keys=True, indent=2)
             handle.write("\n")
 
-    def record_event(self, payload: OpenAICodexHookPayload) -> OpenAICodexSessionState:
-        state = _updated_state(self.load(payload.session_id), payload)
+    def record_event(
+        self,
+        payload: OpenAICodexHookPayload,
+        *,
+        posttooluse_task_standard_context_enabled: bool = False,
+    ) -> OpenAICodexSessionState:
+        state = _updated_state(
+            self.load(payload.session_id),
+            payload,
+            posttooluse_task_standard_context_enabled=(
+                posttooluse_task_standard_context_enabled
+            ),
+        )
         self.save(state)
         return state
 
@@ -526,6 +696,7 @@ def handle_openai_codex_hook_payload(
     state_store: OpenAICodexInMemoryStateStore | OpenAICodexJsonStateStore,
     runtime_snapshot: OpenAICodexRuntimeSnapshot | None = None,
     task_standard_text_enabled: bool = False,
+    posttooluse_task_standard_context_enabled: bool = False,
 ) -> OpenAICodexHookCoordinatorResult:
     """Coordinate one Codex lifecycle payload through product Cortex law."""
 
@@ -544,8 +715,20 @@ def handle_openai_codex_hook_payload(
             "handle_openai_codex_hook_payload.task_standard_text_enabled must be "
             f"bool, got {actual_type}."
         )
+    if not isinstance(posttooluse_task_standard_context_enabled, bool):
+        actual_type = type(posttooluse_task_standard_context_enabled).__name__
+        raise TypeError(
+            "handle_openai_codex_hook_payload."
+            "posttooluse_task_standard_context_enabled must be bool, "
+            f"got {actual_type}."
+        )
     hook_payload = normalize_openai_codex_hook_payload(payload)
-    state = state_store.record_event(hook_payload)
+    state = state_store.record_event(
+        hook_payload,
+        posttooluse_task_standard_context_enabled=(
+            posttooluse_task_standard_context_enabled
+        ),
+    )
     intervention = _grounded_intervention_for_event(
         hook_payload,
         runtime_snapshot=runtime_snapshot,
@@ -556,6 +739,11 @@ def handle_openai_codex_hook_payload(
         lifecycle_facts=hook_payload.lifecycle_facts(),
     )
     directive = _accountable_continuation_directive(
+        directive,
+        hook_payload=hook_payload,
+        state=state,
+    )
+    directive = _posttooluse_task_standard_context_directive(
         directive,
         hook_payload=hook_payload,
         state=state,
@@ -610,6 +798,14 @@ def _host_response_for_directive(
 ) -> OpenAICodexHookHostResponse:
     if (
         directive.action
+        is OpenAICodexLifecycleDirectiveAction.ADD_ADDITIONAL_CONTEXT
+    ):
+        return OpenAICodexHookHostResponse(
+            context=directive.model_visible_text,
+            context_hook_event_name=hook_payload.hook_event_name.value,
+        )
+    if (
+        directive.action
         is OpenAICodexLifecycleDirectiveAction.BLOCK_WITH_IDENTITY_CONTINUOUS_TEXT
     ):
         return OpenAICodexHookHostResponse(
@@ -620,13 +816,18 @@ def _host_response_for_directive(
         task_standard_text_enabled
         and hook_payload.hook_event_name is OpenAICodexLifecycleEvent.USER_PROMPT_SUBMIT
     ):
-        return OpenAICodexHookHostResponse(context=TASK_STANDARD_FORMATION_TEXT)
+        return OpenAICodexHookHostResponse(
+            context=TASK_STANDARD_FORMATION_TEXT,
+            context_hook_event_name=hook_payload.hook_event_name.value,
+        )
     return OpenAICodexHookHostResponse()
 
 
 def _updated_state(
     state: OpenAICodexSessionState | None,
     payload: OpenAICodexHookPayload,
+    *,
+    posttooluse_task_standard_context_enabled: bool = False,
 ) -> OpenAICodexSessionState:
     prior = state or OpenAICodexSessionState(session_id=payload.session_id)
     lifecycle_counts = _increment_count(
@@ -643,6 +844,12 @@ def _updated_state(
     tool_failure_count = prior.tool_failure_count
     stop_event_count = prior.stop_event_count
     current_step = prior.current_step
+    posttooluse_context_item_ids = prior.posttooluse_task_standard_context_item_ids
+    last_posttooluse_context_item_id: str | None = None
+    last_posttooluse_context_text: str | None = None
+    last_posttooluse_context_reason: str | None = None
+    last_posttooluse_context_silence_reason: str | None = None
+    task_standard_evidence: TaskStandardEvidence | None = None
     if payload.hook_event_name is OpenAICodexLifecycleEvent.USER_PROMPT_SUBMIT:
         current_step += 1
         expectation_ledger = ExpectationLedger()
@@ -650,6 +857,7 @@ def _updated_state(
         closure_claim_count = 0
         self_repair_response_count = 0
         warning_tags = ()
+        posttooluse_context_item_ids = ()
         task_standard_spine = initialize_task_standard_spine(
             payload.prompt_text,
             event_ref=_event_ref(
@@ -663,6 +871,11 @@ def _updated_state(
         OpenAICodexLifecycleEvent.POST_TOOL_USE,
         OpenAICodexLifecycleEvent.POST_TOOL_USE_FAILURE,
     }:
+        task_standard_spine = _capture_pretool_transcript_standard(
+            task_standard_spine,
+            payload,
+            current_step=current_step,
+        )
         tool_event_count += 1
     if (
         payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE
@@ -710,7 +923,7 @@ def _updated_state(
             )
     elif payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE:
         tool_event_ref = _event_ref(payload, current_step=current_step, suffix="tool-event")
-        task_standard_spine, _ = record_task_standard_evidence(
+        task_standard_spine, task_standard_evidence = record_task_standard_evidence(
             task_standard_spine,
             event_ref=tool_event_ref,
             tool_text=_tool_event_text(payload),
@@ -719,6 +932,43 @@ def _updated_state(
                 _tool_event_text(payload).lower(),
             ),
         )
+    if (
+        posttooluse_task_standard_context_enabled
+        and payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE
+    ):
+        if task_standard_evidence is None:
+            last_posttooluse_context_silence_reason = "no_task_standard_evidence"
+        else:
+            posttooluse_context = _posttooluse_task_standard_context_decision(
+                task_standard_spine,
+                evidence=task_standard_evidence,
+                payload=payload,
+                already_context_item_ids=posttooluse_context_item_ids,
+            )
+            last_posttooluse_context_silence_reason = posttooluse_context.reason
+        if (
+            task_standard_evidence is not None
+            and posttooluse_context.context_text is not None
+            and posttooluse_context.item_id is not None
+        ):
+            (
+                last_posttooluse_context_item_id,
+                last_posttooluse_context_text,
+                last_posttooluse_context_reason,
+            ) = (
+                posttooluse_context.item_id,
+                posttooluse_context.context_text,
+                posttooluse_context.reason,
+            )
+            last_posttooluse_context_silence_reason = None
+            posttooluse_context_item_ids = tuple(
+                dict.fromkeys(
+                    (
+                        *posttooluse_context_item_ids,
+                        last_posttooluse_context_item_id,
+                    )
+                )
+            )
     if payload.hook_event_name is OpenAICodexLifecycleEvent.POST_TOOL_USE_FAILURE:
         tool_failure_count += 1
         warning_tags = tuple(dict.fromkeys((*warning_tags, "tool-failure")))
@@ -816,7 +1066,10 @@ def _updated_state(
                     commitment,
                 )
                 if (
-                    verification_evidence_count > 0
+                    (
+                        verification_evidence_count > 0
+                        or task_standard_closure_satisfied(task_standard_spine)
+                    )
                     and not task_standard_spine.has_unmatched_closure_items
                 ):
                     expectation_ledger = expectation_ledger.apply_progress(
@@ -852,6 +1105,13 @@ def _updated_state(
         warning_tags=warning_tags,
         lifecycle_counts=lifecycle_counts,
         task_standard_spine=task_standard_spine,
+        posttooluse_task_standard_context_item_ids=posttooluse_context_item_ids,
+        last_posttooluse_task_standard_context_item_id=last_posttooluse_context_item_id,
+        last_posttooluse_task_standard_context_text=last_posttooluse_context_text,
+        last_posttooluse_task_standard_context_reason=last_posttooluse_context_reason,
+        last_posttooluse_task_standard_context_silence_reason=(
+            last_posttooluse_context_silence_reason
+        ),
     )
 
 
@@ -862,6 +1122,117 @@ def _increment_count(
     mapping = dict(counts)
     mapping[event_name] = mapping.get(event_name, 0) + 1
     return tuple(sorted(mapping.items()))
+
+
+def _capture_pretool_transcript_standard(
+    spine: TaskStandardSpine,
+    payload: OpenAICodexHookPayload,
+    *,
+    current_step: int,
+) -> TaskStandardSpine:
+    if spine.standard_items or payload.hook_event_name not in {
+        OpenAICodexLifecycleEvent.PRE_TOOL_USE,
+        OpenAICodexLifecycleEvent.POST_TOOL_USE,
+    }:
+        return spine
+    for message in _pretool_assistant_messages_from_transcript(payload.transcript_path):
+        updated = store_assistant_standard_block(
+            spine,
+            message,
+            event_ref=_event_ref(
+                payload,
+                current_step=current_step,
+                suffix="pretool-transcript-standard",
+            ),
+        )
+        if updated.standard_items or (
+            updated.malformed_standard_block_count != spine.malformed_standard_block_count
+        ):
+            return updated
+    return spine
+
+
+def _pretool_assistant_messages_from_transcript(
+    transcript_path: str | None,
+) -> tuple[str, ...]:
+    if not isinstance(transcript_path, str) or not transcript_path.strip():
+        return ()
+    path = Path(transcript_path)
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return ()
+    messages: list[str] = []
+    for line in lines:
+        if not line.strip():
+            continue
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            return ()
+        if not isinstance(row, Mapping):
+            continue
+        payload = row.get("payload")
+        if not isinstance(payload, Mapping):
+            continue
+        if _transcript_row_is_tool_boundary(row_type=row.get("type"), payload=payload):
+            break
+        message = _assistant_text_from_transcript_row(
+            row_type=row.get("type"),
+            payload=payload,
+        )
+        if message:
+            messages.append(message)
+    return tuple(messages)
+
+
+def _transcript_row_is_tool_boundary(
+    *,
+    row_type: Any,
+    payload: Mapping[str, Any],
+) -> bool:
+    payload_type = payload.get("type")
+    if row_type == "response_item" and payload_type in {
+        "function_call",
+        "function_call_output",
+        "tool_call",
+        "tool_result",
+    }:
+        return True
+    if row_type == "event_msg" and payload_type in {
+        "tool_call",
+        "tool_result",
+        "tool_started",
+        "tool_completed",
+    }:
+        return True
+    return False
+
+
+def _assistant_text_from_transcript_row(
+    *,
+    row_type: Any,
+    payload: Mapping[str, Any],
+) -> str | None:
+    if row_type == "event_msg" and payload.get("type") == "agent_message":
+        message = payload.get("message")
+        return message.strip() if isinstance(message, str) and message.strip() else None
+    if row_type != "response_item" or payload.get("type") != "message":
+        return None
+    if payload.get("role") != "assistant":
+        return None
+    content = payload.get("content")
+    if not isinstance(content, list):
+        return None
+    parts: list[str] = []
+    for item in content:
+        if not isinstance(item, Mapping):
+            continue
+        text = item.get("text")
+        if isinstance(text, str) and text.strip():
+            parts.append(text.strip())
+    combined = "\n".join(parts).strip()
+    return combined or None
 
 
 def _runtime_snapshot_from_session_state(
@@ -977,6 +1348,178 @@ def _accountable_continuation_directive(
     )
 
 
+def _posttooluse_task_standard_context_directive(
+    directive: OpenAICodexLifecycleDirective,
+    *,
+    hook_payload: OpenAICodexHookPayload,
+    state: OpenAICodexSessionState,
+) -> OpenAICodexLifecycleDirective:
+    if (
+        hook_payload.hook_event_name is not OpenAICodexLifecycleEvent.POST_TOOL_USE
+        or directive.action is not OpenAICodexLifecycleDirectiveAction.ALLOW
+        or not state.last_posttooluse_task_standard_context_text
+    ):
+        return directive
+    return OpenAICodexLifecycleDirective(
+        action=OpenAICodexLifecycleDirectiveAction.ADD_ADDITIONAL_CONTEXT,
+        hook_event_name=hook_payload.hook_event_name.value,
+        model_visible_text=state.last_posttooluse_task_standard_context_text,
+        silence_reason=None,
+        model_bound_difference_kind="posttooluse_task_standard_next_step_context",
+    )
+
+
+def _posttooluse_task_standard_context_decision(
+    spine: TaskStandardSpine,
+    *,
+    evidence: TaskStandardEvidence,
+    payload: OpenAICodexHookPayload,
+    already_context_item_ids: tuple[str, ...],
+) -> _PostToolUseTaskStandardContextDecision:
+    if not spine.has_standard:
+        return _PostToolUseTaskStandardContextDecision(
+            item_id=None,
+            context_text=None,
+            reason="no_model_derived_standard",
+        )
+    if task_standard_closure_satisfied(spine):
+        return _PostToolUseTaskStandardContextDecision(
+            item_id=None,
+            context_text=None,
+            reason="task_standard_closure_satisfied",
+        )
+    if evidence.evidence_class not in {
+        TaskStandardEvidenceClass.CLAIM_ALIGNED,
+        TaskStandardEvidenceClass.STANDARD_ALIGNED,
+    }:
+        return _PostToolUseTaskStandardContextDecision(
+            item_id=None,
+            context_text=None,
+            reason="evidence_not_standard_aligned",
+        )
+    if (
+        len(already_context_item_ids)
+        >= _POSTTOOLUSE_TASK_STANDARD_CONTEXT_SESSION_LIMIT
+    ):
+        return _PostToolUseTaskStandardContextDecision(
+            item_id=None,
+            context_text=None,
+            reason="posttooluse_context_session_cap_reached",
+        )
+    tool_text = _tool_event_text(payload).lower()
+    if not tool_text:
+        return _PostToolUseTaskStandardContextDecision(
+            item_id=None,
+            context_text=None,
+            reason="no_tool_event_text",
+        )
+    if not _tool_event_has_verification_marker(tool_text):
+        return _PostToolUseTaskStandardContextDecision(
+            item_id=None,
+            context_text=None,
+            reason="no_verification_marker",
+        )
+    if _tool_event_looks_failed(payload, tool_text):
+        return _PostToolUseTaskStandardContextDecision(
+            item_id=None,
+            context_text=None,
+            reason="tool_event_failed",
+        )
+    item = _first_unresolved_required_standard_item(
+        spine,
+        already_context_item_ids=already_context_item_ids,
+    )
+    if item is None:
+        return _PostToolUseTaskStandardContextDecision(
+            item_id=None,
+            context_text=None,
+            reason="no_unresolved_required_item",
+        )
+    context_text = _render_posttooluse_task_standard_context(spine, item)
+    return _PostToolUseTaskStandardContextDecision(
+        item_id=item.item_id,
+        context_text=context_text,
+        reason="unresolved_task_standard_item_after_tool",
+    )
+
+
+def _first_unresolved_required_standard_item(
+    spine: TaskStandardSpine,
+    *,
+    already_context_item_ids: tuple[str, ...],
+) -> TaskStandardItem | None:
+    already = set(already_context_item_ids)
+    for kind in (
+        TaskStandardItemKind.WORK_STANDARD,
+        TaskStandardItemKind.CLOSURE_EVIDENCE,
+    ):
+        for item in spine.standard_items:
+            if item.kind is kind and not item.has_aligned_evidence and item.item_id not in already:
+                return item
+    return None
+
+
+def _render_posttooluse_task_standard_context(
+    spine: TaskStandardSpine,
+    item: TaskStandardItem,
+) -> str:
+    closure_evidence = next(
+        (
+            standard_item.text
+            for standard_item in spine.standard_items
+            if standard_item.kind is TaskStandardItemKind.CLOSURE_EVIDENCE
+        ),
+        "",
+    )
+    next_step = (
+        _posttooluse_context_span(closure_evidence)
+        if closure_evidence
+        else "a direct check for that item"
+    )
+    return _POSTTOOLUSE_TASK_STANDARD_CONTEXT_TEMPLATE.format(
+        standard_item=_posttooluse_context_span(item.text),
+        next_step=next_step,
+    )
+
+
+def _posttooluse_context_span(text: str) -> str:
+    compacted = re.sub(r"\s+", " ", str(text)).strip()
+    compacted = re.sub(r"\bCortex\b", "this work", compacted)
+    for term in ("hidden verifier", "hidden_quality", "test-hidden", "verifier_only"):
+        compacted = re.sub(re.escape(term), "", compacted, flags=re.IGNORECASE)
+    compacted = re.sub(r"\s+", " ", compacted).strip(" .;:")
+    if len(compacted) <= _POSTTOOLUSE_TASK_STANDARD_CONTEXT_SPAN_LIMIT:
+        return compacted or "a direct check for that item"
+    shortened = compacted[: _POSTTOOLUSE_TASK_STANDARD_CONTEXT_SPAN_LIMIT].rsplit(
+        " ",
+        1,
+    )[0]
+    anchors = tuple(
+        anchor
+        for anchor in _posttooluse_product_anchors(compacted)
+        if anchor not in shortened
+    )
+    if anchors:
+        anchor_text = " ".join(anchors[:3])
+        if len(anchor_text) > 80:
+            anchor_text = anchor_text[:80].rsplit(" ", 1)[0].strip()
+        prefix_room = (
+            _POSTTOOLUSE_TASK_STANDARD_CONTEXT_SPAN_LIMIT - len(anchor_text) - 5
+        )
+        if prefix_room >= 40:
+            shortened = compacted[:prefix_room].rsplit(" ", 1)[0]
+            return f"{shortened.strip()}... {anchor_text}".strip()
+    return f"{shortened.strip()}..."
+
+
+def _posttooluse_product_anchors(text: str) -> tuple[str, ...]:
+    quoted = re.findall(r"`[^`]+`|\"[^\"]+\"|'[^']+'", text)
+    paths = re.findall(r"[A-Za-z0-9_./-]+\.[A-Za-z0-9_./-]+", text)
+    numeric = re.findall(r"[A-Za-z0-9_./-]*\d[A-Za-z0-9_./-]*", text)
+    anchors = (*quoted, *paths, *numeric)
+    return tuple(dict.fromkeys(anchor.strip() for anchor in anchors if anchor.strip()))
+
+
 def _tool_event_has_verification_evidence(
     payload: OpenAICodexHookPayload,
     *,
@@ -985,46 +1528,15 @@ def _tool_event_has_verification_evidence(
     text = _tool_event_text(payload).lower()
     if not text:
         return False
-    verification_markers = (
-        " test",
-        "tests",
-        "pytest",
-        "unittest",
-        "vitest",
-        "jest",
-        "build",
-        "lint",
-        "typecheck",
-        "tsc",
-        "mypy",
-        "ruff",
-        "cargo test",
-        "go test",
-        "check",
-        "verify",
-        "cat ",
-        "$(cat",
-        "\\\"cat",
-        " wc ",
-        "wc -l",
-        "\\\"wc",
-        "grep",
-        "stat ",
-        "\\\"stat",
-        "[ -f",
-        "test -f",
-        "file_ok",
-        "content_ok",
-        "content=",
-        "lines=",
-        "exists",
-        "matches exactly",
-    )
-    if not any(marker in text for marker in verification_markers):
+    if not _tool_event_has_verification_marker(text):
         return False
     if _tool_event_looks_failed(payload, text):
         return False
     return active_verification_expectation or _tool_event_looks_successful(payload, text)
+
+
+def _tool_event_has_verification_marker(normalized_tool_text: str) -> bool:
+    return any(marker in normalized_tool_text for marker in _TOOL_VERIFICATION_MARKERS)
 
 
 def _tool_event_text(payload: OpenAICodexHookPayload) -> str:
@@ -1158,7 +1670,7 @@ def _json_value_text(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"))
 
 
-def _host_text_from_stdout_payload(payload: dict[str, str] | None) -> str:
+def _host_text_from_stdout_payload(payload: dict[str, object] | None) -> str:
     return json.dumps(payload) if payload is not None else ""
 
 

@@ -26,6 +26,8 @@ from lab.codex_app_cli_stop_activation_probe import (
     TASK_STANDARD_LIVE_HOOK_EVENTS,
     TASK_STANDARD_LIVE_OUTPUT_ROOT,
     TASK_STANDARD_LIVE_PROMPT,
+    TASK_STANDARD_STOP_GATING_APPROVAL_ENV,
+    TASK_STANDARD_STOP_GATING_OUTPUT_ROOT,
     run_gate0_probe,
     run_live_canary_probe,
     run_product_event_capture_live_probe,
@@ -33,9 +35,20 @@ from lab.codex_app_cli_stop_activation_probe import (
     run_product_perception_live_probe,
     run_stop_continuation_resolution_gate0_probe,
     run_stop_continuation_resolution_live_probe,
+    run_task_standard_pretool_transcript_replay,
     run_task_standard_live_gate0_probe,
     run_task_standard_live_probe,
+    run_task_standard_stop_gating_gate0_probe,
+    run_task_standard_stop_gating_live_probe,
 )
+
+
+TASK_STANDARD_CODEX_CONTEXT_PAYLOAD = {
+    "hookSpecificOutput": {
+        "hookEventName": "UserPromptSubmit",
+        "additionalContext": TASK_STANDARD_FORMATION_TEXT,
+    }
+}
 
 
 def test_gate0_probe_passes_with_isolated_product_subject_config(tmp_path: Path) -> None:
@@ -284,9 +297,31 @@ def test_task_standard_live_gate0_records_context_and_standard_capture(
     assert report["case_results"] == {
         "context_emits_exact_signed_text": True,
         "standard_block_captured": True,
+        "live_equivalent_pretool_transcript_standard_captured": True,
+        "pretool_capture_happens_before_tool_evidence": True,
         "malformed_standard_diagnostic_only": True,
         "no_unexpected_model_visible_text": True,
     }
+    assert report["boundary_evidence_ladder"] == {
+        "host_stdout_contract_ok": True,
+        "host_attached_context_observed": False,
+        "model_assimilation_observed": True,
+        "state_capture_observed": True,
+        "gate_used_captured_state": False,
+        "behavior_lift_claim_allowed": False,
+    }
+    capture_boundary_result = report["capture_boundary_result"]
+    assert Path(
+        capture_boundary_result["live_equivalent_pretool_transcript_path"]
+    ).exists()
+    assert capture_boundary_result["pretool_standard_capture_observed"] is True
+    assert all(
+        "pretool-transcript-standard" in ref
+        for ref in capture_boundary_result["pretool_standard_capture_source_refs"]
+    )
+    assert "before any tool evidence is scored" in capture_boundary_result[
+        "reason"
+    ]
     assert report["boundary_results"] == {
         "root_config_unchanged": True,
         "subject_config_task_standard_only": True,
@@ -320,9 +355,206 @@ def test_task_standard_live_gate0_records_context_and_standard_capture(
         for row in rows
         if row["case_id"] == "malformed_standard_stays_diagnostic_only:2"
     )
-    assert context_step["stdout_payload"] == {"context": TASK_STANDARD_FORMATION_TEXT}
+    pretool_step = next(
+        row
+        for row in rows
+        if row["case_id"]
+        == "live_equivalent_pretool_standard_capture_boundary:2"
+    )
+    assert context_step["stdout_payload"] == TASK_STANDARD_CODEX_CONTEXT_PAYLOAD
     assert capture_step["task_standard_standard_item_count"] == 3
+    assert pretool_step["hook_event_name"] == "PreToolUse"
+    assert pretool_step["task_standard_standard_item_count"] == 3
+    assert pretool_step["task_standard_evidence_ref_count"] == 0
+    assert any(
+        "pretool-transcript-standard" in ref
+        for ref in pretool_step["task_standard_standard_item_source_refs"]
+    )
     assert malformed_step["task_standard_malformed_standard_block_count"] == 1
+
+
+def test_task_standard_pretool_transcript_replay_captures_prior_live_shape(
+    tmp_path: Path,
+) -> None:
+    artifact_root = tmp_path / "source_artifact"
+    artifact_root.mkdir()
+    transcript_path = artifact_root / "transcript.jsonl"
+    standard_block = "\n".join(
+        (
+            "Work standard: create the file with exact one-line content.",
+            "Likely misses: wrong filename, wrong content, or no readback.",
+            "Closure evidence: cat output shows the exact created file content.",
+        )
+    )
+    transcript_path.write_text(
+        "\n".join(
+            json.dumps(row, sort_keys=True)
+            for row in (
+                {
+                    "type": "response_item",
+                    "payload": {
+                        "type": "message",
+                        "role": "developer",
+                        "content": [
+                            {
+                                "type": "input_text",
+                                "text": TASK_STANDARD_FORMATION_TEXT,
+                            }
+                        ],
+                    },
+                },
+                {
+                    "type": "event_msg",
+                    "payload": {
+                        "type": "agent_message",
+                        "message": standard_block,
+                        "phase": "commentary",
+                    },
+                },
+                {
+                    "type": "response_item",
+                    "payload": {
+                        "type": "function_call",
+                        "name": "exec_command",
+                        "arguments": "{\"cmd\":\"cat file.txt\"}",
+                    },
+                },
+            )
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (artifact_root / "report.json").write_text(
+        json.dumps({"prompt": TASK_STANDARD_LIVE_PROMPT}, sort_keys=True),
+        encoding="utf-8",
+    )
+    (artifact_root / "hook_client_diagnostics.jsonl").write_text(
+        json.dumps(
+            {
+                "stdout_payload": TASK_STANDARD_CODEX_CONTEXT_PAYLOAD,
+                "coordinator": {
+                    "hook_payload": {
+                        "hook_event_name": "UserPromptSubmit",
+                        "transcript_path": str(transcript_path),
+                    }
+                },
+            },
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = run_task_standard_pretool_transcript_replay(
+        output_root=tmp_path,
+        artifact_root=artifact_root,
+    )
+
+    assert report["passed"] is True
+    assert report["pretool_standard_capture_observed"] is True
+    assert report["standard_capture_item_count"] == 3
+    assert report["boundary_evidence_ladder"] == {
+        "host_stdout_contract_ok": True,
+        "host_attached_context_observed": True,
+        "model_assimilation_observed": True,
+        "state_capture_observed": True,
+        "gate_used_captured_state": False,
+        "behavior_lift_claim_allowed": False,
+    }
+    assert all(
+        "pretool-transcript-standard" in ref
+        for ref in report["standard_capture_source_refs"]
+    )
+
+
+def test_task_standard_stop_gating_live_refuses_without_explicit_approval(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv(TASK_STANDARD_STOP_GATING_APPROVAL_ENV, raising=False)
+
+    report = run_task_standard_stop_gating_live_probe(output_root=tmp_path)
+
+    assert report["passed"] is False
+    assert report["live_probe_ran"] is False
+    assert report["verdict"] == "not_run"
+    assert report["blocked_reason"] == (
+        "task_standard_stop_gating_live_requires_explicit_current_turn_approval"
+    )
+    assert report["approval_env"] == TASK_STANDARD_STOP_GATING_APPROVAL_ENV
+
+
+def test_task_standard_stop_gating_gate0_calibrates_block_and_clean_silence(
+    tmp_path: Path,
+) -> None:
+    root_config = Path(".codex/config.toml")
+    root_config_before = root_config.read_text(encoding="utf-8")
+
+    report = run_task_standard_stop_gating_gate0_probe(output_root=tmp_path)
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_gating_calibrated"
+    assert report["case_results"] == {
+        "premature_closure_gap_blocks": True,
+        "clean_evidenced_closure_stays_silent": True,
+        "latest_live_capture_replay_available": True,
+        "latest_live_capture_replay_does_not_overblock": True,
+    }
+    assert report["boundary_results"] == {
+        "root_config_unchanged": True,
+        "subject_config_product_hook_only": True,
+        "subject_config_enables_task_standard_text": True,
+        "subject_config_omits_runtime_snapshot": True,
+        "subject_config_does_not_suppress_stop_blocks": True,
+        "no_runtime_snapshot_fixture": True,
+        "no_unexpected_model_visible_text": True,
+    }
+    assert report["stop_stdout_payload"] == {
+        "decision": "block",
+        "reason": EXPECTED_OVERDUE_VERIFICATION_TEXT,
+    }
+    assert report["rendered_text_hash"]
+    assert report["captured_standard_ids"]
+    assert report["gap_unmatched_standard_item_ids"]
+    assert report["clean_evidence_item_ids"]
+    assert report["clean_unmatched_standard_item_ids"] == []
+    assert report["overblock_detection"] == {
+        "clean_control_overblock": False,
+        "latest_live_capture_replay_overblock": False,
+        "latest_live_capture_replay_missing": False,
+        "latest_live_capture_replay_source": str(
+            codex_app_cli_stop_activation_probe._task_standard_stop_gating_replay_artifact_root()
+        ),
+        "latest_live_capture_replay_unmatched_standard_item_ids": [],
+        "failure_reason": None,
+    }
+    assert report["boundary_evidence_ladder"] == {
+        "host_stdout_contract_ok": True,
+        "host_attached_context_observed": False,
+        "model_assimilation_observed": True,
+        "state_capture_observed": True,
+        "gate_used_captured_state": True,
+        "behavior_lift_claim_allowed": False,
+    }
+    assert root_config.read_text(encoding="utf-8") == root_config_before
+    rows = [
+        json.loads(line)
+        for line in Path(str(report["trajectory_path"]))
+        .read_text(encoding="utf-8")
+        .splitlines()
+        if line.strip()
+    ]
+    sequence_rows = {row["case_id"]: row for row in rows if "steps" in row}
+    assert sequence_rows["premature_closure_gap"]["final_stdout_payload"] == {
+        "decision": "block",
+        "reason": EXPECTED_OVERDUE_VERIFICATION_TEXT,
+    }
+    assert sequence_rows["clean_evidenced_closure"]["final_silence_reason"] == (
+        "pressure_below_visible_threshold"
+    )
+    assert sequence_rows["latest_live_capture_replay"]["final_silence_reason"] == (
+        "pressure_below_visible_threshold"
+    )
 
 
 def test_product_perception_live_uses_separate_no_snapshot_output_root() -> None:
@@ -374,6 +606,19 @@ def test_task_standard_live_uses_separate_output_root() -> None:
 
     assert selected_root == TASK_STANDARD_LIVE_OUTPUT_ROOT
     assert "codex_app_cli_task_standard_live_probe" in str(selected_root)
+
+
+def test_task_standard_stop_gating_uses_separate_output_root() -> None:
+    selected_root = codex_app_cli_stop_activation_probe._selected_output_root(
+        SimpleArgs(
+            output_root=None,
+            product_perception_live=False,
+            task_standard_stop_gating_gate0=True,
+        )
+    )
+
+    assert selected_root == TASK_STANDARD_STOP_GATING_OUTPUT_ROOT
+    assert "codex_app_cli_task_standard_stop_gating_probe" in str(selected_root)
 
 
 def test_product_perception_live_subject_config_omits_runtime_snapshot(
@@ -484,6 +729,27 @@ def test_subject_config_can_disable_model_visible_blocks_for_silent_arm(
     assert "cortex_mission_reflection_stop_hook" not in config
 
 
+def test_subject_config_can_disable_only_stop_blocks_for_capture_probe(
+    tmp_path: Path,
+) -> None:
+    subject = tmp_path / "subject"
+    config_path = codex_app_cli_stop_activation_probe._write_subject_hook_config(
+        subject=subject,
+        state_root=tmp_path / "state",
+        snapshot_path=None,
+        diagnostics_path=tmp_path / "diagnostics.jsonl",
+        hook_events=TASK_STANDARD_LIVE_HOOK_EVENTS,
+        disable_stop_blocks=True,
+        enable_task_standard_text=True,
+    )
+    config = config_path.read_text(encoding="utf-8")
+
+    assert "--disable-stop-blocks" in config
+    assert "--disable-model-visible-blocks" not in config
+    assert "--enable-task-standard-text" in config
+    assert "--runtime-snapshot" not in config
+
+
 def test_live_subject_workspace_is_prepared_as_isolated_git_root(
     tmp_path: Path,
 ) -> None:
@@ -574,10 +840,13 @@ def test_live_trajectory_rows_record_no_snapshot_product_state() -> None:
                 }
             ),
             "stop_hook_active": False,
+            "task_standard_evidence_item_ids": [],
             "task_standard_evidence_ref_count": 0,
             "task_standard_final_closure_claim_count": 0,
             "task_standard_malformed_standard_block_count": 0,
             "task_standard_standard_item_count": 0,
+            "task_standard_standard_item_ids": [],
+            "task_standard_standard_item_source_refs": [],
             "task_standard_unmatched_standard_item_ids": [],
             "task_standard_visible_obligation_count": 0,
         }
@@ -626,6 +895,9 @@ class SimpleArgs:
         stop_continuation_resolution_live=False,
         task_standard_live_gate0=False,
         task_standard_live=False,
+        task_standard_pretool_transcript_replay=False,
+        task_standard_stop_gating_gate0=False,
+        task_standard_stop_gating_live=False,
     ) -> None:
         self.output_root = output_root
         self.product_perception_live = product_perception_live
@@ -634,3 +906,8 @@ class SimpleArgs:
         self.stop_continuation_resolution_live = stop_continuation_resolution_live
         self.task_standard_live_gate0 = task_standard_live_gate0
         self.task_standard_live = task_standard_live
+        self.task_standard_pretool_transcript_replay = (
+            task_standard_pretool_transcript_replay
+        )
+        self.task_standard_stop_gating_gate0 = task_standard_stop_gating_gate0
+        self.task_standard_stop_gating_live = task_standard_stop_gating_live

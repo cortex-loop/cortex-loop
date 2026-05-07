@@ -1871,7 +1871,11 @@ def _claude_stop_hook_configured() -> tuple[bool, str]:
     return False, "Stop hook for cortex_grid_stop_hook.py not declared"
 
 
-def _run_stop_hook_with_transcript(text: str) -> tuple[int, str, str]:
+def _run_stop_hook_with_transcript(
+    text: str,
+    *,
+    structural_only: bool = False,
+) -> tuple[int, str, str]:
     hook_path = _root() / ".claude" / "hooks" / "cortex_grid_stop_hook.py"
     transcript_entry = {
         "type": "assistant",
@@ -1895,6 +1899,14 @@ def _run_stop_hook_with_transcript(text: str) -> tuple[int, str, str]:
             capture_output=True,
             text=True,
             timeout=180,
+            env={
+                **os.environ,
+                **(
+                    {"CORTEX_GRID_STOP_HOOK_STRUCTURAL_ONLY": "1"}
+                    if structural_only
+                    else {}
+                ),
+            },
         )
         return proc.returncode, proc.stdout, proc.stderr
     finally:
@@ -1910,9 +1922,10 @@ def _hook_health_payload() -> dict[str, object]:
     filled_graph = mission_reflection.filled_example_graph(graph)
     validator_result = mission_reflection.validate_graph_text(
         filled_graph,
-        check_payload=check_payload,
+        check_payload=None,
         require_filled=True,
     )
+    workflow_readiness_ok = check_payload.get("verdict") == "PASS"
 
     failures: list[str] = []
     if not configured:
@@ -1924,7 +1937,8 @@ def _hook_health_payload() -> dict[str, object]:
         )
 
     bad_code, bad_stdout, bad_stderr = _run_stop_hook_with_transcript(
-        "Plain assistant message without the mission graph."
+        "Plain assistant message without the mission graph.",
+        structural_only=True,
     )
     if bad_code != 0:
         failures.append(f"Stop hook returned non-zero on bad transcript: {bad_code}")
@@ -1939,7 +1953,10 @@ def _hook_health_payload() -> dict[str, object]:
                 + (f"; stderr={bad_stderr.strip()}" if bad_stderr.strip() else "")
             )
 
-    good_code, good_stdout, good_stderr = _run_stop_hook_with_transcript(filled_graph)
+    good_code, good_stdout, good_stderr = _run_stop_hook_with_transcript(
+        filled_graph,
+        structural_only=True,
+    )
     if good_code != 0:
         failures.append(f"Stop hook returned non-zero on valid transcript: {good_code}")
     if good_stdout.strip():
@@ -1955,6 +1972,8 @@ def _hook_health_payload() -> dict[str, object]:
         "shared_validator_ok": validator_result.ok,
         "known_bad_blocks": not bad_stdout.strip() == "",
         "filled_graph_allows_stop": not good_stdout.strip(),
+        "workflow_readiness_ok": workflow_readiness_ok,
+        "workflow_readiness_verdict": check_payload.get("verdict"),
     }
 
 
@@ -2020,7 +2039,11 @@ def _codex_app_stop_hook_configured() -> tuple[bool, str]:
     )
 
 
-def _run_codex_app_stop_hook_with_message(text: str | None) -> tuple[int, str, str]:
+def _run_codex_app_stop_hook_with_message(
+    text: str | None,
+    *,
+    structural_only: bool = False,
+) -> tuple[int, str, str]:
     """Simulate Codex App Stop hook input for health tests."""
 
     hook_path = _root() / ".codex" / "hooks" / "cortex_mission_reflection_stop_hook.py"
@@ -2039,6 +2062,10 @@ def _run_codex_app_stop_hook_with_message(text: str | None) -> tuple[int, str, s
         capture_output=True,
         text=True,
         timeout=180,
+        env={
+            **os.environ,
+            **({"CORTEX_CODEX_APP_HOOK_STRUCTURAL_ONLY": "1"} if structural_only else {}),
+        },
     )
     return proc.returncode, proc.stdout, proc.stderr
 
@@ -2059,9 +2086,10 @@ def _codex_app_hook_health_payload() -> dict[str, object]:
     filled_graph = mission_reflection.filled_example_graph(graph)
     validator_result = mission_reflection.validate_graph_text(
         filled_graph,
-        check_payload=check_payload,
+        check_payload=None,
         require_filled=True,
     )
+    workflow_readiness_ok = check_payload.get("verdict") == "PASS"
 
     failures: list[str] = []
     if not validator_result.ok:
@@ -2071,7 +2099,8 @@ def _codex_app_hook_health_payload() -> dict[str, object]:
         )
 
     bad_code, bad_stdout, bad_stderr = _run_codex_app_stop_hook_with_message(
-        "Plain assistant message without the mission graph."
+        "Plain assistant message without the mission graph.",
+        structural_only=True,
     )
     bad_blocks = False
     if bad_code != 0:
@@ -2089,7 +2118,8 @@ def _codex_app_hook_health_payload() -> dict[str, object]:
             )
 
     good_code, good_stdout, good_stderr = _run_codex_app_stop_hook_with_message(
-        filled_graph
+        filled_graph,
+        structural_only=True,
     )
     good_allows = good_code == 0 and not good_stdout.strip() and not good_stderr.strip()
     if good_code != 0:
@@ -2104,7 +2134,8 @@ def _codex_app_hook_health_payload() -> dict[str, object]:
         )
 
     missing_code, missing_stdout, missing_stderr = _run_codex_app_stop_hook_with_message(
-        None
+        None,
+        structural_only=True,
     )
     missing_message_fails_open = (
         missing_code == 0
@@ -2127,6 +2158,8 @@ def _codex_app_hook_health_payload() -> dict[str, object]:
         "known_bad_blocks": bad_blocks,
         "filled_graph_allows_stop": good_allows,
         "missing_last_assistant_message_fails_open": missing_message_fails_open,
+        "workflow_readiness_ok": workflow_readiness_ok,
+        "workflow_readiness_verdict": check_payload.get("verdict"),
     }
 
 

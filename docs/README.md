@@ -132,9 +132,84 @@ Active docs:
   structural Gate 0 evidence for signed-off task-standard context delivery and
   standard capture before an explicitly approved live run
 - [Cortex Codex App/CLI Task-Standard Live Run](recon/cortex_codex_app_cli_task_standard_live_run.md) —
-  live Codex CLI evidence that the signed context payload was emitted, but the
-  model did not produce a prework task-standard block and existing Stop
-  verification text fired
+  live Codex CLI evidence that the signed text was emitted through a flat
+  Cortex-internal context payload, but no prework task-standard block was
+  captured
+- [Cortex Codex App/CLI Hook Contract Capture Boundary Remediation](recon/cortex_codex_app_cli_hook_contract_capture_boundary_remediation.md) —
+  structural evidence that UserPromptSubmit task-standard context now uses
+  Codex-native `hookSpecificOutput.additionalContext`, with Stop blocks isolated
+  for the next live capture rerun
+- [Cortex Codex App/CLI Task-Standard Context Live Rerun](recon/cortex_codex_app_cli_task_standard_context_live_rerun.md) —
+  live evidence that Codex-native task-standard context reached the model and
+  produced a pre-tool standard block, but Cortex did not capture it into
+  `TaskStandardSpine` from hook-visible state
+- [Cortex Codex App/CLI Communication Boundary Audit And Hardening](recon/cortex_codex_app_cli_communication_boundary_audit_and_hardening.md) —
+  structural audit evidence that recent Codex App/CLI trickle failures are
+  proof-boundary failures across host contract, lifecycle config, temporal
+  capture, Gate 0/live mismatch, and workflow-health coupling, not SRE doctrine
+  failure
+- [Cortex Codex App/CLI Task-Standard PreTool Transcript Capture](recon/cortex_codex_app_cli_task_standard_pretool_transcript_capture.md) —
+  structural and replay evidence that assistant-authored pre-tool standard
+  blocks from Codex transcripts now populate `TaskStandardSpine` before tool
+  evidence is scored
+- [Cortex Codex App/CLI Task-Standard Live Capture Rerun](recon/cortex_codex_app_cli_task_standard_live_capture_rerun.md) —
+  live Codex CLI evidence that signed task-standard context reaches the model,
+  the model writes a pre-tool standard block, and Cortex captures it into
+  `TaskStandardSpine` before tool evidence scoring
+- [Cortex Codex App/CLI Task-Standard Stop-Gating Calibration Probe](recon/cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md) —
+  structural calibration evidence that captured task standards can block
+  premature Stop closure while clean readback evidence stays silent, with the
+  latest live capture replay no longer overblocking
+- [Cortex Codex App/CLI Task-Standard Stop-Gating Live Run](recon/cortex_codex_app_cli_task_standard_stop_gating_live_run.md) —
+  live Codex CLI evidence that captured task standards can drive an existing
+  Stop block, the model can run stronger aligned continuation checks, and final
+  Stop can resolve silently without claiming behavior lift
+- [Cortex Codex App/CLI Task-Standard Behavior Comparison Harness](recon/cortex_codex_app_cli_task_standard_behavior_comparison_harness.md) —
+  structural Gate 0 evidence for the pinned raw, silent task-standard, and
+  active task-standard behavior-comparison harness, without live behavior-lift
+  claims
+- [Cortex Codex App/CLI Task-Standard Behavior Comparison Live Run](recon/cortex_codex_app_cli_task_standard_behavior_comparison_live_run.md) —
+  live three-arm evidence that active task-standard Stop gating overblocked
+  clean controls and did not earn behavior lift over silent perception
+- [Cortex Codex App/CLI Task-Standard Evidence-Gating Remediation](recon/cortex_codex_app_cli_task_standard_evidence_gating_remediation.md) —
+  structural remediation evidence that Stop verification-fit can consume
+  captured `TaskStandardSpine` satisfaction directly while preserving gap blocks
+- [Cortex Codex App/CLI Task-Standard Pre-Live Audit Roadmap Update](recon/cortex_codex_app_cli_task_standard_pre_live_audit_roadmap_update.md) —
+  roadmap evidence that another live comparison is blocked until an offline
+  readiness gate proves clean-control safety and actuator opportunity
+- [Cortex Codex App/CLI Task-Standard Offline Replay Readiness Gate](recon/cortex_codex_app_cli_task_standard_offline_replay_readiness_gate.md) —
+  no-spend proof that scored lexical matching, clean-control replay, mismatch
+  blockability, and artifact fidelity are ready before another live run
+- [Cortex Codex App/CLI Task-Standard Raw-vs-Silent Artifact Readout](recon/cortex_codex_app_cli_task_standard_raw_vs_silent_artifact_readout.md) —
+  no-spend readout showing a narrow silent-over-raw signal on
+  `task_standard_exactness` evidence recovery, not broad Cortex lift
+- [Cortex Codex App/CLI Lifecycle Actuator Map Roadmap Update](recon/cortex_codex_app_cli_lifecycle_actuator_map_roadmap_update.md) —
+  roadmap update pausing live tests and Sinkhorn until the Codex lifecycle
+  actuator map is explicit
+- [Cortex Codex App/CLI Lifecycle Actuator Map](recon/cortex_codex_app_cli_lifecycle_actuator_map.md) —
+  doctrine/status map of SessionStart, UserPromptSubmit, PreToolUse,
+  PermissionRequest, PostToolUse, and Stop by actual model-control surface
+- [Cortex Codex App/CLI PostToolUse Task-Standard Next-Step Correction](recon/cortex_codex_app_cli_posttooluse_task_standard_next_step_correction.md) —
+  structural Gate 0 evidence that PostToolUse can attach a specific
+  task-standard next-step context after product-visible mismatch
+- [Cortex Codex App/CLI PostToolUse Task-Standard Calibration Decision](recon/cortex_codex_app_cli_posttooluse_task_standard_calibration_decision.md) —
+  no-spend decision queuing a narrow live PostToolUse actuator probe, not a
+  three-arm behavior comparison
+- [Cortex Codex App/CLI Raw-vs-Silent Artifact Readout Roadmap Update](recon/cortex_codex_app_cli_raw_vs_silent_artifact_readout_roadmap_update.md) —
+  roadmap update queuing the raw-vs-silent artifact readout before implementing
+  PostToolUse or PreToolUse actuators
+- [Cortex Codex App/CLI Task-Standard Stack Publication Hygiene](recon/cortex_codex_app_cli_task_standard_stack_publication_hygiene.md) —
+  workflow/product-proof hygiene record keeping the narrow PostToolUse live
+  probe queued but unapproved until the task-standard stack is cleanly landed
+- [Cortex Codex App/CLI PostToolUse Task-Standard Narrow Live Probe](recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md) —
+  approval-gated live probe harness for narrow PostToolUse exactness evidence,
+  not a live run or broad behavior-lift claim
+- [Cortex Codex App/CLI PostToolUse Task-Standard Narrow Live Run](recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md) —
+  live negative evidence that PostToolUse context was delivered without
+  earning immediate next-action repair, queuing an architecture decision
+- [Cortex Codex App/CLI PostToolUse Task-Standard Actuator Architecture Decision](recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md) —
+  decision classifying the negative live result as PostToolUse timing/selection
+  failure and queuing no-live phase-aware calibration
 - [Claude Code Desktop Lifecycle Spine Branch Disposition](recon/claude_code_desktop_lifecycle_spine_branch_disposition.md) —
   branch-hygiene disposition preserving the parked Claude lifecycle spine head
   before retiring the stale managed branch
