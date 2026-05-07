@@ -256,6 +256,9 @@ Active docs:
   live negative evidence that context delivery, unique-fingerprint trace
   joining, and next-tool direct checking worked, but final closure did not
   report the context evidence
+- [Cortex Codex App/CLI PostToolUse Task-Standard Closure-Reporting Architecture Decision](recon/cortex_codex_app_cli_posttooluse_task_standard_closure_reporting_architecture_decision.md) —
+  architecture decision that classifies the latest closure-reporting failure
+  as lab final-closure readout underfit and queues no-live readout remediation
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed
