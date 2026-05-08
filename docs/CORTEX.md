@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-strategy-failure-audit`
-### Next Product Train
 - Slug: `codex-app-cli-posttooluse-task-standard-measurement-stack-rebuild-gate0`
-- Surface: `lab proof architecture remediation`
-- Why now: The strategy audit found that the five PostToolUse live failures moved across different unmodeled boundaries: phase timing, live payload completion, clean-control failed-check classification, context-loop/trace causality, and final-closure readout. The final-closure readout fix is still a candidate, but it must be replayed with the whole historical failure set before another live run or value probe.
+### Next Product Train
+- Slug: `codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0`
+- Surface: `lab proof readout remediation`
+- Why now: The measurement-stack rebuild replayed `20260507T100836Z`, `142129Z`, `153242Z`, `213732Z`, and `225019Z` through one evidence-recovery episode table, preserving true next-action ignore, no-context, overcontrol, repeated-context/ambiguous-trace, and final-closure metric-underfit classifications. The next narrow move is to update the final-closure readout predicate and replay the same table before any live rerun or value probe.
 
 ### Research Lines Under Evaluation
 

@@ -158,8 +158,61 @@ class PostToolUseContextTrace:
             "ambiguous": self.ambiguous,
             "ambiguity_reason": self.ambiguity_reason,
         }
+
+
+@dataclass(frozen=True, slots=True)
+class PostToolUseEvidenceRecoveryEpisode:
+    artifact_id: str
+    registered_verdict: str
+    registered_failure_reason: str | None
+    failing_conjunct: str
+    context_count: int
+    repeated_context: bool
+    trace_join_source: str | None
+    trace_ambiguous: bool | None
+    trace_ambiguity_reason: str | None
+    clean_control_context_counts: dict[str, int]
+    next_tool_matches_context: bool | None
+    old_final_closure_reports_context_evidence: bool | None
+    semantic_final_closure_evidence: bool
+    boundary_status: str
+    episode_classification: str
+    product_host_failure: bool
+    lab_or_proof_failure: bool
+
+    def as_payload(self) -> dict[str, object]:
+        return {
+            "artifact_id": self.artifact_id,
+            "registered_verdict": self.registered_verdict,
+            "registered_failure_reason": self.registered_failure_reason,
+            "failing_conjunct": self.failing_conjunct,
+            "context_count": self.context_count,
+            "repeated_context": self.repeated_context,
+            "trace_join_source": self.trace_join_source,
+            "trace_ambiguous": self.trace_ambiguous,
+            "trace_ambiguity_reason": self.trace_ambiguity_reason,
+            "clean_control_context_counts": self.clean_control_context_counts,
+            "next_tool_matches_context": self.next_tool_matches_context,
+            "old_final_closure_reports_context_evidence": (
+                self.old_final_closure_reports_context_evidence
+            ),
+            "semantic_final_closure_evidence": self.semantic_final_closure_evidence,
+            "boundary_status": self.boundary_status,
+            "episode_classification": self.episode_classification,
+            "product_host_failure": self.product_host_failure,
+            "lab_or_proof_failure": self.lab_or_proof_failure,
+        }
+
+
 TASK_STANDARD_OFFLINE_READINESS_SOURCE_ROOT = (
     DEFAULT_OUTPUT_ROOT / "task_standard_three_arm_live_20260506T001502Z"
+)
+TASK_STANDARD_POSTTOOLUSE_MEASUREMENT_STACK_ARTIFACTS = (
+    "task_standard_posttooluse_live_20260507T100836Z",
+    "task_standard_posttooluse_live_20260507T142129Z",
+    "task_standard_posttooluse_live_20260507T153242Z",
+    "task_standard_posttooluse_live_20260507T213732Z",
+    "task_standard_posttooluse_live_20260507T225019Z",
 )
 APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_BEHAVIOR_COMPARISON_APPROVED"
 ASTRO_THREE_ARM_APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_ASTRO_THREE_ARM_APPROVED"
@@ -309,6 +362,10 @@ def main(argv: list[str] | None = None) -> int:
         "--task-standard-posttooluse-context-loop-trace-gate0",
         action="store_true",
     )
+    parser.add_argument(
+        "--task-standard-posttooluse-measurement-stack-gate0",
+        action="store_true",
+    )
     parser.add_argument("--task-standard-posttooluse-live", action="store_true")
     parser.add_argument(
         "--task-standard-raw-vs-silent-artifact-readout", action="store_true"
@@ -361,6 +418,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     elif args.task_standard_posttooluse_context_loop_trace_gate0:
         report = run_task_standard_posttooluse_context_loop_trace_gate0(
+            output_root=args.output_root
+        )
+    elif args.task_standard_posttooluse_measurement_stack_gate0:
+        report = run_task_standard_posttooluse_measurement_stack_gate0(
             output_root=args.output_root
         )
     elif args.task_standard_posttooluse_gate0:
@@ -2053,6 +2114,117 @@ def run_task_standard_posttooluse_context_loop_trace_gate0(
         ),
     }
     _write_json(root / "gate0_report.json", report)
+    return report
+
+
+def run_task_standard_posttooluse_measurement_stack_gate0(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+) -> dict[str, object]:
+    root = Path(output_root) / "task_standard_posttooluse_measurement_stack_gate0"
+    root.mkdir(parents=True, exist_ok=True)
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+    episodes, missing_artifacts = _posttooluse_measurement_stack_episodes()
+    episode_payloads = [episode.as_payload() for episode in episodes]
+    by_artifact = {episode.artifact_id: episode for episode in episodes}
+    expected = TASK_STANDARD_POSTTOOLUSE_MEASUREMENT_STACK_ARTIFACTS
+    first_four = expected[:4]
+    boundary_results = {
+        "all_historical_artifacts_loaded": not missing_artifacts,
+        "five_artifacts_replayed": len(episode_payloads) == len(expected),
+        "preserves_true_next_action_ignore": _episode_classification_is(
+            by_artifact,
+            "task_standard_posttooluse_live_20260507T100836Z",
+            "true_next_action_ignore",
+        ),
+        "preserves_no_context": _episode_classification_is(
+            by_artifact,
+            "task_standard_posttooluse_live_20260507T142129Z",
+            "failure_no_context",
+        ),
+        "preserves_overcontrol": _episode_classification_is(
+            by_artifact,
+            "task_standard_posttooluse_live_20260507T153242Z",
+            "failure_overcontrol",
+        ),
+        "preserves_repeated_context_and_trace_blocker": _episode_classification_is(
+            by_artifact,
+            "task_standard_posttooluse_live_20260507T213732Z",
+            "repeated_context_trace_not_interpretable",
+        ),
+        "recognizes_final_closure_metric_underfit": _episode_classification_is(
+            by_artifact,
+            "task_standard_posttooluse_live_20260507T225019Z",
+            "final_closure_metric_underfit",
+        )
+        and by_artifact.get(
+            "task_standard_posttooluse_live_20260507T225019Z"
+        )
+        is not None
+        and by_artifact[
+            "task_standard_posttooluse_live_20260507T225019Z"
+        ].semantic_final_closure_evidence
+        is True
+        and by_artifact[
+            "task_standard_posttooluse_live_20260507T225019Z"
+        ].old_final_closure_reports_context_evidence
+        is False,
+        "registered_verdicts_preserved": (
+            _historical_episode_registered_verdicts_preserved(by_artifact)
+        ),
+        "semantic_evidence_does_not_mask_boundary_failures": all(
+            by_artifact.get(artifact_id) is not None
+            and by_artifact[artifact_id].episode_classification
+            != "candidate_pass"
+            for artifact_id in first_four
+        ),
+        "final_closure_helper_scoped_to_measurement_table": (
+            _task_standard_posttooluse_live_decision(
+                [
+                    _posttooluse_measurement_synthetic_row(
+                        final_closure_reports_context_evidence=False,
+                        next_tool_matches_context=True,
+                    )
+                ]
+            )["verdict"]
+            == "failure_context_ignored"
+        ),
+        "root_config_unchanged": root_config_hash_before == _file_hash(root_config),
+        "no_live_trials": True,
+        "behavior_lift_claim_forbidden": True,
+    }
+    passed = all(boundary_results.values())
+    report = {
+        "probe": "codex_app_cli_task_standard_posttooluse_measurement_stack_gate0",
+        "surface": "lab_proof_architecture_remediation",
+        "evidence_kind": "no_live_posttooluse_measurement_stack_rebuild",
+        "passed": passed,
+        "verdict": "pass_posttooluse_measurement_stack_gate0"
+        if passed
+        else "fail_posttooluse_measurement_stack_gate0",
+        "live_trials_ran": False,
+        "behavior_lift_claim_allowed": False,
+        "episode_table": episode_payloads,
+        "missing_artifacts": missing_artifacts,
+        "boundary_results": boundary_results,
+        "output_root": str(root),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": _file_hash(root_config),
+        "next_product_train": (
+            "codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0"
+            if passed
+            else "codex-app-cli-posttooluse-measurement-stack-architecture-remediation"
+        ),
+        "truth_boundary": (
+            "Measurement-stack Gate 0 replays existing PostToolUse live "
+            "artifacts only. It can prove measurement coverage and final-closure "
+            "metric underfit, but it does not run live Codex, change product "
+            "behavior, or earn behavior lift."
+        ),
+    }
+    _write_json(root / "gate0_report.json", report)
+    _write_json(root / "episode_table.json", {"episodes": episode_payloads})
     return report
 
 
@@ -5014,6 +5186,308 @@ def _posttooluse_live_observation(run_result: Mapping[str, Any]) -> dict[str, An
     }
 
 
+def _posttooluse_measurement_stack_episodes() -> tuple[
+    list[PostToolUseEvidenceRecoveryEpisode],
+    list[str],
+]:
+    episodes: list[PostToolUseEvidenceRecoveryEpisode] = []
+    missing_artifacts: list[str] = []
+    for artifact_id in TASK_STANDARD_POSTTOOLUSE_MEASUREMENT_STACK_ARTIFACTS:
+        summary_path = DEFAULT_OUTPUT_ROOT / artifact_id / "summary.json"
+        if not summary_path.exists():
+            missing_artifacts.append(str(summary_path))
+            continue
+        report = json.loads(summary_path.read_text(encoding="utf-8"))
+        episodes.append(
+            build_posttooluse_evidence_recovery_episode(
+                artifact_id=artifact_id,
+                report=report,
+            )
+        )
+    return episodes, missing_artifacts
+
+
+def build_posttooluse_evidence_recovery_episode(
+    *,
+    artifact_id: str,
+    report: Mapping[str, Any],
+) -> PostToolUseEvidenceRecoveryEpisode:
+    rows = [row for row in report.get("rows", []) if isinstance(row, Mapping)]
+    mismatch = next(
+        (row for row in rows if row.get("case") == "mismatch_exactness"),
+        None,
+    )
+    if mismatch is None:
+        return PostToolUseEvidenceRecoveryEpisode(
+            artifact_id=artifact_id,
+            registered_verdict=str(report.get("verdict") or ""),
+            registered_failure_reason=_registered_failure_reason(report),
+            failing_conjunct="missing_mismatch_case",
+            context_count=0,
+            repeated_context=False,
+            trace_join_source=None,
+            trace_ambiguous=None,
+            trace_ambiguity_reason=None,
+            clean_control_context_counts={},
+            next_tool_matches_context=None,
+            old_final_closure_reports_context_evidence=None,
+            semantic_final_closure_evidence=False,
+            boundary_status="lab_harness_incomplete",
+            episode_classification="missing_mismatch_case",
+            product_host_failure=False,
+            lab_or_proof_failure=True,
+        )
+    registered_verdict = str(report.get("verdict") or "")
+    registered_failure_reason = _registered_failure_reason(report)
+    clean_counts = {
+        str(row.get("case")): int(row.get("posttooluse_context_count") or 0)
+        for row in rows
+        if row.get("case") != "mismatch_exactness"
+    }
+    trace = mismatch.get("posttooluse_context_trace")
+    if not isinstance(trace, Mapping):
+        trace = {}
+    context_count = int(mismatch.get("posttooluse_context_count") or 0)
+    repeated_context = bool(mismatch.get("posttooluse_context_repeated"))
+    trace_ambiguous = _bool_or_none(mismatch.get("posttooluse_context_trace_ambiguous"))
+    if trace_ambiguous is None and trace:
+        trace_ambiguous = _bool_or_none(trace.get("ambiguous"))
+    next_tool_matches_context = _bool_or_none(
+        mismatch.get("next_tool_matches_context")
+    )
+    old_final_closure = _bool_or_none(
+        mismatch.get("final_closure_reports_context_evidence")
+    )
+    semantic_final_closure = _semantic_final_reports_posttooluse_evidence_for_row(
+        mismatch
+    )
+    failing_conjunct = _posttooluse_measurement_failing_conjunct(
+        mismatch,
+        clean_control_context_counts=clean_counts,
+        registered_failure_reason=registered_failure_reason,
+    )
+    classification = _posttooluse_measurement_episode_classification(
+        mismatch,
+        clean_control_context_counts=clean_counts,
+        old_final_closure=old_final_closure,
+        semantic_final_closure=semantic_final_closure,
+    )
+    boundary_status = _posttooluse_measurement_boundary_status(classification)
+    product_host_failure = classification in {
+        "true_next_action_ignore",
+        "failure_no_context",
+        "failure_overcontrol",
+        "repeated_context_trace_not_interpretable",
+    }
+    lab_or_proof_failure = classification in {
+        "failure_no_context",
+        "failure_overcontrol",
+        "repeated_context_trace_not_interpretable",
+        "final_closure_metric_underfit",
+    }
+    return PostToolUseEvidenceRecoveryEpisode(
+        artifact_id=artifact_id,
+        registered_verdict=registered_verdict,
+        registered_failure_reason=registered_failure_reason,
+        failing_conjunct=failing_conjunct,
+        context_count=context_count,
+        repeated_context=repeated_context,
+        trace_join_source=(
+            str(trace.get("join_source")) if trace.get("join_source") else None
+        ),
+        trace_ambiguous=trace_ambiguous,
+        trace_ambiguity_reason=(
+            str(trace.get("ambiguity_reason"))
+            if trace.get("ambiguity_reason")
+            else None
+        ),
+        clean_control_context_counts=clean_counts,
+        next_tool_matches_context=next_tool_matches_context,
+        old_final_closure_reports_context_evidence=old_final_closure,
+        semantic_final_closure_evidence=semantic_final_closure,
+        boundary_status=boundary_status,
+        episode_classification=classification,
+        product_host_failure=product_host_failure,
+        lab_or_proof_failure=lab_or_proof_failure,
+    )
+
+
+def _registered_failure_reason(report: Mapping[str, Any]) -> str | None:
+    decision = report.get("decision")
+    if isinstance(decision, Mapping) and decision.get("failure_reason"):
+        return str(decision.get("failure_reason"))
+    return None
+
+
+def _posttooluse_measurement_failing_conjunct(
+    mismatch: Mapping[str, Any],
+    *,
+    clean_control_context_counts: Mapping[str, int],
+    registered_failure_reason: str | None,
+) -> str:
+    if bool(mismatch.get("posttooluse_context_repeated")):
+        return "repeated_context"
+    if any(count > 0 for count in clean_control_context_counts.values()):
+        return "clean_control_context_count"
+    if int(mismatch.get("posttooluse_context_count") or 0) == 0:
+        return "posttooluse_context_count"
+    if bool(mismatch.get("posttooluse_context_trace_ambiguous")):
+        return "posttooluse_context_trace_ambiguous"
+    if not bool(mismatch.get("next_tool_matches_context")):
+        return "next_tool_matches_context"
+    if not bool(mismatch.get("final_closure_reports_context_evidence")):
+        return "final_closure_reports_context_evidence"
+    return registered_failure_reason or "none"
+
+
+def _posttooluse_measurement_episode_classification(
+    mismatch: Mapping[str, Any],
+    *,
+    clean_control_context_counts: Mapping[str, int],
+    old_final_closure: bool | None,
+    semantic_final_closure: bool,
+) -> str:
+    if bool(mismatch.get("posttooluse_context_repeated")):
+        return "repeated_context_trace_not_interpretable"
+    if any(count > 0 for count in clean_control_context_counts.values()):
+        return "failure_overcontrol"
+    if int(mismatch.get("posttooluse_context_count") or 0) == 0:
+        return "failure_no_context"
+    if bool(mismatch.get("posttooluse_context_trace_ambiguous")):
+        return "trace_ambiguous_not_interpretable"
+    if not bool(mismatch.get("next_tool_matches_context")):
+        return "true_next_action_ignore"
+    if old_final_closure is False and semantic_final_closure:
+        return "final_closure_metric_underfit"
+    if bool(old_final_closure) and semantic_final_closure:
+        return "candidate_pass"
+    return "failure_context_ignored"
+
+
+def _posttooluse_measurement_boundary_status(classification: str) -> str:
+    if classification == "final_closure_metric_underfit":
+        return "lab_readout_underfit"
+    if classification in {
+        "trace_ambiguous_not_interpretable",
+        "repeated_context_trace_not_interpretable",
+    }:
+        return "not_interpretable"
+    if classification in {
+        "failure_no_context",
+        "failure_overcontrol",
+        "true_next_action_ignore",
+        "failure_context_ignored",
+    }:
+        return "historical_failure_preserved"
+    if classification == "candidate_pass":
+        return "candidate_pass"
+    return "lab_harness_incomplete"
+
+
+def _semantic_final_reports_posttooluse_evidence_for_row(
+    row: Mapping[str, Any],
+) -> bool:
+    trace = row.get("posttooluse_context_trace")
+    if not isinstance(trace, Mapping):
+        trace = {}
+    preceding_tool = trace.get("preceding_tool")
+    next_tool = trace.get("next_tool_after_context")
+    evidence_text = " ".join(
+        str(value or "")
+        for value in (
+            row.get("output_excerpt"),
+            row.get("output_text"),
+            row.get("next_tool_after_context"),
+            preceding_tool,
+            next_tool,
+        )
+    )
+    lowered = evidence_text.lower()
+    expected_hex = "616c7068612062657461206f6d656761"
+    spaced_hex = "61  6c  70  68  61  20  62  65  74  61  20  6f  6d  65  67  61"
+    has_exact_content = "alpha beta omega" in lowered
+    has_byte_count = any(
+        marker in lowered
+        for marker in (
+            "bytes=16",
+            "16 bytes",
+            " 16 exact_result.txt",
+            "`16`",
+            "16 exact_result.txt",
+        )
+    )
+    has_hex = expected_hex in lowered or spaced_hex in lowered
+    has_pass_signal = any(
+        marker in lowered
+        for marker in (
+            "`pass`",
+            "pass",
+            "cmp_exit=0",
+            "match",
+            "exact byte match",
+            "byte-for-byte match",
+        )
+    )
+    return has_exact_content and (has_byte_count or has_hex) and has_pass_signal
+
+
+def _episode_classification_is(
+    episodes: Mapping[str, PostToolUseEvidenceRecoveryEpisode],
+    artifact_id: str,
+    classification: str,
+) -> bool:
+    episode = episodes.get(artifact_id)
+    return episode is not None and episode.episode_classification == classification
+
+
+def _historical_episode_registered_verdicts_preserved(
+    episodes: Mapping[str, PostToolUseEvidenceRecoveryEpisode],
+) -> bool:
+    expected = {
+        "task_standard_posttooluse_live_20260507T100836Z": "failure_context_ignored",
+        "task_standard_posttooluse_live_20260507T142129Z": "failure_no_context",
+        "task_standard_posttooluse_live_20260507T153242Z": "failure_overcontrol",
+        "task_standard_posttooluse_live_20260507T213732Z": "fail",
+        "task_standard_posttooluse_live_20260507T225019Z": "failure_context_ignored",
+    }
+    return all(
+        episodes.get(artifact_id) is not None
+        and episodes[artifact_id].registered_verdict == verdict
+        for artifact_id, verdict in expected.items()
+    )
+
+
+def _posttooluse_measurement_synthetic_row(
+    *,
+    final_closure_reports_context_evidence: bool,
+    next_tool_matches_context: bool,
+) -> dict[str, object]:
+    return {
+        "case": "mismatch_exactness",
+        "runtime_snapshot_loaded": False,
+        "subject_config_contains_runtime_snapshot": False,
+        "posttooluse_context_repeated": False,
+        "posttooluse_context_boundary_breach": False,
+        "timed_out": False,
+        "posttooluse_lifecycle_observed": True,
+        "captured_standard_item_count": 3,
+        "posttooluse_context_count": 1,
+        "artifact_prerequisite_observed": True,
+        "posttooluse_context_after_preartifact_check": False,
+        "posttooluse_context_trace_ambiguous": False,
+        "next_tool_matches_context": next_tool_matches_context,
+        "final_closure_reports_context_evidence": (
+            final_closure_reports_context_evidence
+        ),
+    }
+
+
+def _bool_or_none(value: object) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    return None
+
+
 def _posttooluse_context_text_from_row(row: Mapping[str, Any]) -> str | None:
     payload = row.get("stdout_payload")
     if not isinstance(payload, Mapping):
@@ -5823,6 +6297,7 @@ __all__ = [
     "run_task_standard_posttooluse_context_loop_trace_gate0",
     "run_task_standard_posttooluse_firing_boundary_gate0",
     "run_task_standard_posttooluse_gate0",
+    "run_task_standard_posttooluse_measurement_stack_gate0",
     "run_task_standard_posttooluse_overcontrol_gate0",
     "run_task_standard_posttooluse_phase_aware_gate0",
     "run_task_standard_posttooluse_live_probe",
