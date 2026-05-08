@@ -101,7 +101,8 @@
     "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_measurement_stack_rebuild_gate0.md",
     "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_final_closure_readout_remediation_gate0.md",
     "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_probe_gate0.md",
-    "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_live_probe.md"
+    "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_live_probe.md",
+    "docs/recon/cortex_effectiveness_strategy_reset.md"
   ],
   "bio_to_code_matrix": [
     {
@@ -444,7 +445,8 @@
           "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_measurement_stack_rebuild_gate0.md",
           "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_final_closure_readout_remediation_gate0.md",
           "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_probe_gate0.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_live_probe.md"
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_live_probe.md",
+          "docs/recon/cortex_effectiveness_strategy_reset.md"
         ],
         "update_rule": "Add a recon when a proof or decision is earned; do not treat recon alone as shipping truth without status promotion."
       }
@@ -918,13 +920,13 @@
     ]
   },
   "next_product_train": {
-    "slug": "codex-app-cli-posttooluse-task-standard-value-claims-pause-decision",
-    "surface": "no-live architecture decision",
-    "executive_benefit": "Pause PostToolUse task-standard value claims after the exactness-only paired live probe failed to show active value over silent control, and decide whether this probe shape should retire, defer, or move into a lifecycle-level actuator redesign.",
-    "why_now": "The approval-gated paired live probe `task_standard_posttooluse_paired_value_live_20260508T120907Z` produced `failure_no_value`: active PostToolUse context beat silent in 0/5 mismatch pairs against the registered 4/5 threshold. Repeats 2-4 were `tie_no_value` because active and silent both succeeded; repeats 1 and 5 were active `failure_no_context` rows. Clean/control rows emitted zero PostToolUse contexts, root config stayed unchanged, no runtime snapshot loaded, and no exactness value lift was earned.",
-    "primary_metric": "No-live decision records the negative paired value evidence and chooses one disposition: pause PostToolUse value claims, retire this exactness probe shape, or queue a broader lifecycle-actuator architecture redesign. It must not tune PostToolUse text or rerun the same probe as a substitute for value evidence.",
-    "guardrail": "No live Codex run. No text or policy tuning. No broad behavior comparison. No product host behavior change. Do not change signed UserPromptSubmit text, PostToolUse text, Stop text, SRE law, matcher thresholds, fixture scoring, root hooks, hidden-verifier boundary, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed intervention pressure, or host-runtime extraction.",
-    "kill_rule": "If the decision proposes another same-shape live rerun, text tuning, or policy tuning without explaining why active beat silent in 0/5 pairs, reject it. The negative value result must remain recorded as failure_no_value and exactness value lift must remain forbidden.",
+    "slug": "cortex-executive-effectiveness-evaluator-gate0",
+    "surface": "no-live evaluator architecture gate",
+    "executive_benefit": "Regroup around Cortex's actual product objective by defining a hard paired evaluator for lifecycle executive effectiveness across candidate policies, instead of continuing the PostToolUse-only value path.",
+    "why_now": "The approval-gated paired live probe `task_standard_posttooluse_paired_value_live_20260508T120907Z` produced `failure_no_value`: active PostToolUse context beat silent in 0/5 mismatch pairs against the registered 4/5 threshold. The recent PostToolUse line improved proof visibility but not measured effectiveness; it added substantial lab/docs/tests machinery and only reached a hard paired value evaluator after multiple local boundary repairs. Cortex now needs a broader evaluator that compares lifecycle policies against baseline and silent controls before any more actuator expansion.",
+    "primary_metric": "Gate 0 passes only if it defines a hard Cortex effectiveness score, registers baseline/silent/active lifecycle policy candidates, preserves the negative PostToolUse paired result as no-value evidence, names allowed arm deltas, and includes automatic dominance gates for overcontrol, repeated intervention, trace ambiguity, root config mutation, runtime snapshots, hidden verifier leakage, and silent-baseline success. It must treat silent success as no Cortex value and must include a contraction rule for retiring or role-demoting stale PostToolUse proof paths as the new evaluator becomes owner.",
+    "guardrail": "No live Codex run. No product host behavior change. No PostToolUse text or policy tuning. No same-shape PostToolUse live rerun. Do not change signed UserPromptSubmit text, PostToolUse text, Stop text, SRE law, matcher thresholds, fixture scoring, root hooks, hidden-verifier boundary, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed intervention pressure, or host-runtime extraction.",
+    "kill_rule": "Fail the seam if it merely renames the PostToolUse value probe, proposes another same-shape rerun, lacks baseline/silent controls, lacks multiple lifecycle policy candidates, gives credit when silent also succeeds, omits overcontrol/root/runtime/hidden-boundary dominance, or does not specify which stale PostToolUse proof surfaces will be retired, archived, or role-demoted.",
     "last_reviewed_at": "2026-05-08T00:00:00+00:00"
   },
   "packet_to_code_anchors": [
@@ -1582,7 +1584,7 @@
     "The Codex App/CLI PostToolUse task-standard narrow live probe harness seam then added `--task-standard-posttooluse-live`, approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running a live Codex command. The live probe remains unearned until explicitly approved and run; this seam earns harness readiness only and preserves signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport deferral, PreToolUse denial deferral, and PermissionRequest policy."
   ],
   "work_today": {
-    "slug": "codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-live-probe",
-    "note": "The Codex App/CLI PostToolUse exactness-only paired value live probe ran with explicit approval and produced `failure_no_value` on artifact `task_standard_posttooluse_paired_value_live_20260508T120907Z`. The registered 18-row matrix ran active/silent conditions across five mismatch repeats and four control cases. Active PostToolUse context beat silent in 0/5 mismatch pairs against the 4/5 threshold: repeats 2-4 were `tie_no_value` because active and silent both succeeded, while repeats 1 and 5 were active `failure_no_context` rows with `candidate_artifact_without_posttooluse_context`. Clean/control rows emitted zero PostToolUse contexts, no repeated context loop or trace ambiguity occurred, root config stayed unchanged, and no runtime snapshot loaded. The first-pass paired readout was repaired from `scoped_negative` because no-tool blocker/waiting controls need not emit PostToolUse lifecycle rows. No behavior lift, exactness value lift, broad Cortex lift, Codex App parity, or shipping promotion is earned; the next train is a no-live value-claims pause decision."
+    "slug": "cortex-effectiveness-strategy-reset",
+    "note": "The Cortex effectiveness strategy reset records that the PostToolUse-only task-standard value path should stop before any further hook-local remediation or same-shape live rerun. The approval-gated paired live probe `task_standard_posttooluse_paired_value_live_20260508T120907Z` produced `failure_no_value`: active PostToolUse context beat silent in 0/5 mismatch pairs against the 4/5 threshold, with repeats 2-4 as `tie_no_value` and repeats 1 and 5 as active `failure_no_context`. This shows improved proof visibility but no measured effectiveness. The reset classifies the recent line as not yet AlphaEvolve-style optimization because the hard objective and paired evaluator arrived late, only one hook policy was defended, and substantial proof machinery accumulated before value was tested. No behavior lift, exactness value lift, broad Cortex lift, Codex App parity, or shipping promotion is earned. PostToolUse remains feasibility evidence only; the next train is a no-live Cortex executive effectiveness evaluator Gate 0 with baseline/silent/active lifecycle policy candidates, hard dominance gates, and contraction obligations for stale PostToolUse proof paths."
   }
 }
