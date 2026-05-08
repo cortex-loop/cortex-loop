@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -16,10 +17,19 @@ DEFAULT_OUTPUT_ROOT = Path(
 DEFAULT_BUILD_OUTPUT_ROOT = Path(
     ".cortex/live_validation/cortex_effectiveness_evaluator_build"
 )
+DEFAULT_LIVE_GATE1_OUTPUT_ROOT = Path(
+    ".cortex/live_validation/cortex_effectiveness_evaluator_live_gate1"
+)
 HISTORICAL_POSTTOOLUSE_PAIRED_VALUE_SUMMARY = Path(
     ".cortex/live_validation/openai/codex_app_cli_hook_native_behavior_comparison/"
     "task_standard_posttooluse_paired_value_live_20260508T120907Z/summary.json"
 )
+EVALUATOR_LIVE_APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED"
+EVALUATOR_LIVE_APPROVAL_VALUE = "approved"
+EVALUATOR_LIVE_MATRIX_COMMAND = (
+    "python3 lab/cortex_effectiveness_evaluator.py --live-matrix"
+)
+LIVE_MATRIX_REPEAT_COUNT = 3
 
 ARMS: tuple[str, ...] = (
     "no_cortex_baseline",
@@ -304,6 +314,17 @@ def validate_episode_rows_mission_contract(
         for error in mission_contract_errors(row):
             errors.append(f"row[{index}] {error}")
     return tuple(errors)
+
+
+def registered_live_commands() -> list[dict[str, Any]]:
+    """Return exact future live command/env pairs for status and automation."""
+
+    return [
+        {
+            "command": EVALUATOR_LIVE_MATRIX_COMMAND,
+            "env": {EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
+        }
+    ]
 
 
 def cortex_effectiveness_evaluator_design() -> dict[str, Any]:
@@ -798,6 +819,71 @@ def historical_posttooluse_failure_no_value_rows(
     return rows, replay
 
 
+def _policy_candidate_for_arm(arm: str) -> str:
+    if arm == "no_cortex_baseline":
+        return "none"
+    if arm == "simple_hook_baseline":
+        return "simple_hook_baseline"
+    if arm == "cortex_silent_perception":
+        return "silent_perception_control"
+    return "lifecycle_composed_policy"
+
+
+def build_live_matrix_plan(
+    *,
+    repeat_count: int = LIVE_MATRIX_REPEAT_COUNT,
+) -> dict[str, Any]:
+    """Build a dry-run live matrix plan without executing model trials."""
+
+    rows: list[EvaluatorEpisodeRow] = []
+    for task_family in TASK_FAMILIES:
+        for repeat_index in range(1, repeat_count + 1):
+            case_id = f"{task_family}_matrix"
+            for arm in ARMS:
+                policy_candidate = _policy_candidate_for_arm(arm)
+                rows.append(
+                    _row(
+                        arm,
+                        task_family=task_family,
+                        case_id=case_id,
+                        repeat_index=repeat_index,
+                        policy_candidate=policy_candidate,
+                        source="live_gate1_dry_run_plan",
+                        expected_verdict="not_run_live_gate1_dry_run",
+                        notes="Dry-run schedule only; no live Codex command executed.",
+                    )
+                )
+    return {
+        "matrix_id": "cortex_effectiveness_live_matrix_v1",
+        "live_trials_ran": False,
+        "repeat_count": repeat_count,
+        "row_count": len(rows),
+        "arms": list(ARMS),
+        "task_families": list(TASK_FAMILIES),
+        "dominance_gates": list(DOMINANCE_GATES),
+        "registered_live_commands": registered_live_commands(),
+        "workspace_isolation": {
+            "mode": "isolated_workspace_per_row",
+            "seed_fields": ["task_family", "case_id", "repeat_index", "arm"],
+            "root_config_mutation_allowed": False,
+            "runtime_snapshot_allowed": False,
+        },
+        "approval": {
+            "env": EVALUATOR_LIVE_APPROVAL_ENV,
+            "required_value": EVALUATOR_LIVE_APPROVAL_VALUE,
+            "without_approval_verdict": "not_run_approval_required",
+        },
+        "reports": [
+            "live_plan.json",
+            "episode_table.jsonl",
+            "summary.json",
+            "leaderboard.json",
+            "failure_analysis.json",
+        ],
+        "rows": [row.to_json() for row in rows],
+    }
+
+
 def write_episode_table(path: Path, rows: Sequence[EvaluatorEpisodeRow]) -> None:
     path.write_text(
         "".join(json.dumps(row.to_json(), sort_keys=True) + "\n" for row in rows),
@@ -953,6 +1039,181 @@ def run_cortex_effectiveness_evaluator_build(
     return report
 
 
+def run_cortex_effectiveness_evaluator_live_gate1(
+    output_root: Path | str = DEFAULT_LIVE_GATE1_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    """Register and prove the no-live future evaluator live-matrix interface."""
+
+    root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
+    design = cortex_effectiveness_evaluator_design()
+    live_plan = build_live_matrix_plan()
+    rows = [
+        EvaluatorEpisodeRow(
+            task_family=row["task_family"],
+            case_id=row["case_id"],
+            repeat_index=int(row["repeat_index"]),
+            arm=row["arm"],
+            policy_candidate=row["policy_candidate"],
+            metrics=row["metrics"],
+            source=row["source"],
+            episode_id=row["episode_id"],
+            expected_verdict=row.get("expected_verdict"),
+            observed_verdict=row.get("observed_verdict"),
+            notes=row.get("notes", ""),
+            mission_objective=row.get("mission_objective"),
+        )
+        for row in live_plan["rows"]
+    ]
+    mission_contract_errors = validate_episode_rows_mission_contract(rows)
+    episode_table_path = root / "episode_table.jsonl"
+    write_episode_table(episode_table_path, rows)
+    leaderboard = {
+        "live_trials_ran": False,
+        "score_basis": "live_gate1_dry_run_schedule_only",
+        "claim_allowed": {
+            "behavior_lift": False,
+            "exactness_value_lift": False,
+            "broad_cortex_lift": False,
+            "codex_app_parity": False,
+            "shipping_promotion": False,
+        },
+        "selection_status": "not_live_eligible_until_simple_hook_challenger",
+    }
+    failure_analysis = {
+        "live_trials_ran": False,
+        "known_boundary_failures_preserved": list(DOMINANCE_GATES),
+        "simple_hook_parity_blocks_value": True,
+        "silent_success_blocks_value": True,
+        "positive_result_requires_user_review": True,
+    }
+    checks = {
+        "registered_live_command_env_pair": registered_live_commands()
+        == live_plan["registered_live_commands"],
+        "approval_refusal_registered": live_plan["approval"][
+            "without_approval_verdict"
+        ]
+        == "not_run_approval_required",
+        "all_required_arms_scheduled": set(live_plan["arms"]) == set(ARMS),
+        "all_task_families_scheduled": set(live_plan["task_families"])
+        == set(TASK_FAMILIES),
+        "episode_rows_written": episode_table_path.exists(),
+        "row_count_matches_matrix": live_plan["row_count"]
+        == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT,
+        "mission_contract_preserved": not mission_contract_errors,
+        "dominance_gates_preserved": set(DOMINANCE_GATES).issubset(
+            set(live_plan["dominance_gates"])
+        ),
+        "live_trials_not_run": live_plan["live_trials_ran"] is False,
+        "alphaevolve_mutation_loop_not_allowed": True,
+    }
+    passed = all(checks.values())
+    report = {
+        "passed": passed,
+        "verdict": (
+            "pass_cortex_executive_effectiveness_evaluator_live_gate1"
+            if passed
+            else "failure_cortex_executive_effectiveness_evaluator_live_gate1"
+        ),
+        "live_trials_ran": False,
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": False,
+        "broad_cortex_lift_claim_allowed": False,
+        "codex_app_parity_claim_allowed": False,
+        "shipping_promotion_claim_allowed": False,
+        "alphaevolve_mutation_loop_allowed": False,
+        "next_train_if_pass": "cortex-simple-hook-baseline-challenger",
+        "artifact_paths": {
+            "evaluator_design": "evaluator_design.json",
+            "live_plan": "live_plan.json",
+            "episode_table": "episode_table.jsonl",
+            "summary": "summary.json",
+            "leaderboard": "leaderboard.json",
+            "failure_analysis": "failure_analysis.json",
+        },
+        "registered_live_commands": registered_live_commands(),
+        "checks": checks,
+        "mission_contract_errors": list(mission_contract_errors),
+        "live_plan": {
+            key: value for key, value in live_plan.items() if key != "rows"
+        },
+        "failure_analysis": failure_analysis,
+    }
+    (root / "evaluator_design.json").write_text(
+        json.dumps(design, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (root / "live_plan.json").write_text(
+        json.dumps(live_plan, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (root / "leaderboard.json").write_text(
+        json.dumps(leaderboard, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (root / "failure_analysis.json").write_text(
+        json.dumps(failure_analysis, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (root / "summary.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return report
+
+
+def run_cortex_effectiveness_evaluator_live_matrix(
+    output_root: Path | str = DEFAULT_LIVE_GATE1_OUTPUT_ROOT,
+    *,
+    approval_env: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    """Approval-refusal shell for the future live matrix.
+
+    Gate 1 registers the exact live command, but execution remains deferred
+    until the simple-hook challenger exists.
+    """
+
+    env = approval_env if approval_env is not None else os.environ
+    root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
+    approved = env.get(EVALUATOR_LIVE_APPROVAL_ENV) == EVALUATOR_LIVE_APPROVAL_VALUE
+    if not approved:
+        report = {
+            "passed": False,
+            "verdict": "not_run_approval_required",
+            "live_trials_ran": False,
+            "approval_required": True,
+            "approval_env": EVALUATOR_LIVE_APPROVAL_ENV,
+            "required_value": EVALUATOR_LIVE_APPROVAL_VALUE,
+            "registered_live_commands": registered_live_commands(),
+            "behavior_lift_claim_allowed": False,
+            "exactness_value_lift_claim_allowed": False,
+            "broad_cortex_lift_claim_allowed": False,
+            "codex_app_parity_claim_allowed": False,
+            "shipping_promotion_claim_allowed": False,
+        }
+    else:
+        report = {
+            "passed": False,
+            "verdict": "not_run_live_matrix_execution_deferred_until_simple_hook_challenger",
+            "live_trials_ran": False,
+            "approval_required": False,
+            "approval_env": EVALUATOR_LIVE_APPROVAL_ENV,
+            "registered_live_commands": registered_live_commands(),
+            "next_required_train": "cortex-simple-hook-baseline-challenger",
+            "behavior_lift_claim_allowed": False,
+            "exactness_value_lift_claim_allowed": False,
+            "broad_cortex_lift_claim_allowed": False,
+            "codex_app_parity_claim_allowed": False,
+            "shipping_promotion_claim_allowed": False,
+        }
+    (root / "summary.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return report
+
+
 def run_cortex_effectiveness_evaluator_gate0(
     output_root: Path | str = DEFAULT_OUTPUT_ROOT,
 ) -> dict[str, Any]:
@@ -1077,6 +1338,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="write evaluator_design.json, episode_table.jsonl, summary.json, and leaderboard.json",
     )
     parser.add_argument(
+        "--live-gate1",
+        action="store_true",
+        help="write no-live live matrix registration and dry-run schedule",
+    )
+    parser.add_argument(
+        "--live-matrix",
+        action="store_true",
+        help="future approval-gated live matrix command; refuses without approval in Gate 1",
+    )
+    parser.add_argument(
         "--output-root",
         type=Path,
         default=None,
@@ -1088,17 +1359,30 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="return non-zero if Gate 0 does not pass",
     )
     args = parser.parse_args(argv)
-    if args.gate0 == args.build:
-        parser.error("select exactly one of --gate0 or --build")
+    selected_modes = sum(
+        bool(value)
+        for value in (args.gate0, args.build, args.live_gate1, args.live_matrix)
+    )
+    if selected_modes != 1:
+        parser.error("select exactly one of --gate0, --build, --live-gate1, or --live-matrix")
 
     output_root = args.output_root
     if output_root is None:
-        output_root = DEFAULT_OUTPUT_ROOT if args.gate0 else DEFAULT_BUILD_OUTPUT_ROOT
+        if args.gate0:
+            output_root = DEFAULT_OUTPUT_ROOT
+        elif args.build:
+            output_root = DEFAULT_BUILD_OUTPUT_ROOT
+        else:
+            output_root = DEFAULT_LIVE_GATE1_OUTPUT_ROOT
 
     if args.gate0:
         report = run_cortex_effectiveness_evaluator_gate0(output_root)
-    else:
+    elif args.build:
         report = run_cortex_effectiveness_evaluator_build(output_root)
+    elif args.live_gate1:
+        report = run_cortex_effectiveness_evaluator_live_gate1(output_root)
+    else:
+        report = run_cortex_effectiveness_evaluator_live_matrix(output_root)
 
     print(json.dumps(report, indent=2, sort_keys=True))
     if args.require_pass and not report["passed"]:

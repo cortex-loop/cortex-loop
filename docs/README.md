@@ -291,6 +291,9 @@ Active docs:
   no-live hardening seam that keeps overnight automation and evaluator work as
   proof/support surfaces unless a row declares a product spine, non-lab
   model-I/O path, and current-truth authorization
+- [Cortex Executive Effectiveness Evaluator Live Gate 1](recon/cortex_executive_effectiveness_evaluator_live_gate1.md) —
+  no-live live-interface gate registering the future four-arm evaluator matrix,
+  approval refusal, dry-run schedule, and next simple-hook dependency
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation

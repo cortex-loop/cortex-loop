@@ -64,6 +64,31 @@ def test_classify_next_work_allows_clean_evaluator_build_auto_merge() -> None:
     assert "start-session" in decision.recommended_commands[0]
 
 
+def test_classify_next_work_allows_simple_hook_and_live_gate1_sequence() -> None:
+    live_gate = loop.classify_next_work(
+        _status(
+            slug="cortex-executive-effectiveness-evaluator-live-gate1",
+            surface="no-live lab/proof evaluator live-interface gate",
+            guardrail="No live Codex run in this seam.",
+            primary_metric="Register future live command/env pairs.",
+        ),
+        _git(),
+    )
+    simple_hook = loop.classify_next_work(
+        _status(
+            slug="cortex-simple-hook-baseline-challenger",
+            surface="no-live lab/proof evaluator baseline",
+            guardrail="No live Codex run in this seam.",
+            primary_metric="Implement the simple-hook challenger.",
+        ),
+        _git(),
+    )
+
+    assert live_gate.status == "ready"
+    assert "python3 lab/cortex_effectiveness_evaluator.py --live-gate1 --require-pass" in live_gate.allowed_commands
+    assert simple_hook.status == "ready"
+
+
 def test_classify_next_work_refuses_dirty_main_but_allows_managed_resume() -> None:
     dirty_main = loop.classify_next_work(_status(), _git(dirty=True))
     managed_branch = loop.classify_next_work(
