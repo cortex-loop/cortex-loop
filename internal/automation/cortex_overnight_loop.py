@@ -15,8 +15,13 @@ from typing import Any, Mapping, Sequence
 
 DEFAULT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_DIGEST_ROOT = Path(".cortex/automation/overnight")
+DEFAULT_CANDIDATE_DB = Path(".cortex/automation/candidates/candidates.jsonl")
 LOCK_NAME = "cortex_overnight_loop.lock"
 OVERNIGHT_HOURS = tuple(list(range(22, 24)) + list(range(0, 8)))
+NON_TEST_LOC_ADDED_BUDGET = 250
+EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS = {
+    "cortex-executive-effectiveness-evaluator-build",
+}
 SAFE_AUTO_MERGE_SURFACES = {
     "no-live lab/proof evaluator build",
     "no-live evaluator architecture gate",
@@ -88,6 +93,9 @@ class BloatMetrics:
     new_policy_paths: tuple[str, ...]
     duplicate_policy_removed: bool
     contraction_debt_increased: bool
+    non_test_loc_added: int = 0
+    policy_lab_loc_added: int = 0
+    policy_lab_loc_deleted: int = 0
 
 
 @dataclass(frozen=True)
@@ -99,6 +107,7 @@ class LoopDecision:
     user_input_required: bool
     reasons: tuple[str, ...]
     recommended_commands: tuple[str, ...]
+    allowed_commands: tuple[str, ...]
 
 
 def _run_git(root: Path, args: Sequence[str]) -> subprocess.CompletedProcess[str]:
@@ -149,6 +158,14 @@ def parse_numstat(text: str) -> tuple[int, int, tuple[str, ...]]:
     return added, deleted, tuple(files)
 
 
+def _is_test_path(path: str) -> bool:
+    return path.startswith("tests/")
+
+
+def _is_policy_or_lab_path(path: str) -> bool:
+    return path.startswith("lab/") or is_policy_path(path)
+
+
 def is_policy_path(path: str) -> bool:
     lowered = path.lower()
     return any(
@@ -165,15 +182,38 @@ def is_policy_path(path: str) -> bool:
 
 
 def bloat_metrics_from_numstat(text: str) -> BloatMetrics:
-    added, deleted, files = parse_numstat(text)
+    added = 0
+    deleted = 0
+    non_test_added = 0
+    policy_lab_added = 0
+    policy_lab_deleted = 0
+    files: list[str] = []
+    for line in text.splitlines():
+        parts = line.split("\t")
+        if len(parts) < 3:
+            continue
+        add_text, delete_text, path = parts[0], parts[1], parts[2]
+        files.append(path)
+        add_count = int(add_text) if add_text.isdigit() else 0
+        delete_count = int(delete_text) if delete_text.isdigit() else 0
+        added += add_count
+        deleted += delete_count
+        if not _is_test_path(path):
+            non_test_added += add_count
+        if _is_policy_or_lab_path(path):
+            policy_lab_added += add_count
+            policy_lab_deleted += delete_count
     new_policy_paths = tuple(path for path in files if is_policy_path(path))
     return BloatMetrics(
         loc_added=added,
         loc_deleted=deleted,
-        changed_files=files,
+        changed_files=tuple(files),
         new_policy_paths=new_policy_paths,
         duplicate_policy_removed=deleted > added and bool(new_policy_paths),
         contraction_debt_increased=added > deleted and bool(new_policy_paths),
+        non_test_loc_added=non_test_added,
+        policy_lab_loc_added=policy_lab_added,
+        policy_lab_loc_deleted=policy_lab_deleted,
     )
 
 
@@ -209,6 +249,12 @@ def _with_untracked_files(
     changed_files = (*bloat.changed_files, *additions)
     new_policy_paths = tuple(path for path in changed_files if is_policy_path(path))
     loc_added = bloat.loc_added + added_lines
+    non_test_added = bloat.non_test_loc_added + sum(
+        _text_line_count(root / path) for path in additions if not _is_test_path(path)
+    )
+    policy_lab_added = bloat.policy_lab_loc_added + sum(
+        _text_line_count(root / path) for path in additions if _is_policy_or_lab_path(path)
+    )
     return BloatMetrics(
         loc_added=loc_added,
         loc_deleted=bloat.loc_deleted,
@@ -216,6 +262,9 @@ def _with_untracked_files(
         new_policy_paths=new_policy_paths,
         duplicate_policy_removed=bloat.loc_deleted > loc_added and bool(new_policy_paths),
         contraction_debt_increased=loc_added > bloat.loc_deleted and bool(new_policy_paths),
+        non_test_loc_added=non_test_added,
+        policy_lab_loc_added=policy_lab_added,
+        policy_lab_loc_deleted=bloat.policy_lab_loc_deleted,
     )
 
 
@@ -265,21 +314,134 @@ def repeated_simple_baseline_losses(
     return tuple(sorted(policy for policy, count in loss_counts.items() if count >= 2))
 
 
+def load_candidate_rows(root: Path, candidate_db: Path = DEFAULT_CANDIDATE_DB) -> tuple[Mapping[str, Any], ...]:
+    path = candidate_db if candidate_db.is_absolute() else root / candidate_db
+    if not path.exists():
+        return ()
+    rows: list[Mapping[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        payload = json.loads(line)
+        if isinstance(payload, Mapping):
+            rows.append(payload)
+    return tuple(rows)
+
+
+def load_latest_cycle_state(digest_root: Path) -> Mapping[str, Any] | None:
+    path = digest_root / "latest_cycle_state.json"
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    return payload if isinstance(payload, Mapping) else None
+
+
+def _registered_live_commands(next_train: Mapping[str, Any]) -> tuple[Mapping[str, Any], ...]:
+    commands = next_train.get("registered_live_commands")
+    if commands is None and next_train.get("registered_live_command") is not None:
+        commands = [next_train["registered_live_command"]]
+    if not isinstance(commands, list):
+        return ()
+    return tuple(command for command in commands if isinstance(command, Mapping))
+
+
+def _managed_current_work_slug(
+    status: Mapping[str, Any],
+    git_state: GitState,
+) -> str | None:
+    if git_state.branch == "main" or not git_state.managed_branch:
+        return None
+    work_today = status.get("work_today") or {}
+    if not isinstance(work_today, Mapping):
+        return None
+    work_slug = work_today.get("slug")
+    if isinstance(work_slug, str) and work_slug and work_slug in git_state.branch:
+        return work_slug
+    branch_tail = git_state.branch.split("/", 1)[-1]
+    parts = branch_tail.split("-", 2)
+    if len(parts) == 3 and parts[0].isdigit() and parts[1].isdigit():
+        return parts[2]
+    return None
+
+
+def _allowed_commands_for_slug(slug: str | None, git_state: GitState) -> tuple[str, ...]:
+    if slug == "cortex-executive-effectiveness-evaluator-build":
+        return (
+            "python3 lab/cortex_effectiveness_evaluator.py --build --require-pass",
+            "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
+            "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
+            "python3 internal/truth/generate_status.py --check",
+            "python3 internal/truth/generate_cortex_doc.py --check",
+            "git diff --check",
+        )
+    if git_state.branch == "main" and slug:
+        return (
+            f"python3 internal/workflow/repo_workflow.py start-session --agent codex --slug {slug}",
+        )
+    return ("follow current truth and repo workflow; no unregistered command batch",)
+
+
+def _previous_ready_noop_reason(
+    previous_cycle: Mapping[str, Any] | None,
+    *,
+    slug: str | None,
+    git_state: GitState,
+) -> str | None:
+    if previous_cycle is None or not slug:
+        return None
+    prior_decision = previous_cycle.get("decision") or {}
+    prior_git = previous_cycle.get("git_state") or {}
+    if not isinstance(prior_decision, Mapping) or not isinstance(prior_git, Mapping):
+        return None
+    if (
+        prior_decision.get("status") == "ready"
+        and prior_decision.get("next_slug") == slug
+        and prior_git.get("branch") == "main"
+        and git_state.branch == "main"
+        and not git_state.dirty
+    ):
+        return (
+            "previous clean-main cycle already reported this next train ready; "
+            "stop instead of repeating a no-op cycle"
+        )
+    return None
+
+
 def classify_next_work(
     status: Mapping[str, Any],
     git_state: GitState,
     bloat: BloatMetrics | None = None,
+    *,
+    now: datetime | None = None,
+    previous_cycle: Mapping[str, Any] | None = None,
+    candidate_contraction: Sequence[str] = (),
 ) -> LoopDecision:
     next_train = status.get("next_product_train") or {}
     if not isinstance(next_train, Mapping):
         next_train = {}
     slug = next_train.get("slug")
+    managed_work_slug = _managed_current_work_slug(status, git_state)
+    active_slug = managed_work_slug or slug
     surface = str(next_train.get("surface") or "")
     guardrail = str(next_train.get("guardrail") or "").lower()
     primary_metric = str(next_train.get("primary_metric") or "").lower()
     kill_rule = str(next_train.get("kill_rule") or "").lower()
     combined = " ".join((surface.lower(), guardrail, primary_metric, kill_rule))
+    if managed_work_slug:
+        work_today = status.get("work_today") or {}
+        work_note = (
+            str(work_today.get("note") or "").lower()
+            if isinstance(work_today, Mapping)
+            else ""
+        )
+        combined = " ".join((managed_work_slug.lower(), work_note))
     reasons: list[str] = []
+
+    if now is not None and now.hour not in OVERNIGHT_HOURS:
+        reasons.append("current time is outside the registered overnight automation window")
 
     if git_state.branch == "main":
         if git_state.dirty:
@@ -289,15 +451,23 @@ def classify_next_work(
     elif not git_state.managed_branch:
         reasons.append("current branch is not main or a managed session branch")
 
-    if not isinstance(slug, str) or not slug.strip():
+    if not isinstance(active_slug, str) or not active_slug.strip():
         reasons.append("next_product_train.slug is missing")
         slug_text = None
     else:
-        slug_text = slug
-        if not slug.startswith(EVALUATOR_AUTHORIZED_SLUG_PREFIXES):
-            reasons.append(f"next train `{slug}` is not evaluator-authorized")
+        slug_text = active_slug
+        if not slug_text.startswith(EVALUATOR_AUTHORIZED_SLUG_PREFIXES):
+            reasons.append(f"next train `{slug_text}` is not evaluator-authorized")
 
-    if any(phrase in combined for phrase in FORBIDDEN_REVIEW_PHRASES):
+    noop_reason = _previous_ready_noop_reason(
+        previous_cycle,
+        slug=slug_text if isinstance(slug_text, str) else None,
+        git_state=git_state,
+    )
+    if noop_reason:
+        reasons.append(noop_reason)
+
+    if not managed_work_slug and any(phrase in combined for phrase in FORBIDDEN_REVIEW_PHRASES):
         reasons.append("current truth names a user-review boundary or forbidden mutation surface")
 
     if bloat is not None:
@@ -313,20 +483,48 @@ def classify_next_work(
                 "task-specific harness growth detected; use general evaluator episode rows: "
                 + ", ".join(harness_paths)
             )
+        if (
+            slug_text not in EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS
+            and bloat.non_test_loc_added > NON_TEST_LOC_ADDED_BUDGET
+        ):
+            reasons.append(
+                "non-test LOC budget exceeded outside evaluator build: "
+                f"{bloat.non_test_loc_added} > {NON_TEST_LOC_ADDED_BUDGET}"
+            )
+        if (
+            slug_text not in EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS
+            and bloat.policy_lab_loc_added > bloat.policy_lab_loc_deleted
+            and not candidate_contraction
+        ):
+            reasons.append(
+                "policy/lab LOC increased without a contraction candidate"
+            )
 
     live_forbidden_by_truth = "no live codex run" in combined
     live_requested = (
         not live_forbidden_by_truth
         and ("live" in (slug_text or "").lower() or "live" in combined)
     )
-    live_allowed = live_requested and all(
-        part in (slug_text or "").lower() or part in combined
-        for part in ("evaluator",)
+    registered_live_commands = (
+        ()
+        if managed_work_slug and managed_work_slug != slug
+        else _registered_live_commands(next_train)
+    )
+    live_allowed = (
+        live_requested
+        and "evaluator" in ((slug_text or "").lower() + " " + combined)
+        and bool(registered_live_commands)
     )
     if live_requested and not live_allowed:
-        reasons.append("live run is not inside the registered evaluator plan")
+        reasons.append(
+            "live run is not inside the registered evaluator plan with exact registered command/env"
+        )
 
-    safe_surface = surface in SAFE_AUTO_MERGE_SURFACES or surface.startswith("no-live")
+    safe_surface = (
+        managed_work_slug in EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS
+        or surface in SAFE_AUTO_MERGE_SURFACES
+        or surface.startswith("no-live")
+    )
     no_positive_claim = not any(
         phrase in combined
         for phrase in ("positive lift", "value claim", "shipping promotion")
@@ -334,12 +532,14 @@ def classify_next_work(
     safe_to_auto_merge = not reasons and safe_surface and no_positive_claim and not live_requested
     status_text = "ready" if not reasons else "blocked"
     commands = []
+    allowed_commands = _allowed_commands_for_slug(slug_text, git_state)
     if status_text == "ready":
         if git_state.branch == "main":
             commands.append("python3 internal/workflow/repo_workflow.py start-session --agent codex --slug " + slug_text)
         else:
             commands.append("continue managed session branch " + git_state.branch)
         commands.append("implement only the current evaluator-authorized seam")
+        commands.append("run the allowed command list before any broader validation")
         commands.append("run targeted tests, generated-doc checks, closeout validation, and cleanup-report")
     else:
         commands.append("stop and report blocker in daily digest")
@@ -352,6 +552,7 @@ def classify_next_work(
         user_input_required=bool(reasons),
         reasons=tuple(reasons),
         recommended_commands=tuple(commands),
+        allowed_commands=allowed_commands if status_text == "ready" else (),
     )
 
 
@@ -402,6 +603,9 @@ def render_digest(
         "",
         f"- LOC added: `{bloat.loc_added}`",
         f"- LOC deleted: `{bloat.loc_deleted}`",
+        f"- Non-test LOC added: `{bloat.non_test_loc_added}`",
+        f"- Policy/lab LOC added: `{bloat.policy_lab_loc_added}`",
+        f"- Policy/lab LOC deleted: `{bloat.policy_lab_loc_deleted}`",
         f"- Changed files: `{len(bloat.changed_files)}`",
         f"- New policy paths: `{', '.join(bloat.new_policy_paths) if bloat.new_policy_paths else 'none'}`",
         f"- Duplicate policy removed: `{bloat.duplicate_policy_removed}`",
@@ -416,6 +620,11 @@ def render_digest(
         lines.append("- none")
     lines.extend(["", "## Recommended Commands", ""])
     lines.extend(f"- `{command}`" for command in decision.recommended_commands)
+    lines.extend(["", "## Allowed Commands", ""])
+    if decision.allowed_commands:
+        lines.extend(f"- `{command}`" for command in decision.allowed_commands)
+    else:
+        lines.append("- none")
     lines.extend(["", "## Contraction Candidates", ""])
     if candidate_contraction:
         lines.extend(f"- `{candidate}` lost to simple baseline at least twice" for candidate in candidate_contraction)
@@ -423,6 +632,19 @@ def render_digest(
         lines.append("- none")
     lines.extend(["", "## User Input Needed", ""])
     lines.append("- yes" if decision.user_input_required else "- no")
+    lines.extend(
+        [
+            "",
+            "## Morning Review",
+            "",
+            f"- What changed: `{len(bloat.changed_files)}` file(s) in current diff.",
+            "- What evidence improved: see evaluator/recon artifacts from the completed seam; none is assumed by the runner.",
+            "- Did Cortex beat simple-hook anywhere: no claim unless evaluator summary explicitly says so.",
+            f"- What lost to simple-hook: `{', '.join(candidate_contraction) if candidate_contraction else 'none recorded'}`.",
+            "- What should be deleted or demoted: contraction candidates above plus any stale proof surfaces named by the evaluator.",
+            "- What needs user judgment: yes if any blocker or positive value/lift claim appears.",
+        ]
+    )
     lines.append("")
     return "\n".join(lines)
 
@@ -439,11 +661,21 @@ def run_once(
     digest_root = digest_root if digest_root.is_absolute() else root / digest_root
     lock_path = digest_root / LOCK_NAME
     with LoopLock(lock_path):
+        started_at = datetime.now().astimezone()
         status = load_status(root)
         git_state = inspect_git_state(root)
         bloat = collect_bloat_metrics(root)
-        decision = classify_next_work(status, git_state, bloat)
-        contraction = repeated_simple_baseline_losses(candidate_rows)
+        previous_cycle = load_latest_cycle_state(digest_root)
+        rows = tuple(candidate_rows) if candidate_rows else load_candidate_rows(root)
+        contraction = repeated_simple_baseline_losses(rows)
+        decision = classify_next_work(
+            status,
+            git_state,
+            bloat,
+            now=now,
+            previous_cycle=previous_cycle,
+            candidate_contraction=contraction,
+        )
         day_dir = digest_root / now.date().isoformat()
         day_dir.mkdir(parents=True, exist_ok=True)
         digest_text = render_digest(
@@ -455,9 +687,15 @@ def run_once(
         )
         digest_path = day_dir / "digest.md"
         report_path = day_dir / "cycle_report.json"
+        cycle_id = f"{now.strftime('%Y%m%dT%H%M%S')}-{os.getpid()}"
+        cycle_state_path = day_dir / f"cycle_state_{cycle_id}.json"
         digest_path.write_text(digest_text, encoding="utf-8")
+        ended_at = datetime.now().astimezone()
         report = {
+            "cycle_id": cycle_id,
             "timestamp": now.isoformat(),
+            "started_at": started_at.isoformat(),
+            "ended_at": ended_at.isoformat(),
             "overnight_hours": list(OVERNIGHT_HOURS),
             "candidate_record_fields": list(CANDIDATE_RECORD_FIELDS),
             "git_state": asdict(git_state),
@@ -466,8 +704,15 @@ def run_once(
             "contraction_candidates": list(contraction),
             "digest_path": str(digest_path),
             "report_path": str(report_path),
+            "cycle_state_path": str(cycle_state_path),
+            "commit": None,
+            "pull_request": None,
+            "blocker": "; ".join(decision.reasons) if decision.reasons else None,
         }
-        report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        report_text = json.dumps(report, indent=2, sort_keys=True) + "\n"
+        report_path.write_text(report_text, encoding="utf-8")
+        cycle_state_path.write_text(report_text, encoding="utf-8")
+        (digest_root / "latest_cycle_state.json").write_text(report_text, encoding="utf-8")
         return report
 
 

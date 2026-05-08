@@ -15,6 +15,7 @@ from lab.cortex_effectiveness_evaluator import (
     TASK_FAMILIES,
     evaluate_cortex_effectiveness_rows,
     gate0_synthetic_scenarios,
+    run_cortex_effectiveness_evaluator_build,
     run_cortex_effectiveness_evaluator_gate0,
 )
 
@@ -99,6 +100,85 @@ def test_gate0_writes_summary_and_cli_passes(tmp_path: Path) -> None:
     summary = json.loads((output_root / "summary.json").read_text())
     assert summary["passed"] is True
     assert summary["next_train_if_pass"] == "cortex-executive-effectiveness-evaluator-build"
+
+
+def test_build_writes_episode_table_summary_and_leaderboard(tmp_path: Path) -> None:
+    report = run_cortex_effectiveness_evaluator_build(output_root=tmp_path)
+    rows = [
+        json.loads(line)
+        for line in (tmp_path / "episode_table.jsonl").read_text().splitlines()
+    ]
+    leaderboard = json.loads((tmp_path / "leaderboard.json").read_text())
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_cortex_executive_effectiveness_evaluator_build"
+    assert report["live_trials_ran"] is False
+    assert report["alphaevolve_mutation_loop_allowed"] is False
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["exactness_value_lift_claim_allowed"] is False
+    assert (tmp_path / "evaluator_design.json").exists()
+    assert (tmp_path / "episode_table.jsonl").exists()
+    assert (tmp_path / "summary.json").exists()
+    assert (tmp_path / "leaderboard.json").exists()
+    assert {row["arm"] for row in rows}.issuperset(set(ARMS))
+    assert leaderboard["claim_allowed"]["behavior_lift"] is False
+    assert leaderboard["claim_allowed"]["exactness_value_lift"] is False
+
+
+def test_build_preserves_historical_posttooluse_failure_no_value(tmp_path: Path) -> None:
+    report = run_cortex_effectiveness_evaluator_build(output_root=tmp_path)
+    rows = [
+        json.loads(line)
+        for line in (tmp_path / "episode_table.jsonl").read_text().splitlines()
+    ]
+
+    assert report["historical_replay"]["artifact"] == (
+        "task_standard_posttooluse_paired_value_live_20260508T120907Z"
+    )
+    assert report["historical_replay"]["registered_verdict"] == "failure_no_value"
+    assert report["historical_replay"]["preserved_verdict"] == "failure_no_value"
+    assert report["historical_replay"]["preserved"] is True
+    assert report["historical_replay"]["counts_as_new_live_run"] is False
+    assert any(
+        row["source"] == "historical_posttooluse_failure_no_value"
+        and row["expected_verdict"] == "failure_no_value"
+        for row in rows
+    )
+
+
+def test_build_checks_refuse_value_without_simple_and_silent_controls(tmp_path: Path) -> None:
+    report = run_cortex_effectiveness_evaluator_build(output_root=tmp_path)
+    checks = report["build_checks"]
+
+    assert checks["all_scoreable_episodes_have_required_arms"] is True
+    assert checks["simple_hook_baseline_present"] is True
+    assert checks["simple_hook_parity_blocks_value"] is True
+    assert checks["silent_success_blocks_value"] is True
+    assert checks["dominance_gates_block_value"] is True
+
+
+def test_build_cli_passes_and_emits_required_artifacts(tmp_path: Path) -> None:
+    output_root = tmp_path / "cli_build"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--build",
+            "--require-pass",
+            "--output-root",
+            str(output_root),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "pass_cortex_executive_effectiveness_evaluator_build" in result.stdout
+    assert (output_root / "evaluator_design.json").exists()
+    assert (output_root / "episode_table.jsonl").exists()
+    assert (output_root / "summary.json").exists()
+    assert (output_root / "leaderboard.json").exists()
 
 
 def test_gate0_source_keeps_alphaevolve_loop_deferred() -> None:
