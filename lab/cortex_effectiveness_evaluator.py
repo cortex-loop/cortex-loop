@@ -97,6 +97,79 @@ SCORE_FIELDS: tuple[str, ...] = (
     "continuity_preserved",
 )
 
+EXECUTIVE_FUNCTIONS: tuple[str, ...] = (
+    "continuity",
+    "focused_persistence",
+    "context_adoption",
+    "brake",
+    "truthful_closure",
+    "capability_routing",
+    "blocker_surfacing",
+    "preservation",
+    "support_geometry",
+)
+
+LOOP_STAGES: tuple[str, ...] = (
+    "model_host_event",
+    "task_state",
+    "intervention_decision",
+    "control_mode",
+    "improved_model_behavior",
+)
+
+CONTROL_MODES: tuple[str, ...] = (
+    "silence",
+    "route",
+    "degrade",
+    "block",
+    "preserve",
+    "recheck",
+    "ask",
+    "model_visible_context",
+    "stop_continuation",
+    "tool_denial",
+)
+
+TRUTH_SCOPES: tuple[str, ...] = (
+    "cortex_truth",
+    "brain_wiring_truth",
+    "conformance_truth",
+    "shipping_truth",
+)
+
+LAB_PROOF_MODEL_IO_PATH = "none_lab_proof_only"
+
+CONTRACTION_IMPLICATIONS: tuple[str, ...] = (
+    "delete",
+    "archive",
+    "role_demote",
+    "consolidate",
+    "none_with_reason",
+)
+
+MISSION_OBJECTIVE_REQUIRED_FIELDS: tuple[str, ...] = (
+    "executive_function",
+    "loop_stage",
+    "control_mode",
+    "truth_scope",
+    "model_io_path",
+    "product_spine",
+    "contraction_implication",
+)
+
+PRODUCT_CLAIM_METRIC_FIELDS: tuple[str, ...] = (
+    "claims_cortex_value",
+    "claims_product_progress",
+    "claims_behavior_lift",
+    "claims_exactness_value_lift",
+    "claims_shipping_promotion",
+    "behavior_lift_claim_allowed",
+    "exactness_value_lift_claim_allowed",
+    "broad_cortex_lift_claim_allowed",
+    "codex_app_parity_claim_allowed",
+    "shipping_promotion_claim_allowed",
+)
+
 
 @dataclass(frozen=True)
 class EvaluatorEpisodeRow:
@@ -113,6 +186,7 @@ class EvaluatorEpisodeRow:
     expected_verdict: str | None = None
     observed_verdict: str | None = None
     notes: str = ""
+    mission_objective: Mapping[str, Any] | None = None
 
     def key(self) -> tuple[str, str, int]:
         return (self.task_family, self.case_id, self.repeat_index)
@@ -128,6 +202,108 @@ class EvaluatorEpisodeRow:
 
     def to_json(self) -> dict[str, Any]:
         return asdict(self)
+
+
+def _task_family_executive_function(task_family: str) -> str:
+    if task_family in {"exactness_evidence_recovery", "truthful_closure"}:
+        return "truthful_closure"
+    if task_family == "blocker_surfacing":
+        return "blocker_surfacing"
+    if task_family == "continuity_after_interruption":
+        return "continuity"
+    if task_family == "clean_verified_work_control":
+        return "preservation"
+    return "focused_persistence"
+
+
+def _control_mode_for_row(arm: str, policy_candidate: str) -> str:
+    if arm in {"no_cortex_baseline", "cortex_silent_perception"}:
+        return "silence"
+    if arm == "simple_hook_baseline":
+        return "model_visible_context"
+    if policy_candidate == "stop_only":
+        return "stop_continuation"
+    if policy_candidate.startswith("pretooluse"):
+        return "tool_denial"
+    return "model_visible_context"
+
+
+def mission_objective_for_row(
+    *,
+    arm: str,
+    task_family: str,
+    policy_candidate: str,
+) -> dict[str, Any]:
+    """Return the lab/proof mission contract for one evaluator row."""
+
+    return {
+        "executive_function": _task_family_executive_function(task_family),
+        "loop_stage": "improved_model_behavior",
+        "control_mode": _control_mode_for_row(arm, policy_candidate),
+        "truth_scope": "brain_wiring_truth",
+        "model_io_path": LAB_PROOF_MODEL_IO_PATH,
+        "product_spine": [],
+        "contraction_implication": "none_with_reason",
+        "contraction_reason": (
+            "No-live evaluator/support row; product progress requires a "
+            "separate product spine and non-empty model-I/O path."
+        ),
+    }
+
+
+def row_claims_product_value(row: EvaluatorEpisodeRow) -> bool:
+    return any(bool(row.metrics.get(field)) for field in PRODUCT_CLAIM_METRIC_FIELDS)
+
+
+def mission_contract_errors(row: EvaluatorEpisodeRow) -> tuple[str, ...]:
+    objective = row.mission_objective
+    if not isinstance(objective, Mapping):
+        return ("mission_objective missing",)
+    errors: list[str] = []
+    for field in MISSION_OBJECTIVE_REQUIRED_FIELDS:
+        if field not in objective:
+            errors.append(f"mission_objective.{field} missing")
+    if errors:
+        return tuple(errors)
+
+    allowed_values = {
+        "executive_function": EXECUTIVE_FUNCTIONS,
+        "loop_stage": LOOP_STAGES,
+        "control_mode": CONTROL_MODES,
+        "truth_scope": TRUTH_SCOPES,
+        "contraction_implication": CONTRACTION_IMPLICATIONS,
+    }
+    for field, allowed in allowed_values.items():
+        value = objective.get(field)
+        if not isinstance(value, str) or value not in allowed:
+            errors.append(f"mission_objective.{field} invalid")
+
+    model_io_path = objective.get("model_io_path")
+    product_spine = objective.get("product_spine")
+    if not isinstance(model_io_path, str) or not model_io_path:
+        errors.append("mission_objective.model_io_path invalid")
+    if not isinstance(product_spine, list):
+        errors.append("mission_objective.product_spine invalid")
+
+    claims_product_value = row_claims_product_value(row)
+    lab_only = model_io_path == LAB_PROOF_MODEL_IO_PATH
+    if claims_product_value and lab_only:
+        errors.append("lab-only row cannot claim Cortex/product value")
+    if claims_product_value and not product_spine:
+        errors.append("product/value claim requires product_spine")
+    if not lab_only and not product_spine:
+        errors.append("product-facing model_io_path requires product_spine")
+    return tuple(errors)
+
+
+def validate_episode_rows_mission_contract(
+    rows: Sequence[EvaluatorEpisodeRow],
+) -> tuple[str, ...]:
+    errors: list[str] = []
+    for index, row in enumerate(rows):
+        for error in mission_contract_errors(row):
+            errors.append(f"row[{index}] {error}")
+    return tuple(errors)
 
 
 def cortex_effectiveness_evaluator_design() -> dict[str, Any]:
@@ -172,6 +348,24 @@ def cortex_effectiveness_evaluator_design() -> dict[str, Any]:
         "task_families": list(TASK_FAMILIES),
         "arms": list(ARMS),
         "active_policy_candidates": list(ACTIVE_POLICY_CANDIDATES),
+        "mission_objective_contract": {
+            "required_fields": list(MISSION_OBJECTIVE_REQUIRED_FIELDS),
+            "executive_functions": list(EXECUTIVE_FUNCTIONS),
+            "loop_stages": list(LOOP_STAGES),
+            "control_modes": list(CONTROL_MODES),
+            "truth_scopes": list(TRUTH_SCOPES),
+            "lab_proof_model_io_path": LAB_PROOF_MODEL_IO_PATH,
+            "product_claim_rule": (
+                "Rows with model_io_path=none_lab_proof_only cannot claim "
+                "Cortex value, product progress, behavior lift, exactness "
+                "value lift, parity, or shipping promotion."
+            ),
+            "product_spine_rule": (
+                "Any product-facing claim must carry capability -> state law "
+                "-> enforcement decision -> host action -> model I/O."
+            ),
+            "contraction_implications": list(CONTRACTION_IMPLICATIONS),
+        },
         "simple_hook_challenger": {
             "id": "simple_hook_baseline",
             "mandatory": True,
@@ -388,6 +582,7 @@ def _row(
     expected_verdict: str | None = None,
     observed_verdict: str | None = None,
     notes: str = "",
+    mission_objective: Mapping[str, Any] | None = None,
     **flags: Any,
 ) -> EvaluatorEpisodeRow:
     metrics: dict[str, Any] = {field: False for field in SCORE_FIELDS}
@@ -406,6 +601,12 @@ def _row(
         expected_verdict=expected_verdict,
         observed_verdict=observed_verdict,
         notes=notes,
+        mission_objective=mission_objective
+        or mission_objective_for_row(
+            arm=arm,
+            task_family=task_family,
+            policy_candidate=policy_candidate,
+        ),
     )
 
 
@@ -540,24 +741,44 @@ def historical_posttooluse_failure_no_value_rows(
                     arm="no_cortex_baseline",
                     policy_candidate="none",
                     metrics=_historical_score_metrics(success=False),
+                    mission_objective=mission_objective_for_row(
+                        arm="no_cortex_baseline",
+                        task_family="exactness_evidence_recovery",
+                        policy_candidate="none",
+                    ),
                     **common,
                 ),
                 EvaluatorEpisodeRow(
                     arm="simple_hook_baseline",
                     policy_candidate="simple_hook_baseline",
                     metrics=_historical_score_metrics(success=silent_success),
+                    mission_objective=mission_objective_for_row(
+                        arm="simple_hook_baseline",
+                        task_family="exactness_evidence_recovery",
+                        policy_candidate="simple_hook_baseline",
+                    ),
                     **common,
                 ),
                 EvaluatorEpisodeRow(
                     arm="cortex_silent_perception",
                     policy_candidate="silent_posttooluse_control",
                     metrics=_historical_score_metrics(success=silent_success),
+                    mission_objective=mission_objective_for_row(
+                        arm="cortex_silent_perception",
+                        task_family="exactness_evidence_recovery",
+                        policy_candidate="silent_posttooluse_control",
+                    ),
                     **common,
                 ),
                 EvaluatorEpisodeRow(
                     arm="cortex_active_policy",
                     policy_candidate="posttooluse_stop",
                     metrics=_historical_score_metrics(success=active_success),
+                    mission_objective=mission_objective_for_row(
+                        arm="cortex_active_policy",
+                        task_family="exactness_evidence_recovery",
+                        policy_candidate="posttooluse_stop",
+                    ),
                     **common,
                 ),
             ]
@@ -639,6 +860,7 @@ def run_cortex_effectiveness_evaluator_build(
         historical_summary_path
     )
     rows = [*synthetic_rows, *historical_rows]
+    mission_contract_errors = validate_episode_rows_mission_contract(rows)
     synthetic_results = evaluate_cortex_effectiveness_rows(synthetic_rows)
     leaderboard = build_leaderboard(rows)
     episode_table_path = root / "episode_table.jsonl"
@@ -673,6 +895,19 @@ def run_cortex_effectiveness_evaluator_build(
         "historical_replay_not_counted_as_new_live": not historical_replay[
             "counts_as_new_live_run"
         ],
+        "mission_objective_contract_registered": bool(
+            design["mission_objective_contract"]
+        ),
+        "episode_rows_carry_valid_mission_contract": not mission_contract_errors,
+        "lab_only_rows_do_not_claim_product_value": not any(
+            row_claims_product_value(row)
+            and (
+                isinstance(row.mission_objective, Mapping)
+                and row.mission_objective.get("model_io_path")
+                == LAB_PROOF_MODEL_IO_PATH
+            )
+            for row in rows
+        ),
     }
     passed = all(build_checks.values())
     report = {
@@ -697,6 +932,7 @@ def run_cortex_effectiveness_evaluator_build(
             "leaderboard": "leaderboard.json",
         },
         "build_checks": build_checks,
+        "mission_contract_errors": list(mission_contract_errors),
         "synthetic_results": synthetic_results,
         "historical_replay": historical_replay,
         "leaderboard": leaderboard,
@@ -726,6 +962,8 @@ def run_cortex_effectiveness_evaluator_gate0(
     root.mkdir(parents=True, exist_ok=True)
     design = cortex_effectiveness_evaluator_design()
     scenarios = gate0_synthetic_scenarios()
+    scenario_rows = [row for rows in scenarios.values() for row in rows]
+    mission_contract_errors = validate_episode_rows_mission_contract(scenario_rows)
     synthetic_results = {
         name: evaluate_cortex_effectiveness_rows(rows)
         for name, rows in scenarios.items()
@@ -770,6 +1008,19 @@ def run_cortex_effectiveness_evaluator_gate0(
         "contraction_obligations_registered": bool(
             design["contraction_obligations"]
         ),
+        "mission_objective_contract_registered": bool(
+            design["mission_objective_contract"]
+        ),
+        "episode_rows_carry_valid_mission_contract": not mission_contract_errors,
+        "lab_only_rows_do_not_claim_product_value": not any(
+            row_claims_product_value(row)
+            and (
+                isinstance(row.mission_objective, Mapping)
+                and row.mission_objective.get("model_io_path")
+                == LAB_PROOF_MODEL_IO_PATH
+            )
+            for row in scenario_rows
+        ),
         "synthetic_decisions_match_expected": all(
             synthetic_results[name]["verdict"] == verdict
             for name, verdict in expected.items()
@@ -791,6 +1042,7 @@ def run_cortex_effectiveness_evaluator_gate0(
         "shipping_promotion_claim_allowed": False,
         "next_train_if_pass": "cortex-executive-effectiveness-evaluator-build",
         "boundary_results": boundary_results,
+        "mission_contract_errors": list(mission_contract_errors),
         "synthetic_results": synthetic_results,
         "design_artifact": "evaluator_design.json",
     }

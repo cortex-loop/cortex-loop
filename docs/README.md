@@ -287,6 +287,10 @@ Active docs:
   no-live evaluator build emitting the episode table, leaderboard, summary,
   historical PostToolUse no-value replay, and stricter overnight runner
   execution contract before any live matrix or candidate mutation
+- [Cortex Automation Product-Boundary Contract](recon/cortex_automation_product_boundary_contract.md) —
+  no-live hardening seam that keeps overnight automation and evaluator work as
+  proof/support surfaces unless a row declares a product spine, non-lab
+  model-I/O path, and current-truth authorization
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation

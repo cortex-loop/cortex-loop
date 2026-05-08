@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-executive-effectiveness-evaluator-build`
+- Slug: `cortex-automation-product-boundary-contract`
 ### Next Product Train
 - Slug: `cortex-executive-effectiveness-evaluator-live-gate1`
 - Surface: `no-live lab/proof evaluator live-interface gate`
-- Why now: The evaluator build passed: it now emits the required design, episode table, summary, and leaderboard artifacts; preserves the historical PostToolUse `failure_no_value` replay; and hardens overnight automation with cycle state, allowed commands, bloat budgets, no-op dedupe, and exact live-command registration. The next work is to define the live matrix interface before any live execution or AlphaEvolve-style candidate loop.
+- Why now: The evaluator build passed and the automation product-boundary contract now prevents the development loop from becoming Cortex product identity: evaluator rows carry a mission objective contract, lab-only rows cannot claim product value, product claims require product spine plus non-lab model-I/O path, and the overnight runner blocks unsafe candidate surfaces or positive value/shipping claims without user review. The next work is to define the live matrix interface before any live execution or AlphaEvolve-style candidate loop.
 
 ### Research Lines Under Evaluation
 

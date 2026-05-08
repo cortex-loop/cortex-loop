@@ -21,6 +21,7 @@ OVERNIGHT_HOURS = tuple(list(range(22, 24)) + list(range(0, 8)))
 NON_TEST_LOC_ADDED_BUDGET = 250
 EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS = {
     "cortex-executive-effectiveness-evaluator-build",
+    "cortex-automation-product-boundary-contract",
 }
 SAFE_AUTO_MERGE_SURFACES = {
     "no-live lab/proof evaluator build",
@@ -30,6 +31,7 @@ SAFE_AUTO_MERGE_SURFACES = {
 }
 EVALUATOR_AUTHORIZED_SLUG_PREFIXES = (
     "cortex-executive-effectiveness-evaluator",
+    "cortex-automation-product-boundary-contract",
     "cortex-overnight-evaluator-automation-hardening",
 )
 ALLOWED_LIVE_SLUG_PARTS = (
@@ -67,12 +69,48 @@ CANDIDATE_RECORD_FIELDS = (
     "candidate_id",
     "parent_id",
     "policy_candidate",
+    "executive_function",
+    "loop_stage",
+    "control_mode",
+    "truth_scope",
+    "model_io_path",
+    "product_spine",
     "changed_files",
     "mutation_reason",
     "metrics",
     "score",
     "failure_class",
     "contraction_implication",
+)
+MISSION_OBJECTIVE_REQUIRED_FIELDS = (
+    "executive_function",
+    "loop_stage",
+    "control_mode",
+    "truth_scope",
+    "model_io_path",
+    "product_spine",
+    "contraction_implication",
+)
+LAB_PROOF_MODEL_IO_PATH = "none_lab_proof_only"
+PRODUCT_CLAIM_FIELDS = (
+    "claims_cortex_value",
+    "claims_product_progress",
+    "claims_behavior_lift",
+    "claims_exactness_value_lift",
+    "claims_shipping_promotion",
+    "behavior_lift_claim_allowed",
+    "exactness_value_lift_claim_allowed",
+    "broad_cortex_lift_claim_allowed",
+    "codex_app_parity_claim_allowed",
+    "shipping_promotion_claim_allowed",
+)
+FORBIDDEN_CANDIDATE_EXACT_PATHS = (
+    "lab/cortex_effectiveness_evaluator.py",
+)
+FORBIDDEN_CANDIDATE_ROW_EXACT_PATHS = (
+    "docs/CORTEX.md",
+    "docs/CORTEX_STATUS.md",
+    "lab/cortex_effectiveness_evaluator.py",
 )
 
 
@@ -282,6 +320,9 @@ def collect_bloat_metrics(root: Path) -> BloatMetrics:
 def forbidden_candidate_paths(paths: Sequence[str]) -> tuple[str, ...]:
     forbidden: list[str] = []
     for path in paths:
+        if path in FORBIDDEN_CANDIDATE_EXACT_PATHS:
+            forbidden.append(path)
+            continue
         if path.startswith(FORBIDDEN_CANDIDATE_PATH_PREFIXES):
             forbidden.append(path)
             continue
@@ -300,6 +341,137 @@ def task_specific_harness_paths(paths: Sequence[str]) -> tuple[str, ...]:
         elif path.startswith("lab/") and "posttooluse" in lowered and "cortex_effectiveness" not in lowered:
             offenders.append(path)
     return tuple(offenders)
+
+
+def _candidate_value(row: Mapping[str, Any], field: str) -> Any:
+    if field in row:
+        return row.get(field)
+    objective = row.get("mission_objective")
+    if isinstance(objective, Mapping):
+        return objective.get(field)
+    return None
+
+
+def _candidate_metrics(row: Mapping[str, Any]) -> Mapping[str, Any]:
+    metrics = row.get("metrics")
+    return metrics if isinstance(metrics, Mapping) else {}
+
+
+def _candidate_changed_files(row: Mapping[str, Any]) -> tuple[str, ...]:
+    changed = row.get("changed_files")
+    if isinstance(changed, str):
+        return (changed,)
+    if isinstance(changed, (list, tuple)):
+        return tuple(str(path) for path in changed)
+    return ()
+
+
+def _candidate_claims_value(row: Mapping[str, Any]) -> bool:
+    metrics = _candidate_metrics(row)
+    return any(bool(row.get(field)) or bool(metrics.get(field)) for field in PRODUCT_CLAIM_FIELDS)
+
+
+def _product_paths(paths: Sequence[str]) -> tuple[str, ...]:
+    return tuple(path for path in paths if path.startswith("cortex/"))
+
+
+def candidate_mission_contract_errors(
+    candidate_rows: Sequence[Mapping[str, Any]],
+    *,
+    changed_files: Sequence[str] = (),
+    active_slug: str | None = None,
+) -> tuple[str, ...]:
+    errors: list[str] = []
+    all_product_paths = set(_product_paths(changed_files))
+    covered_product_paths: set[str] = set()
+    for index, row in enumerate(candidate_rows):
+        for field in MISSION_OBJECTIVE_REQUIRED_FIELDS:
+            if _candidate_value(row, field) is None:
+                errors.append(f"candidate[{index}] missing {field}")
+        model_io_path = _candidate_value(row, "model_io_path")
+        product_spine = _candidate_value(row, "product_spine")
+        row_paths = _candidate_changed_files(row)
+        row_forbidden_paths = tuple(
+            path for path in row_paths if path in FORBIDDEN_CANDIDATE_ROW_EXACT_PATHS
+        )
+        if row_forbidden_paths:
+            errors.append(
+                f"candidate[{index}] touches forbidden candidate mutation surfaces: "
+                + ", ".join(row_forbidden_paths)
+            )
+        product_paths = _product_paths(row_paths)
+        all_product_paths.update(product_paths)
+        covered_product_paths.update(product_paths)
+        claims_value = _candidate_claims_value(row)
+        lab_only = model_io_path == LAB_PROOF_MODEL_IO_PATH
+        if claims_value and lab_only:
+            errors.append(f"candidate[{index}] lab-only row claims Cortex/product value")
+        if (claims_value or product_paths) and (
+            not isinstance(model_io_path, str) or not model_io_path or lab_only
+        ):
+            errors.append(f"candidate[{index}] product/value row lacks product model-I/O path")
+        if (claims_value or product_paths) and not product_spine:
+            errors.append(f"candidate[{index}] product/value row lacks product_spine")
+        if product_paths and row.get("authorized_by_next_train") != active_slug:
+            errors.append(f"candidate[{index}] product row is not current-truth authorized")
+    if all_product_paths and not candidate_rows:
+        errors.append("cortex/** changes require mission objective candidate record")
+    elif all_product_paths and not covered_product_paths:
+        errors.append("cortex/** changes require candidate changed_files coverage")
+    return tuple(errors)
+
+
+def structured_positive_claim_fields(
+    candidate_rows: Sequence[Mapping[str, Any]],
+) -> tuple[str, ...]:
+    fields: set[str] = set()
+    for row in candidate_rows:
+        metrics = _candidate_metrics(row)
+        for field in PRODUCT_CLAIM_FIELDS:
+            if bool(row.get(field)) or bool(metrics.get(field)):
+                fields.add(field)
+    return tuple(sorted(fields))
+
+
+def candidate_mission_summary(
+    candidate_rows: Sequence[Mapping[str, Any]],
+) -> dict[str, str]:
+    if not candidate_rows:
+        return {
+            "executive_functions": "none",
+            "loop_stages": "none",
+            "model_io_paths": "none",
+            "simple_hook_result": "none recorded",
+            "contraction_implications": "none",
+        }
+    simple_results: list[str] = []
+    for row in candidate_rows:
+        failure = str(row.get("failure_class") or "")
+        if failure == "failure_simple_baseline_parity":
+            simple_results.append("tied/lost")
+        elif failure.startswith("pass"):
+            simple_results.append("beat")
+        elif failure:
+            simple_results.append(failure)
+    return {
+        "executive_functions": ", ".join(
+            sorted({str(_candidate_value(row, "executive_function")) for row in candidate_rows if _candidate_value(row, "executive_function")})
+        )
+        or "none",
+        "loop_stages": ", ".join(
+            sorted({str(_candidate_value(row, "loop_stage")) for row in candidate_rows if _candidate_value(row, "loop_stage")})
+        )
+        or "none",
+        "model_io_paths": ", ".join(
+            sorted({str(_candidate_value(row, "model_io_path")) for row in candidate_rows if _candidate_value(row, "model_io_path")})
+        )
+        or "none",
+        "simple_hook_result": ", ".join(sorted(set(simple_results))) or "none recorded",
+        "contraction_implications": ", ".join(
+            sorted({str(_candidate_value(row, "contraction_implication")) for row in candidate_rows if _candidate_value(row, "contraction_implication")})
+        )
+        or "none",
+    }
 
 
 def repeated_simple_baseline_losses(
@@ -377,6 +549,16 @@ def _allowed_commands_for_slug(slug: str | None, git_state: GitState) -> tuple[s
             "python3 internal/truth/generate_cortex_doc.py --check",
             "git diff --check",
         )
+    if slug == "cortex-automation-product-boundary-contract":
+        return (
+            "python3 lab/cortex_effectiveness_evaluator.py --build --require-pass",
+            "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
+            "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
+            "python3 -m pytest tests/internal/test_docs_boundary.py -q",
+            "python3 internal/truth/generate_status.py --check",
+            "python3 internal/truth/generate_cortex_doc.py --check",
+            "git diff --check",
+        )
     if git_state.branch == "main" and slug:
         return (
             f"python3 internal/workflow/repo_workflow.py start-session --agent codex --slug {slug}",
@@ -418,6 +600,7 @@ def classify_next_work(
     now: datetime | None = None,
     previous_cycle: Mapping[str, Any] | None = None,
     candidate_contraction: Sequence[str] = (),
+    candidate_rows: Sequence[Mapping[str, Any]] = (),
 ) -> LoopDecision:
     next_train = status.get("next_product_train") or {}
     if not isinstance(next_train, Mapping):
@@ -472,6 +655,12 @@ def classify_next_work(
 
     if bloat is not None:
         forbidden_paths = forbidden_candidate_paths(bloat.changed_files)
+        if slug_text in EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS:
+            forbidden_paths = tuple(
+                path
+                for path in forbidden_paths
+                if path != "lab/cortex_effectiveness_evaluator.py"
+            )
         if forbidden_paths:
             reasons.append(
                 "candidate touches forbidden mutation surfaces: "
@@ -499,6 +688,23 @@ def classify_next_work(
             reasons.append(
                 "policy/lab LOC increased without a contraction candidate"
             )
+        mission_errors = candidate_mission_contract_errors(
+            candidate_rows,
+            changed_files=bloat.changed_files,
+            active_slug=slug_text,
+        )
+        if mission_errors:
+            reasons.append(
+                "candidate mission/product-boundary contract failed: "
+                + "; ".join(mission_errors)
+            )
+
+    positive_fields = structured_positive_claim_fields(candidate_rows)
+    if positive_fields:
+        reasons.append(
+            "structured positive value/shipping fields require user review: "
+            + ", ".join(positive_fields)
+        )
 
     live_forbidden_by_truth = "no live codex run" in combined
     live_requested = (
@@ -586,7 +792,9 @@ def render_digest(
     decision: LoopDecision,
     bloat: BloatMetrics,
     candidate_contraction: Sequence[str] = (),
+    candidate_rows: Sequence[Mapping[str, Any]] = (),
 ) -> str:
+    mission_summary = candidate_mission_summary(candidate_rows)
     lines = [
         f"# Cortex Overnight Digest — {now.date().isoformat()}",
         "",
@@ -640,6 +848,11 @@ def render_digest(
             f"- What changed: `{len(bloat.changed_files)}` file(s) in current diff.",
             "- What evidence improved: see evaluator/recon artifacts from the completed seam; none is assumed by the runner.",
             "- Did Cortex beat simple-hook anywhere: no claim unless evaluator summary explicitly says so.",
+            f"- Which Cortex executive function was served: `{mission_summary['executive_functions']}`.",
+            f"- Which loop stage improved: `{mission_summary['loop_stages']}`.",
+            f"- Model-I/O path: `{mission_summary['model_io_paths']}`.",
+            f"- Simple-hook result: `{mission_summary['simple_hook_result']}`.",
+            f"- Contraction implication: `{mission_summary['contraction_implications']}`.",
             f"- What lost to simple-hook: `{', '.join(candidate_contraction) if candidate_contraction else 'none recorded'}`.",
             "- What should be deleted or demoted: contraction candidates above plus any stale proof surfaces named by the evaluator.",
             "- What needs user judgment: yes if any blocker or positive value/lift claim appears.",
@@ -675,6 +888,7 @@ def run_once(
             now=now,
             previous_cycle=previous_cycle,
             candidate_contraction=contraction,
+            candidate_rows=rows,
         )
         day_dir = digest_root / now.date().isoformat()
         day_dir.mkdir(parents=True, exist_ok=True)
@@ -684,6 +898,7 @@ def run_once(
             decision=decision,
             bloat=bloat,
             candidate_contraction=contraction,
+            candidate_rows=rows,
         )
         digest_path = day_dir / "digest.md"
         report_path = day_dir / "cycle_report.json"
@@ -701,6 +916,7 @@ def run_once(
             "git_state": asdict(git_state),
             "bloat": asdict(bloat),
             "decision": asdict(decision),
+            "mission_objective_summary": candidate_mission_summary(rows),
             "contraction_candidates": list(contraction),
             "digest_path": str(digest_path),
             "report_path": str(report_path),

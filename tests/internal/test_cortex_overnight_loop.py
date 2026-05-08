@@ -314,6 +314,196 @@ def test_policy_lab_growth_requires_contraction_candidate_outside_build() -> Non
     assert allowed_with_contraction.status == "ready"
 
 
+def _candidate_row(**overrides: object) -> dict[str, object]:
+    row: dict[str, object] = {
+        "candidate_id": "candidate-001",
+        "parent_id": "champion",
+        "policy_candidate": "posttooluse_stop",
+        "executive_function": "truthful_closure",
+        "loop_stage": "improved_model_behavior",
+        "control_mode": "model_visible_context",
+        "truth_scope": "shipping_truth",
+        "model_io_path": "Codex PostToolUse hookSpecificOutput.additionalContext",
+        "product_spine": [
+            "truthful_closure",
+            "task_standard_state_law",
+            "posttooluse_context_decision",
+            "Codex PostToolUse",
+            "hookSpecificOutput.additionalContext",
+        ],
+        "changed_files": ["cortex/hosts/openai/posttooluse_task_standard_actuator.py"],
+        "authorized_by_next_train": "cortex-executive-effectiveness-evaluator-followup",
+        "mutation_reason": "bounded policy candidate",
+        "metrics": {},
+        "score": 0,
+        "failure_class": "failure_simple_baseline_parity",
+        "contraction_implication": "none_with_reason",
+    }
+    row.update(overrides)
+    return row
+
+
+def test_lab_eval_changes_are_support_not_product_with_contraction() -> None:
+    bloat = loop.BloatMetrics(
+        loc_added=12,
+        loc_deleted=0,
+        changed_files=("lab/evaluator_support.py",),
+        new_policy_paths=(),
+        duplicate_policy_removed=False,
+        contraction_debt_increased=False,
+        non_test_loc_added=12,
+        policy_lab_loc_added=12,
+        policy_lab_loc_deleted=0,
+    )
+    decision = loop.classify_next_work(
+        _status(slug="cortex-executive-effectiveness-evaluator-followup"),
+        _git(),
+        bloat,
+        candidate_contraction=("old_posttooluse_gate0",),
+    )
+
+    assert decision.status == "ready"
+    assert decision.safe_to_auto_merge is True
+
+
+def test_cortex_candidate_changes_require_product_spine_and_model_io_path() -> None:
+    bloat = loop.BloatMetrics(
+        loc_added=10,
+        loc_deleted=0,
+        changed_files=("cortex/hosts/openai/posttooluse_task_standard_actuator.py",),
+        new_policy_paths=("cortex/hosts/openai/posttooluse_task_standard_actuator.py",),
+        duplicate_policy_removed=False,
+        contraction_debt_increased=True,
+        non_test_loc_added=10,
+        policy_lab_loc_added=10,
+        policy_lab_loc_deleted=0,
+    )
+    missing_row = loop.classify_next_work(
+        _status(slug="cortex-executive-effectiveness-evaluator-followup"),
+        _git(),
+        bloat,
+        candidate_contraction=("old_path",),
+    )
+    bad_row = loop.classify_next_work(
+        _status(slug="cortex-executive-effectiveness-evaluator-followup"),
+        _git(),
+        bloat,
+        candidate_contraction=("old_path",),
+        candidate_rows=(
+            _candidate_row(
+                model_io_path=loop.LAB_PROOF_MODEL_IO_PATH,
+                product_spine=[],
+            ),
+        ),
+    )
+    good_row = loop.classify_next_work(
+        _status(slug="cortex-executive-effectiveness-evaluator-followup"),
+        _git(),
+        bloat,
+        candidate_contraction=("old_path",),
+        candidate_rows=(_candidate_row(),),
+    )
+
+    assert missing_row.status == "blocked"
+    assert any("mission objective candidate record" in reason for reason in missing_row.reasons)
+    assert bad_row.status == "blocked"
+    assert any("model-I/O path" in reason and "product_spine" in reason for reason in bad_row.reasons)
+    assert good_row.status == "ready"
+
+
+def test_candidate_mutation_of_evaluator_or_cortex_docs_is_blocked() -> None:
+    bloat = loop.BloatMetrics(
+        loc_added=5,
+        loc_deleted=0,
+        changed_files=("lab/cortex_effectiveness_evaluator.py", "docs/CORTEX_V2_CORE_2.md"),
+        new_policy_paths=(),
+        duplicate_policy_removed=False,
+        contraction_debt_increased=False,
+        non_test_loc_added=5,
+    )
+    decision = loop.classify_next_work(
+        _status(slug="cortex-executive-effectiveness-evaluator-followup"),
+        _git(),
+        bloat,
+    )
+
+    assert decision.status == "blocked"
+    assert "lab/cortex_effectiveness_evaluator.py" in loop.forbidden_candidate_paths(bloat.changed_files)
+    assert "docs/CORTEX_V2_CORE_2.md" in loop.forbidden_candidate_paths(bloat.changed_files)
+
+
+def test_candidate_row_cannot_mutate_generated_product_docs() -> None:
+    bloat = loop.BloatMetrics(
+        loc_added=2,
+        loc_deleted=0,
+        changed_files=("docs/CORTEX.md",),
+        new_policy_paths=(),
+        duplicate_policy_removed=False,
+        contraction_debt_increased=False,
+        non_test_loc_added=2,
+    )
+    row = _candidate_row(
+        changed_files=["docs/CORTEX.md"],
+        model_io_path=loop.LAB_PROOF_MODEL_IO_PATH,
+        product_spine=[],
+    )
+    decision = loop.classify_next_work(
+        _status(slug="cortex-executive-effectiveness-evaluator-followup"),
+        _git(),
+        bloat,
+        candidate_rows=(row,),
+    )
+
+    assert decision.status == "blocked"
+    assert any("forbidden candidate mutation surfaces" in reason for reason in decision.reasons)
+
+
+def test_structured_positive_value_claim_forces_user_review() -> None:
+    bloat = loop.BloatMetrics(
+        loc_added=0,
+        loc_deleted=0,
+        changed_files=(),
+        new_policy_paths=(),
+        duplicate_policy_removed=False,
+        contraction_debt_increased=False,
+    )
+    decision = loop.classify_next_work(
+        _status(slug="cortex-executive-effectiveness-evaluator-followup"),
+        _git(),
+        bloat,
+        candidate_rows=(_candidate_row(metrics={"exactness_value_lift_claim_allowed": True}),),
+    )
+
+    assert decision.status == "blocked"
+    assert any("structured positive value" in reason for reason in decision.reasons)
+
+
+def test_digest_includes_mission_contract_review_fields() -> None:
+    text = loop.render_digest(
+        now=datetime(2026, 5, 8, 23, tzinfo=timezone.utc),
+        git_state=_git(),
+        decision=loop.classify_next_work(
+            _status(slug="cortex-executive-effectiveness-evaluator-followup"),
+            _git(),
+        ),
+        bloat=loop.BloatMetrics(
+            loc_added=0,
+            loc_deleted=0,
+            changed_files=(),
+            new_policy_paths=(),
+            duplicate_policy_removed=False,
+            contraction_debt_increased=False,
+        ),
+        candidate_rows=(_candidate_row(),),
+    )
+
+    assert "Which Cortex executive function was served" in text
+    assert "Which loop stage improved" in text
+    assert "Model-I/O path" in text
+    assert "Simple-hook result" in text
+    assert "Contraction implication" in text
+
+
 def test_repeated_simple_baseline_losses_create_contraction_candidates() -> None:
     rows = [
         {"candidate_id": "a", "policy_candidate": "posttooluse_stop", "failure_class": "failure_simple_baseline_parity"},
@@ -376,6 +566,12 @@ def test_candidate_record_schema_is_complete() -> None:
         "candidate_id",
         "parent_id",
         "policy_candidate",
+        "executive_function",
+        "loop_stage",
+        "control_mode",
+        "truth_scope",
+        "model_io_path",
+        "product_spine",
         "changed_files",
         "mutation_reason",
         "metrics",

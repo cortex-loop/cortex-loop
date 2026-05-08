@@ -337,7 +337,7 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_PATH = (
     / "cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun.md"
 )
 
-CURRENT_WORK_SLUG = "cortex-executive-effectiveness-evaluator-build"
+CURRENT_WORK_SLUG = "cortex-automation-product-boundary-contract"
 NEXT_PRODUCT_TRAIN_SLUG = "cortex-executive-effectiveness-evaluator-live-gate1"
 CONTEXT_LOOP_TRACE_REMEDIATION_RECON_PATH = (
     REPO_ROOT
@@ -409,6 +409,12 @@ CORTEX_OVERNIGHT_EVALUATOR_AUTOMATION_HARDENING_PATH = (
     / "docs"
     / "recon"
     / "cortex_overnight_evaluator_automation_hardening.md"
+)
+CORTEX_AUTOMATION_PRODUCT_BOUNDARY_CONTRACT_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_automation_product_boundary_contract.md"
 )
 
 CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_AFTER_SHARED_TOOL_EVIDENCE_PATH = (
@@ -523,31 +529,30 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
 ) -> None:
     assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     work_note = status["work_today"]["note"].lower()
-    assert "cortex executive effectiveness evaluator build passed" in work_note
-    assert "no-live lab/proof seam" in work_note
-    assert "lab/cortex_effectiveness_evaluator.py --build --require-pass" in work_note
-    assert "evaluator_design.json" in work_note
-    assert "episode_table.jsonl" in work_note
-    assert "summary.json" in work_note
-    assert "leaderboard.json" in work_note
-    assert ".cortex/live_validation/cortex_effectiveness_evaluator_build/" in work_note
-    assert "no_cortex_baseline" in work_note
-    assert "simple_hook_baseline" in work_note
-    assert "cortex_silent_perception" in work_note
-    assert "cortex_active_policy" in work_note
+    assert "cortex automation product-boundary contract passed" in work_note
+    assert "no-live support-surface hardening seam" in work_note
+    assert "mission objective contract" in work_note
+    assert "executive_function" in work_note
+    assert "loop_stage" in work_note
+    assert "control_mode" in work_note
+    assert "truth_scope" in work_note
+    assert "model_io_path" in work_note
+    assert "product_spine" in work_note
+    assert "contraction_implication" in work_note
+    assert "none_lab_proof_only" in work_note
+    assert "cannot claim product progress" in work_note
+    assert "product/value claims require a non-empty model-i/o path" in work_note
     assert "simple-hook parity" in work_note
     assert "silent perception success" in work_note
-    assert "dominance gates" in work_note
-    assert "task_standard_posttooluse_paired_value_live_20260508t120907z" in work_note
-    assert "failure_no_value" in work_note
-    assert "without counting it as a new live run" in work_note
-    assert "cycle state" in work_note
-    assert "22:00-07:00" in work_note
-    assert "allowed command lists" in work_note
-    assert "no-op cycles" in work_note
-    assert "exact registered live" in work_note
-    assert "budgets non-test loc" in work_note
-    assert "contraction candidates" in work_note
+    assert "remain no-value" in work_note
+    assert "lab/eval/workflow changes as support" in work_note
+    assert "cortex/**" in work_note
+    assert "current-truth authorization" in work_note
+    assert "structured positive value/shipping fields" in work_note
+    assert "morning digest" in work_note
+    assert "executive function" in work_note
+    assert "loop stage" in work_note
+    assert "simple-hook result" in work_note
     assert "no live codex run occurred" in work_note
     assert "no product host behavior" in work_note
     assert "model-visible text" in work_note
@@ -568,12 +573,13 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
         "executive_benefit"
     ].lower()
     assert "the evaluator build passed" in next_train["why_now"].lower()
-    assert "episode table" in next_train["why_now"].lower()
-    assert "leaderboard" in next_train["why_now"].lower()
-    assert "failure_no_value" in next_train["why_now"].lower()
-    assert "cycle state" in next_train["why_now"].lower()
-    assert "allowed commands" in next_train["why_now"].lower()
-    assert "exact live-command registration" in next_train["why_now"].lower()
+    assert "automation product-boundary contract" in next_train["why_now"].lower()
+    assert "mission objective contract" in next_train["why_now"].lower()
+    assert "lab-only rows cannot claim product value" in next_train["why_now"].lower()
+    assert "product spine plus non-lab model-i/o path" in next_train[
+        "why_now"
+    ].lower()
+    assert "positive value/shipping claims" in next_train["why_now"].lower()
     primary_metric = next_train["primary_metric"].lower()
     assert "no-live gate 1 interface" in primary_metric
     assert "exact future live command/env pairs" in primary_metric
@@ -581,6 +587,7 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
     assert "four required arms" in primary_metric
     assert "task families" in primary_metric
     assert "dry-run live plan" in primary_metric
+    assert "mission objective contract" in primary_metric
     assert "simple-hook parity" in primary_metric
     assert "silent contamination" in primary_metric
     assert "dominance gates" in primary_metric
@@ -598,6 +605,7 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
     assert "exact env approval" in kill_rule
     assert "starts a live run" in kill_rule
     assert "dominance gates" in kill_rule
+    assert "mission objective/product-boundary contract" in kill_rule
     assert "fixtures/scoring" in kill_rule
     assert "alphaevolve-style mutation" in kill_rule
 
@@ -1361,6 +1369,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "claude_code_user_scope_plugin_managed_worktree_probe.md",
         "claude_code_user_scope_plugin_pretooluse_probe.md",
         "codex_app_hook_probe.md",
+        "cortex_automation_product_boundary_contract.md",
         "cortex_codex_app_cli_astro_three_arm_fixture_refresh.md",
         "cortex_codex_app_cli_communication_boundary_audit_and_hardening.md",
         "cortex_codex_app_cli_hook_contract_capture_boundary_remediation.md",
@@ -4074,6 +4083,64 @@ def test_cortex_overnight_evaluator_automation_hardening_pins_runner() -> None:
     _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
+def test_cortex_automation_product_boundary_contract_pins_support_product_split() -> None:
+    text = _read(CORTEX_AUTOMATION_PRODUCT_BOUNDARY_CONTRACT_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "`pass_cortex_automation_product_boundary_contract`" in text
+    for phrase in (
+        "Cortex product remains the shipped runtime executive layer",
+        "overnight loop and evaluator are support surfaces",
+        "`executive_function`",
+        "`loop_stage`",
+        "`control_mode`",
+        "`truth_scope`",
+        "`model_io_path`",
+        "`product_spine`",
+        "`contraction_implication`",
+        "`model_io_path=none_lab_proof_only`",
+        "Product-facing claims require a non-empty model-I/O path",
+        "capability -> state law -> enforcement decision -> host action -> model I/O",
+        "Lab/eval/workflow changes may be auto-merged only as proof/support",
+        "Candidate rows touching `cortex/**` must declare a product spine",
+        "Structured positive value/shipping fields force user review",
+        "which executive function was served",
+        "which loop stage improved",
+        "what model-I/O path exists",
+        "whether the simple hook beat/tied or lost",
+        "what should be contracted",
+        "`no_cortex_baseline`",
+        "`simple_hook_baseline`",
+        "`cortex_silent_perception`",
+        "`cortex_active_policy`",
+        "Simple-hook parity and silent perception success remain no-value",
+        "`failure_no_value`",
+        "`cortex-executive-effectiveness-evaluator-live-gate1`",
+    ):
+        assert phrase in text
+
+    for forbidden in (
+        "no behavior lift",
+        "exactness value lift",
+        "broad Cortex lift",
+        "Codex App parity",
+        "shipping promotion",
+        "product behavior progress",
+    ):
+        assert forbidden in text
+
+    assert (
+        "recon/cortex_automation_product_boundary_contract.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_automation_product_boundary_contract.md"
+        in status["active_docs"]
+    )
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
+
+
 def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
     cortex_doc = _read(CORTEX_DOC_PATH)
     sre_doc = _read(CORTEX_V2_SRE_PATH)
@@ -4570,14 +4637,15 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`cortex-executive-effectiveness-evaluator-build`" in text
+    assert "`cortex-automation-product-boundary-contract`" in text
+    assert "mission objective contract" in text.lower()
+    assert "none_lab_proof_only" in text
     assert (
         "- Next product train after the current focus: "
         "`cortex-executive-effectiveness-evaluator-live-gate1`"
     ) in text
     assert "- Train: `cortex-executive-effectiveness-evaluator-live-gate1`" in text
-    assert "allowed commands" in text.lower()
-    assert "exact live-command registration" in text.lower()
+    assert "positive value/shipping claims" in text.lower()
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
