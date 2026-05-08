@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-automation-product-boundary-contract`
-### Next Product Train
 - Slug: `cortex-executive-effectiveness-evaluator-live-gate1`
-- Surface: `no-live lab/proof evaluator live-interface gate`
-- Why now: The evaluator build passed and the automation product-boundary contract now prevents the development loop from becoming Cortex product identity: evaluator rows carry a mission objective contract, lab-only rows cannot claim product value, product claims require product spine plus non-lab model-I/O path, and the overnight runner blocks unsafe candidate surfaces or positive value/shipping claims without user review. The next work is to define the live matrix interface before any live execution or AlphaEvolve-style candidate loop.
+### Next Product Train
+- Slug: `cortex-simple-hook-baseline-challenger`
+- Surface: `no-live lab/proof evaluator baseline`
+- Why now: Live Gate 1 passed without running Codex: it registered the future evaluator live matrix command/env, proved approval refusal, emitted a 60-row dry-run schedule for four arms across five task families and three repeats, preserved mission objective contract fields on every row, and kept dominance gates plus simple/silent no-value rules intact. The next dependency is the simple-hook baseline; without it, the future live matrix cannot answer whether rich Cortex earns its complexity.
 
 ### Research Lines Under Evaluation
 

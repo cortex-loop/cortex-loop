@@ -106,7 +106,8 @@
     "docs/recon/cortex_executive_effectiveness_evaluator_gate0.md",
     "docs/recon/cortex_overnight_evaluator_automation_hardening.md",
     "docs/recon/cortex_executive_effectiveness_evaluator_build.md",
-    "docs/recon/cortex_automation_product_boundary_contract.md"
+    "docs/recon/cortex_automation_product_boundary_contract.md",
+    "docs/recon/cortex_executive_effectiveness_evaluator_live_gate1.md"
   ],
   "bio_to_code_matrix": [
     {
@@ -454,7 +455,8 @@
           "docs/recon/cortex_executive_effectiveness_evaluator_gate0.md",
           "docs/recon/cortex_overnight_evaluator_automation_hardening.md",
           "docs/recon/cortex_executive_effectiveness_evaluator_build.md",
-          "docs/recon/cortex_automation_product_boundary_contract.md"
+          "docs/recon/cortex_automation_product_boundary_contract.md",
+          "docs/recon/cortex_executive_effectiveness_evaluator_live_gate1.md"
         ],
         "update_rule": "Add a recon when a proof or decision is earned; do not treat recon alone as shipping truth without status promotion."
       }
@@ -928,13 +930,13 @@
     ]
   },
   "next_product_train": {
-    "slug": "cortex-executive-effectiveness-evaluator-live-gate1",
-    "surface": "no-live lab/proof evaluator live-interface gate",
-    "executive_benefit": "Add the approval-gated live evaluator interface that can later run the four-arm Cortex effectiveness matrix without changing product policy or starting candidate mutation.",
-    "why_now": "The evaluator build passed and the automation product-boundary contract now prevents the development loop from becoming Cortex product identity: evaluator rows carry a mission objective contract, lab-only rows cannot claim product value, product claims require product spine plus non-lab model-I/O path, and the overnight runner blocks unsafe candidate surfaces or positive value/shipping claims without user review. The next work is to define the live matrix interface before any live execution or AlphaEvolve-style candidate loop.",
-    "primary_metric": "Implement a no-live Gate 1 interface that registers exact future live command/env pairs, refuses without approval, proves the four required arms and task families can be scheduled, writes a dry-run live plan without running Codex, preserves the mission objective contract on future episode rows, and keeps simple-hook parity, silent contamination, overcontrol, trace ambiguity, root/runtime mutation, and hidden-verifier leakage as dominance gates.",
+    "slug": "cortex-simple-hook-baseline-challenger",
+    "surface": "no-live lab/proof evaluator baseline",
+    "executive_benefit": "Add the deliberately small independent simple-hook challenger so rich Cortex policies must beat a serious low-complexity baseline before any value claim.",
+    "why_now": "Live Gate 1 passed without running Codex: it registered the future evaluator live matrix command/env, proved approval refusal, emitted a 60-row dry-run schedule for four arms across five task families and three repeats, preserved mission objective contract fields on every row, and kept dominance gates plus simple/silent no-value rules intact. The next dependency is the simple-hook baseline; without it, the future live matrix cannot answer whether rich Cortex earns its complexity.",
+    "primary_metric": "Implement a runnable simple-hook baseline under lab/evaluator ownership, target under 500 LOC, independent of cortex/core, cortex/sre, and cortex/aux, with only task-standard capture, one reminder/context path, and one closure check; prove it can be scheduled as the simple_hook_baseline arm without changing evaluator scoring or product behavior.",
     "guardrail": "No live Codex run in this seam. No product host behavior change. No candidate mutation. Do not change signed UserPromptSubmit text, PostToolUse text, Stop text, SRE law, matcher thresholds, fixture scoring, root hooks, hidden-verifier boundary, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed intervention pressure, or host-runtime extraction.",
-    "kill_rule": "Fail if the interface omits any required arm, lacks the simple-hook challenger, registers a live command without exact env approval requirements, starts a live run, weakens dominance gates, drops the mission objective/product-boundary contract, changes fixtures/scoring, or authorizes AlphaEvolve-style mutation before live Gate 1 proof passes.",
+    "kill_rule": "Fail if the simple hook imports cortex/core, cortex/sre, or cortex/aux; exceeds the LOC target without explicit status justification; implements Cortex scoring lattice, AUX memory, Core commitment law, or multi-hook policy search; changes evaluator scoring/fixtures; starts a live run; or authorizes AlphaEvolve-style mutation before the first real four-arm matrix is ready.",
     "last_reviewed_at": "2026-05-08T00:00:00+00:00"
   },
   "packet_to_code_anchors": [
@@ -1592,7 +1594,7 @@
     "The Codex App/CLI PostToolUse task-standard narrow live probe harness seam then added `--task-standard-posttooluse-live`, approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running a live Codex command. The live probe remains unearned until explicitly approved and run; this seam earns harness readiness only and preserves signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport deferral, PreToolUse denial deferral, and PermissionRequest policy."
   ],
   "work_today": {
-    "slug": "cortex-automation-product-boundary-contract",
-    "note": "The Cortex automation product-boundary contract passed as a no-live support-surface hardening seam. `lab/cortex_effectiveness_evaluator.py` now requires evaluator design and episode rows to carry a mission objective contract with `executive_function`, `loop_stage`, `control_mode`, `truth_scope`, `model_io_path`, `product_spine`, and `contraction_implication`. Lab-only rows with `model_io_path=none_lab_proof_only` cannot claim product progress, Cortex value, behavior lift, exactness value lift, broad Cortex lift, Codex App parity, or shipping promotion; product/value claims require a non-empty model-I/O path and product spine. Simple-hook parity and silent perception success remain no-value. `internal/automation/cortex_overnight_loop.py` now treats lab/eval/workflow changes as support, blocks `cortex/**` candidate changes without product spine, model-I/O path, and current-truth authorization, blocks candidate mutation of scoring/fixtures/hidden verifier/Core law/packet law/workflow gates/generated product docs, forces user review for structured positive value/shipping fields, and writes morning digest fields for executive function, loop stage, model-I/O path, simple-hook result, and contraction implication. No live Codex run occurred; no product host behavior, model-visible text, SRE law, matcher threshold, fixture scoring, hidden scoring, root hook, or AlphaEvolve mutation loop changed."
+    "slug": "cortex-executive-effectiveness-evaluator-live-gate1",
+    "note": "The Cortex executive effectiveness evaluator Live Gate 1 passed as a no-live lab/proof interface seam. `lab/cortex_effectiveness_evaluator.py --live-gate1 --require-pass` now writes `evaluator_design.json`, `live_plan.json`, `episode_table.jsonl`, `summary.json`, `leaderboard.json`, and `failure_analysis.json` under `.cortex/live_validation/cortex_effectiveness_evaluator_live_gate1/`. The dry-run plan schedules 60 rows: four arms (`no_cortex_baseline`, `simple_hook_baseline`, `cortex_silent_perception`, `cortex_active_policy`) across five task families and three repeats, with isolated workspaces, no root config mutation, no runtime snapshot, and mission objective contract fields on every row. The registered future live command is `CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --live-matrix`; running `--live-matrix` without approval returns `not_run_approval_required`, and running it with approval remains deferred until `cortex-simple-hook-baseline-challenger` exists. Simple-hook parity and silent perception success remain no-value, dominance gates remain pre-scoring blockers, and positive value results still require user review. No live Codex run occurred; no product host behavior, model-visible text, SRE law, matcher threshold, fixture scoring, hidden scoring, root hook, or AlphaEvolve mutation loop changed."
   }
 }

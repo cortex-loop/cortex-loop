@@ -12,7 +12,10 @@ from lab import cortex_effectiveness_evaluator as evaluator
 from lab.cortex_effectiveness_evaluator import (
     ARMS,
     DOMINANCE_GATES,
+    EVALUATOR_LIVE_APPROVAL_ENV,
+    EVALUATOR_LIVE_APPROVAL_VALUE,
     LAB_PROOF_MODEL_IO_PATH,
+    LIVE_MATRIX_REPEAT_COUNT,
     MISSION_OBJECTIVE_REQUIRED_FIELDS,
     TASK_FAMILIES,
     EvaluatorEpisodeRow,
@@ -22,6 +25,8 @@ from lab.cortex_effectiveness_evaluator import (
     mission_objective_for_row,
     run_cortex_effectiveness_evaluator_build,
     run_cortex_effectiveness_evaluator_gate0,
+    run_cortex_effectiveness_evaluator_live_gate1,
+    run_cortex_effectiveness_evaluator_live_matrix,
 )
 
 
@@ -280,10 +285,95 @@ def test_build_cli_passes_and_emits_required_artifacts(tmp_path: Path) -> None:
     assert (output_root / "leaderboard.json").exists()
 
 
+def test_live_gate1_registers_approval_gated_dry_run_matrix(tmp_path: Path) -> None:
+    report = run_cortex_effectiveness_evaluator_live_gate1(output_root=tmp_path)
+    live_plan = json.loads((tmp_path / "live_plan.json").read_text())
+    rows = [
+        json.loads(line)
+        for line in (tmp_path / "episode_table.jsonl").read_text().splitlines()
+    ]
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_cortex_executive_effectiveness_evaluator_live_gate1"
+    assert report["live_trials_ran"] is False
+    assert report["alphaevolve_mutation_loop_allowed"] is False
+    assert report["next_train_if_pass"] == "cortex-simple-hook-baseline-challenger"
+    assert live_plan["row_count"] == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT
+    assert len(rows) == live_plan["row_count"]
+    assert set(live_plan["arms"]) == set(ARMS)
+    assert set(live_plan["task_families"]) == set(TASK_FAMILIES)
+    assert set(DOMINANCE_GATES).issubset(set(live_plan["dominance_gates"]))
+    assert live_plan["registered_live_commands"][0]["env"] == {
+        EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE
+    }
+    assert all(
+        set(MISSION_OBJECTIVE_REQUIRED_FIELDS).issubset(
+            set(row["mission_objective"])
+        )
+        for row in rows
+    )
+
+
+def test_live_matrix_refuses_without_approval_and_defers_with_approval(tmp_path: Path) -> None:
+    refused = run_cortex_effectiveness_evaluator_live_matrix(
+        output_root=tmp_path / "refused",
+        approval_env={},
+    )
+    approved_deferred = run_cortex_effectiveness_evaluator_live_matrix(
+        output_root=tmp_path / "approved",
+        approval_env={EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
+    )
+
+    assert refused["verdict"] == "not_run_approval_required"
+    assert refused["live_trials_ran"] is False
+    assert refused["approval_env"] == EVALUATOR_LIVE_APPROVAL_ENV
+    assert approved_deferred["verdict"] == (
+        "not_run_live_matrix_execution_deferred_until_simple_hook_challenger"
+    )
+    assert approved_deferred["live_trials_ran"] is False
+
+
+def test_live_gate1_cli_passes_and_live_matrix_cli_refuses(tmp_path: Path) -> None:
+    gate_root = tmp_path / "live_gate1"
+    gate = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--live-gate1",
+            "--require-pass",
+            "--output-root",
+            str(gate_root),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    refusal = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--live-matrix",
+            "--output-root",
+            str(tmp_path / "live_matrix_refusal"),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "pass_cortex_executive_effectiveness_evaluator_live_gate1" in gate.stdout
+    assert (gate_root / "live_plan.json").exists()
+    assert "not_run_approval_required" in refusal.stdout
+
+
 def test_gate0_source_keeps_alphaevolve_loop_deferred() -> None:
     source = inspect.getsource(evaluator)
 
     assert "--gate0" in source
+    assert "--live-gate1" in source
+    assert "--live-matrix" in source
     assert "alphaevolve_loop_later" in source
     assert "program_database_fields" in source
     assert "candidate_representation" in source
