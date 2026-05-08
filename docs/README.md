@@ -283,6 +283,10 @@ Active docs:
   no-live design gate defining the hard objective, four evaluator arms,
   mandatory simple-hook challenger, dominance gates, and contraction
   obligations before any more actuator work
+- [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
+  internal guardrail seam adding a local overnight runner contract, digest,
+  bloat metrics, safe auto-merge boundaries, and evaluator-only automation
+  checks
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed

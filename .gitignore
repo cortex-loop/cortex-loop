@@ -11,6 +11,7 @@ dist/
 .cortex/train_loops/
 .cortex/quality_audit/
 .cortex/closeout_contract/
+.cortex/automation/
 .claude/worktrees/
 .env
 .env.*

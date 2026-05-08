@@ -337,7 +337,7 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_PATH = (
     / "cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun.md"
 )
 
-CURRENT_WORK_SLUG = "cortex-executive-effectiveness-evaluator-gate0"
+CURRENT_WORK_SLUG = "cortex-overnight-evaluator-automation-hardening"
 NEXT_PRODUCT_TRAIN_SLUG = "cortex-executive-effectiveness-evaluator-build"
 CONTEXT_LOOP_TRACE_REMEDIATION_RECON_PATH = (
     REPO_ROOT
@@ -397,6 +397,12 @@ CORTEX_EXECUTIVE_EFFECTIVENESS_EVALUATOR_GATE0_PATH = (
     / "docs"
     / "recon"
     / "cortex_executive_effectiveness_evaluator_gate0.md"
+)
+CORTEX_OVERNIGHT_EVALUATOR_AUTOMATION_HARDENING_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_overnight_evaluator_automation_hardening.md"
 )
 
 CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_AFTER_SHARED_TOOL_EVIDENCE_PATH = (
@@ -511,44 +517,43 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
 ) -> None:
     assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     work_note = status["work_today"]["note"].lower()
-    assert "cortex executive effectiveness evaluator gate 0 passed" in work_note
-    assert "no-live design gate" in work_note
-    assert "hard objective" in work_note
-    assert "active lifecycle policy improves next model behavior" in work_note
-    assert "no_cortex_baseline" in work_note
-    assert "simple_hook_baseline" in work_note
-    assert "cortex_silent_perception" in work_note
-    assert "cortex_active_policy" in work_note
-    assert "exactness/evidence recovery" in work_note
-    assert "truthful closure" in work_note
-    assert "blocker surfacing" in work_note
-    assert "continuity after interruption" in work_note
-    assert "clean verified-work controls" in work_note
-    assert "stop-only" in work_note
-    assert "userpromptsubmit+stop" in work_note
-    assert "posttooluse+stop" in work_note
-    assert "lifecycle-composed policy" in work_note
-    assert "pretooluse later after host contract verification" in work_note
-    assert "overcontrol" in work_note
-    assert "repeated intervention loop" in work_note
-    assert "trace ambiguity" in work_note
-    assert "hidden-verifier leakage" in work_note
-    assert "root config mutation" in work_note
-    assert "runtime snapshot" in work_note
-    assert "simple-hook parity" in work_note
-    assert "silent perception contamination" in work_note
-    assert "stale posttooluse proof surfaces" in work_note
-    assert "alphaevolve-inspired" in work_note
-    assert "hard evaluator first" in work_note
-    assert "bounded candidate iteration later" in work_note
-    assert "no behavior lift" in work_note
-    assert "exactness value lift" in work_note
-    assert "broad cortex lift" in work_note
-    assert "codex app parity" in work_note
-    assert "shipping promotion" in work_note
-    assert "product host behavior change" in work_note
-    assert "model-visible text change" in work_note
-    assert "sre law change" in work_note
+    assert "cortex overnight evaluator automation hardening" in work_note
+    assert "internal/automation/cortex_overnight_loop.py --once" in work_note
+    assert "repo-owned local overnight runner contract" in work_note
+    assert "acquires a lock" in work_note
+    assert "clean synced `main`" in work_note
+    assert "managed session branch" in work_note
+    assert "internal/truth/cortex_status.json" in work_note
+    assert "evaluator-authorized next work" in work_note
+    assert ".cortex/automation/overnight/yyyy-mm-dd/digest.md" in work_note
+    assert "dirty main" in work_note
+    assert "non-managed branches" in work_note
+    assert "non-evaluator trains" in work_note
+    assert "strategic user-review boundaries" in work_note
+    assert "product law revision" in work_note
+    assert "fixture/scoring" in work_note
+    assert "hidden-verifier mutation" in work_note
+    assert "external paid/service-lane credentials" in work_note
+    assert "unsafe live runs" in work_note
+    assert "old posttooluse task-specific harness growth" in work_note
+    assert "positive value/lift claims" in work_note
+    assert "loc added/deleted" in work_note
+    assert "new policy paths" in work_note
+    assert "duplicate-policy removal" in work_note
+    assert "contraction-debt increase" in work_note
+    assert "candidate provenance fields" in work_note
+    assert "loses to the simple baseline twice" in work_note
+    assert "codex cli live runs remain allowed" in work_note
+    assert "external paid apis remain disallowed" in work_note
+    assert "routine overnight digests are local ignored artifacts" in work_note
+    assert "cortex-executive-effectiveness-evaluator-build" in work_note
+    assert "no product host behavior" in work_note
+    assert "model-visible text" in work_note
+    assert "sre law" in work_note
+    assert "matcher threshold" in work_note
+    assert "fixture scoring" in work_note
+    assert "hidden scoring" in work_note
+    assert "root hook" in work_note
     assert "alphaevolve mutation loop" in work_note
 
     next_train = status["next_product_train"]
@@ -1416,13 +1421,14 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_openai_operator_silent_control_live_probe.md",
         "cortex_openai_operator_silent_control_live_probe_retry.md",
         "cortex_openai_operator_verification_debt_continuation.md",
-            "cortex_openai_operator_visible_intervention_hardened_rerun.md",
-            "cortex_openai_operator_visible_intervention_live_probe.md",
-            "cortex_semantic_contraction_audit.md",
-            "cortex_task_standard_executive_doctrine_math_refinement.md",
-            "cortex_task_standard_sre_correspondence_reconciliation.md",
-            "cortex_visible_intervention_product_perception_hardening.md",
-            "lifecycle_first_surface_matrix.md",
+        "cortex_openai_operator_visible_intervention_hardened_rerun.md",
+        "cortex_openai_operator_visible_intervention_live_probe.md",
+        "cortex_overnight_evaluator_automation_hardening.md",
+        "cortex_semantic_contraction_audit.md",
+        "cortex_task_standard_executive_doctrine_math_refinement.md",
+        "cortex_task_standard_sre_correspondence_reconciliation.md",
+        "cortex_visible_intervention_product_perception_hardening.md",
+        "lifecycle_first_surface_matrix.md",
     ]
     assert sorted(path.name for path in (DOCS_ROOT / "runtime_context").iterdir()) == [
         "BASELINE_SHAPED_EXAMPLES.md",
@@ -3940,6 +3946,72 @@ def test_cortex_executive_effectiveness_evaluator_gate0_defines_program() -> Non
     _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
+def test_cortex_overnight_evaluator_automation_hardening_pins_runner() -> None:
+    text = _read(CORTEX_OVERNIGHT_EVALUATOR_AUTOMATION_HARDENING_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: internal automation guardrail" in text
+    assert "Verdict: `overnight_evaluator_loop_guarded`." in text
+    for phrase in (
+        "internal/automation/cortex_overnight_loop.py --once",
+        ".cortex/automation/overnight/YYYY-MM-DD/digest.md",
+        "Routine overnight digests are ignored local artifacts",
+        "acquire a local lock",
+        "clean `main` or a managed session branch",
+        "evaluator-authorized work",
+        "no-Cortex / simple-hook / silent / active",
+        "simple-hook parity and silent success as no-value outcomes",
+        "dominance gates",
+        "strategic judgment",
+        "product law revision",
+        "fixture/scoring changes",
+        "external paid credentials",
+        "Codex CLI live runs are allowed only when current truth registers them",
+        "External paid APIs and service-lane credentials remain disallowed",
+        "LOC added and deleted",
+        "new policy paths",
+        "duplicate policy was removed",
+        "contraction debt increased",
+        "hidden scoring",
+        "fixtures",
+        "Core law",
+        "workflow gates",
+        "old PostToolUse-specific harness",
+        "loses to the simple baseline twice",
+        "candidate id",
+        "parent id",
+        "mutation reason",
+        "failure class",
+        "contraction implication",
+        "cortex-executive-effectiveness-evaluator-build",
+    ):
+        assert phrase in text
+
+    for forbidden in (
+        "No behavior lift",
+        "No exactness value lift",
+        "No broad Cortex lift",
+        "No Codex App parity",
+        "No shipping promotion",
+        "No product host behavior changed",
+        "No model-visible text changed",
+        "No evaluator live matrix was run",
+        "No AlphaEvolve-style mutation loop",
+    ):
+        assert forbidden in text
+
+    assert (
+        "recon/cortex_overnight_evaluator_automation_hardening.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_overnight_evaluator_automation_hardening.md"
+        in status["active_docs"]
+    )
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
+
+
 def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
     cortex_doc = _read(CORTEX_DOC_PATH)
     sre_doc = _read(CORTEX_V2_SRE_PATH)
@@ -4436,7 +4508,7 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`cortex-executive-effectiveness-evaluator-gate0`" in text
+    assert "`cortex-overnight-evaluator-automation-hardening`" in text
     assert (
         "- Next product train after the current focus: "
         "`cortex-executive-effectiveness-evaluator-build`"

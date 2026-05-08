@@ -325,7 +325,7 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-executive-effectiveness-evaluator-gate0`
+- Slug: `cortex-overnight-evaluator-automation-hardening`
 ### Next Product Train
 - Slug: `cortex-executive-effectiveness-evaluator-build`
 - Surface: `no-live lab/proof evaluator build`
