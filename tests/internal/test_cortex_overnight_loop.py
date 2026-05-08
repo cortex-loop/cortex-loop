@@ -11,19 +11,29 @@ from internal.automation import cortex_overnight_loop as loop
 def _status(
     slug: str = "cortex-executive-effectiveness-evaluator-build",
     *,
+    work_slug: str | None = None,
+    work_note: str = "",
     surface: str = "no-live lab/proof evaluator build",
     guardrail: str = "No live Codex run. No product host behavior change.",
     primary_metric: str = "Build evaluator_design.json, episode_table.jsonl, summary.json, and leaderboard.json.",
     kill_rule: str = "Fail if simple or silent succeeds equally.",
+    extra: dict[str, object] | None = None,
 ) -> dict[str, object]:
+    next_train: dict[str, object] = {
+        "slug": slug,
+        "surface": surface,
+        "guardrail": guardrail,
+        "primary_metric": primary_metric,
+        "kill_rule": kill_rule,
+    }
+    if extra:
+        next_train.update(extra)
     return {
-        "next_product_train": {
-            "slug": slug,
-            "surface": surface,
-            "guardrail": guardrail,
-            "primary_metric": primary_metric,
-            "kill_rule": kill_rule,
-        }
+        "work_today": {
+            "slug": work_slug or slug,
+            "note": work_note,
+        },
+        "next_product_train": next_train,
     }
 
 
@@ -90,6 +100,16 @@ def test_classify_next_work_allows_registered_live_but_never_auto_merges() -> No
             surface="approval-gated live evaluator proof",
             guardrail="Codex CLI live matrix is allowed inside registered evaluator plan.",
             primary_metric="Run live evaluator matrix only after deterministic replay.",
+            extra={
+                "registered_live_commands": [
+                    {
+                        "command": "python3 lab/cortex_effectiveness_evaluator.py --live-matrix",
+                        "env": {
+                            "CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED": "approved"
+                        },
+                    }
+                ]
+            },
         ),
         _git(),
     )
@@ -97,6 +117,46 @@ def test_classify_next_work_allows_registered_live_but_never_auto_merges() -> No
     assert decision.status == "ready"
     assert decision.live_codex_allowed is True
     assert decision.safe_to_auto_merge is False
+
+
+def test_classify_next_work_refuses_unregistered_live() -> None:
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-executive-effectiveness-evaluator-live-matrix",
+            surface="approval-gated live evaluator proof",
+            guardrail="Codex CLI live matrix is allowed inside registered evaluator plan.",
+            primary_metric="Run live evaluator matrix only after deterministic replay.",
+        ),
+        _git(),
+    )
+
+    assert decision.status == "blocked"
+    assert any("exact registered command" in reason for reason in decision.reasons)
+
+
+def test_classify_next_work_enforces_overnight_hours_and_noop_dedupe() -> None:
+    off_hours = loop.classify_next_work(
+        _status(),
+        _git(),
+        now=datetime(2026, 5, 8, 12, tzinfo=timezone.utc),
+    )
+    no_op = loop.classify_next_work(
+        _status(),
+        _git(),
+        now=datetime(2026, 5, 8, 23, tzinfo=timezone.utc),
+        previous_cycle={
+            "decision": {
+                "status": "ready",
+                "next_slug": "cortex-executive-effectiveness-evaluator-build",
+            },
+            "git_state": {"branch": "main"},
+        },
+    )
+
+    assert off_hours.status == "blocked"
+    assert any("outside the registered overnight" in reason for reason in off_hours.reasons)
+    assert no_op.status == "blocked"
+    assert any("no-op cycle" in reason for reason in no_op.reasons)
 
 
 def test_bloat_metrics_detects_policy_growth_and_contraction() -> None:
@@ -110,6 +170,8 @@ def test_bloat_metrics_detects_policy_growth_and_contraction() -> None:
 
     assert growth.loc_added == 27
     assert growth.loc_deleted == 3
+    assert growth.non_test_loc_added == 27
+    assert growth.policy_lab_loc_added == 25
     assert growth.new_policy_paths == ("cortex/hosts/openai/new_policy.py",)
     assert growth.contraction_debt_increased is True
     assert contraction.duplicate_policy_removed is True
@@ -159,6 +221,99 @@ def test_candidate_guards_find_forbidden_paths_and_task_specific_harness() -> No
     assert any("general evaluator episode rows" in reason for reason in decision.reasons)
 
 
+def test_non_test_loc_budget_blocks_non_exempt_growth() -> None:
+    bloat = loop.BloatMetrics(
+        loc_added=300,
+        loc_deleted=0,
+        changed_files=("internal/automation/large.py",),
+        new_policy_paths=(),
+        duplicate_policy_removed=False,
+        contraction_debt_increased=False,
+        non_test_loc_added=300,
+    )
+    blocked = loop.classify_next_work(
+        _status(slug="cortex-executive-effectiveness-evaluator-followup"),
+        _git(),
+        bloat,
+    )
+    exempt = loop.classify_next_work(_status(), _git(), bloat)
+
+    assert blocked.status == "blocked"
+    assert any("non-test LOC budget" in reason for reason in blocked.reasons)
+    assert exempt.status == "ready"
+
+
+def test_managed_current_work_slug_preserves_build_exemption_after_next_train_advances() -> None:
+    bloat = loop.BloatMetrics(
+        loc_added=700,
+        loc_deleted=0,
+        changed_files=("lab/cortex_effectiveness_evaluator.py",),
+        new_policy_paths=(),
+        duplicate_policy_removed=False,
+        contraction_debt_increased=False,
+        non_test_loc_added=700,
+        policy_lab_loc_added=300,
+        policy_lab_loc_deleted=0,
+    )
+
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-executive-effectiveness-evaluator-live-gate1",
+            work_slug="cortex-executive-effectiveness-evaluator-build",
+            work_note=(
+                "The Cortex executive effectiveness evaluator build passed as a "
+                "no-live lab/proof seam. No live Codex run occurred."
+            ),
+            surface="no-live lab/proof evaluator live-interface gate",
+            guardrail="No live Codex run in this seam.",
+        ),
+        _git(
+            branch=(
+                "codex/20260508-214601-"
+                "cortex-executive-effectiveness-evaluator-build"
+            ),
+            dirty=True,
+        ),
+        bloat,
+    )
+
+    assert decision.status == "ready"
+    assert decision.next_slug == "cortex-executive-effectiveness-evaluator-build"
+    assert (
+        "python3 lab/cortex_effectiveness_evaluator.py --build --require-pass"
+        in decision.allowed_commands
+    )
+
+
+def test_policy_lab_growth_requires_contraction_candidate_outside_build() -> None:
+    bloat = loop.BloatMetrics(
+        loc_added=20,
+        loc_deleted=0,
+        changed_files=("lab/new_policy_search.py",),
+        new_policy_paths=(),
+        duplicate_policy_removed=False,
+        contraction_debt_increased=False,
+        non_test_loc_added=20,
+        policy_lab_loc_added=20,
+        policy_lab_loc_deleted=0,
+    )
+    blocked = loop.classify_next_work(
+        _status(slug="cortex-executive-effectiveness-evaluator-followup"),
+        _git(),
+        bloat,
+    )
+    allowed_with_contraction = loop.classify_next_work(
+        _status(slug="cortex-executive-effectiveness-evaluator-followup"),
+        _git(),
+        bloat,
+        candidate_contraction=("posttooluse_stop",),
+    )
+
+    assert blocked.status == "blocked"
+    assert any("contraction candidate" in reason for reason in blocked.reasons)
+    assert allowed_with_contraction.status == "ready"
+
+
 def test_repeated_simple_baseline_losses_create_contraction_candidates() -> None:
     rows = [
         {"candidate_id": "a", "policy_candidate": "posttooluse_stop", "failure_class": "failure_simple_baseline_parity"},
@@ -194,10 +349,26 @@ def test_run_once_emits_digest_even_when_blocked(tmp_path: Path, monkeypatch) ->
     assert report["decision"]["status"] == "blocked"
     digest_path = Path(report["digest_path"])
     assert digest_path.exists()
+    assert Path(report["cycle_state_path"]).exists()
+    assert (tmp_path / "digests" / "latest_cycle_state.json").exists()
     text = digest_path.read_text()
     assert "Cortex Overnight Digest" in text
     assert "dirty resting state" in text
     assert "User Input Needed" in text
+
+
+def test_load_candidate_rows_feeds_simple_baseline_contraction(tmp_path: Path) -> None:
+    candidate_db = tmp_path / ".cortex/automation/candidates/candidates.jsonl"
+    candidate_db.parent.mkdir(parents=True)
+    candidate_db.write_text(
+        '{"candidate_id":"a","policy_candidate":"stop_only","failure_class":"failure_simple_baseline_parity"}\n'
+        '{"candidate_id":"b","policy_candidate":"stop_only","failure_class":"failure_simple_baseline_parity"}\n',
+        encoding="utf-8",
+    )
+
+    rows = loop.load_candidate_rows(tmp_path, candidate_db)
+
+    assert loop.repeated_simple_baseline_losses(rows) == ("stop_only",)
 
 
 def test_candidate_record_schema_is_complete() -> None:

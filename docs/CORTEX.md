@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-overnight-evaluator-automation-hardening`
-### Next Product Train
 - Slug: `cortex-executive-effectiveness-evaluator-build`
-- Surface: `no-live lab/proof evaluator build`
-- Why now: The Cortex executive effectiveness evaluator Gate 0 passed: it defined the hard objective, four arms (`no_cortex_baseline`, `simple_hook_baseline`, `cortex_silent_perception`, `cortex_active_policy`), initial task families, lifecycle policy candidates, dominance gates, and contraction obligations. The prior PostToolUse paired live result remains `failure_no_value`, so the next work must build the general evaluator rather than tune PostToolUse or run another same-shape live probe.
+### Next Product Train
+- Slug: `cortex-executive-effectiveness-evaluator-live-gate1`
+- Surface: `no-live lab/proof evaluator live-interface gate`
+- Why now: The evaluator build passed: it now emits the required design, episode table, summary, and leaderboard artifacts; preserves the historical PostToolUse `failure_no_value` replay; and hardens overnight automation with cycle state, allowed commands, bloat budgets, no-op dedupe, and exact live-command registration. The next work is to define the live matrix interface before any live execution or AlphaEvolve-style candidate loop.
 
 ### Research Lines Under Evaluation
 

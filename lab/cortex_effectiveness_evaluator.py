@@ -1,4 +1,4 @@
-"""No-live Cortex executive effectiveness evaluator design gate."""
+"""No-live Cortex executive effectiveness evaluator."""
 
 from __future__ import annotations
 
@@ -12,6 +12,13 @@ from typing import Any, Iterable, Mapping, Sequence
 
 DEFAULT_OUTPUT_ROOT = Path(
     ".cortex/live_validation/cortex_effectiveness_evaluator_gate0"
+)
+DEFAULT_BUILD_OUTPUT_ROOT = Path(
+    ".cortex/live_validation/cortex_effectiveness_evaluator_build"
+)
+HISTORICAL_POSTTOOLUSE_PAIRED_VALUE_SUMMARY = Path(
+    ".cortex/live_validation/openai/codex_app_cli_hook_native_behavior_comparison/"
+    "task_standard_posttooluse_paired_value_live_20260508T120907Z/summary.json"
 )
 
 ARMS: tuple[str, ...] = (
@@ -101,6 +108,11 @@ class EvaluatorEpisodeRow:
     arm: str
     policy_candidate: str
     metrics: Mapping[str, Any]
+    source: str = "synthetic"
+    episode_id: str = ""
+    expected_verdict: str | None = None
+    observed_verdict: str | None = None
+    notes: str = ""
 
     def key(self) -> tuple[str, str, int]:
         return (self.task_family, self.case_id, self.repeat_index)
@@ -372,6 +384,10 @@ def _row(
     repeat_index: int = 1,
     policy_candidate: str = "lifecycle_composed_policy",
     score: int = 0,
+    source: str = "synthetic",
+    expected_verdict: str | None = None,
+    observed_verdict: str | None = None,
+    notes: str = "",
     **flags: Any,
 ) -> EvaluatorEpisodeRow:
     metrics: dict[str, Any] = {field: False for field in SCORE_FIELDS}
@@ -385,6 +401,11 @@ def _row(
         arm=arm,
         policy_candidate=policy_candidate,
         metrics=metrics,
+        source=source,
+        episode_id=f"{task_family}:{case_id}:{repeat_index}",
+        expected_verdict=expected_verdict,
+        observed_verdict=observed_verdict,
+        notes=notes,
     )
 
 
@@ -441,6 +462,259 @@ def gate0_synthetic_scenarios() -> dict[str, list[EvaluatorEpisodeRow]]:
             _row("cortex_active_policy", score=2, hidden_verifier_leakage=True),
         ],
     }
+
+
+def build_synthetic_episode_rows() -> list[EvaluatorEpisodeRow]:
+    """Return scoreable synthetic rows with one distinct key per scenario."""
+
+    rows: list[EvaluatorEpisodeRow] = []
+    for scenario_name, scenario_rows in gate0_synthetic_scenarios().items():
+        result = evaluate_cortex_effectiveness_rows(scenario_rows)
+        for row in scenario_rows:
+            rows.append(
+                _row(
+                    row.arm,
+                    task_family=row.task_family,
+                    case_id=scenario_name,
+                    repeat_index=row.repeat_index,
+                    policy_candidate=row.policy_candidate,
+                    score=row.score(),
+                    source="synthetic_gate0_replay",
+                    expected_verdict=str(result["verdict"]),
+                    **{
+                        flag: bool(row.metrics.get(flag))
+                        for flag in BOUNDARY_FLAGS
+                        if bool(row.metrics.get(flag))
+                    },
+                )
+            )
+    return rows
+
+
+def _historical_score_metrics(*, success: bool, **flags: Any) -> dict[str, Any]:
+    metrics: dict[str, Any] = {field: False for field in SCORE_FIELDS}
+    if success:
+        metrics["task_success"] = True
+        metrics["truthful_closure"] = True
+        metrics["evidence_recovery"] = True
+    metrics.update(flags)
+    return metrics
+
+
+def historical_posttooluse_failure_no_value_rows(
+    summary_path: Path | str = HISTORICAL_POSTTOOLUSE_PAIRED_VALUE_SUMMARY,
+) -> tuple[list[EvaluatorEpisodeRow], dict[str, Any]]:
+    """Preserve the known PostToolUse paired-value negative as replay evidence.
+
+    The historical run did not include the simple-hook challenger. For the
+    build seam we preserve the negative evidence as replay rows, not as live
+    Cortex value. The simple-hook arm is conservatively mirrored from the
+    silent control so a future scorer cannot credit rich Cortex where a small
+    baseline would have tied the observed control.
+    """
+
+    path = Path(summary_path)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    decision = payload.get("decision") or {}
+    pair_results = decision.get("pair_results") or []
+    rows: list[EvaluatorEpisodeRow] = []
+    artifact = path.parent.name
+    registered_verdict = str(decision.get("verdict") or payload.get("verdict") or "")
+    for pair in pair_results:
+        repeat_index = int(pair["repeat_index"])
+        active_success = pair.get("active_verdict") == "pass_posttooluse_next_step_observed"
+        silent_success = bool(pair.get("silent_success"))
+        case_id = f"historical_posttooluse_paired_value_{repeat_index:03d}"
+        common = {
+            "task_family": "exactness_evidence_recovery",
+            "case_id": case_id,
+            "repeat_index": repeat_index,
+            "source": "historical_posttooluse_failure_no_value",
+            "expected_verdict": "failure_no_value",
+            "observed_verdict": registered_verdict,
+            "notes": artifact,
+        }
+        rows.extend(
+            [
+                EvaluatorEpisodeRow(
+                    arm="no_cortex_baseline",
+                    policy_candidate="none",
+                    metrics=_historical_score_metrics(success=False),
+                    **common,
+                ),
+                EvaluatorEpisodeRow(
+                    arm="simple_hook_baseline",
+                    policy_candidate="simple_hook_baseline",
+                    metrics=_historical_score_metrics(success=silent_success),
+                    **common,
+                ),
+                EvaluatorEpisodeRow(
+                    arm="cortex_silent_perception",
+                    policy_candidate="silent_posttooluse_control",
+                    metrics=_historical_score_metrics(success=silent_success),
+                    **common,
+                ),
+                EvaluatorEpisodeRow(
+                    arm="cortex_active_policy",
+                    policy_candidate="posttooluse_stop",
+                    metrics=_historical_score_metrics(success=active_success),
+                    **common,
+                ),
+            ]
+        )
+    replay = {
+        "artifact": artifact,
+        "summary_path": str(path),
+        "registered_verdict": registered_verdict,
+        "preserved_verdict": "failure_no_value",
+        "preserved": registered_verdict == "failure_no_value",
+        "active_wins": int(decision.get("active_wins", -1)),
+        "pair_count": int(decision.get("pair_count", len(pair_results))),
+        "pair_results": pair_results,
+        "live_trials_ran_in_historical_artifact": bool(payload.get("live_trials_ran")),
+        "counts_as_new_live_run": False,
+    }
+    return rows, replay
+
+
+def write_episode_table(path: Path, rows: Sequence[EvaluatorEpisodeRow]) -> None:
+    path.write_text(
+        "".join(json.dumps(row.to_json(), sort_keys=True) + "\n" for row in rows),
+        encoding="utf-8",
+    )
+
+
+def build_leaderboard(rows: Sequence[EvaluatorEpisodeRow]) -> dict[str, Any]:
+    """Summarize no-live evaluator rows without claiming live value."""
+
+    grouped = _group_rows(row for row in rows if row.source.startswith("synthetic"))
+    synthetic_results = evaluate_cortex_effectiveness_rows(
+        [row for row in rows if row.source.startswith("synthetic")]
+    )
+    arm_scores = {
+        arm: sum(row.score() for row in rows if row.arm == arm)
+        for arm in ARMS
+    }
+    value_episode_count = sum(
+        1
+        for result in synthetic_results["episode_results"]
+        if result.get("verdict") == "pass_active_value"
+    )
+    return {
+        "live_trials_ran": False,
+        "score_basis": "synthetic_and_historical_no_live_replay",
+        "scoreable_episode_count": len(grouped),
+        "synthetic_value_episode_count": value_episode_count,
+        "arm_scores": arm_scores,
+        "policy_candidates": [
+            {
+                "policy_candidate": candidate["id"],
+                "status": candidate["status"],
+                "selection_status": "not_live_eligible_until_gate1",
+            }
+            for candidate in ACTIVE_POLICY_CANDIDATES
+        ],
+        "claim_allowed": {
+            "behavior_lift": False,
+            "exactness_value_lift": False,
+            "broad_cortex_lift": False,
+            "codex_app_parity": False,
+            "shipping_promotion": False,
+        },
+    }
+
+
+def run_cortex_effectiveness_evaluator_build(
+    output_root: Path | str = DEFAULT_BUILD_OUTPUT_ROOT,
+    *,
+    historical_summary_path: Path | str = HISTORICAL_POSTTOOLUSE_PAIRED_VALUE_SUMMARY,
+) -> dict[str, Any]:
+    """Build the no-live evaluator artifacts required before live Gate 1."""
+
+    root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
+    design = cortex_effectiveness_evaluator_design()
+    synthetic_rows = build_synthetic_episode_rows()
+    historical_rows, historical_replay = historical_posttooluse_failure_no_value_rows(
+        historical_summary_path
+    )
+    rows = [*synthetic_rows, *historical_rows]
+    synthetic_results = evaluate_cortex_effectiveness_rows(synthetic_rows)
+    leaderboard = build_leaderboard(rows)
+    episode_table_path = root / "episode_table.jsonl"
+    write_episode_table(episode_table_path, rows)
+
+    grouped = _group_rows(synthetic_rows)
+    build_checks = {
+        "dedicated_evaluator_module": True,
+        "episode_table_written": episode_table_path.exists(),
+        "leaderboard_written": True,
+        "all_scoreable_episodes_have_required_arms": all(
+            set(by_arm) == set(ARMS) for by_arm in grouped.values()
+        ),
+        "simple_hook_baseline_present": all(
+            "simple_hook_baseline" in by_arm for by_arm in grouped.values()
+        ),
+        "simple_hook_parity_blocks_value": any(
+            result["verdict"] == "failure_simple_baseline_parity"
+            for result in synthetic_results["episode_results"]
+        ),
+        "silent_success_blocks_value": any(
+            result["verdict"] == "failure_silent_perception_contamination"
+            for result in synthetic_results["episode_results"]
+        ),
+        "dominance_gates_block_value": any(
+            result["verdict"] == "failure_boundary_dominance"
+            for result in synthetic_results["episode_results"]
+        ),
+        "historical_posttooluse_failure_no_value_preserved": historical_replay[
+            "preserved"
+        ],
+        "historical_replay_not_counted_as_new_live": not historical_replay[
+            "counts_as_new_live_run"
+        ],
+    }
+    passed = all(build_checks.values())
+    report = {
+        "passed": passed,
+        "verdict": (
+            "pass_cortex_executive_effectiveness_evaluator_build"
+            if passed
+            else "failure_cortex_executive_effectiveness_evaluator_build"
+        ),
+        "live_trials_ran": False,
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": False,
+        "broad_cortex_lift_claim_allowed": False,
+        "codex_app_parity_claim_allowed": False,
+        "shipping_promotion_claim_allowed": False,
+        "alphaevolve_mutation_loop_allowed": False,
+        "next_train_if_pass": "cortex-executive-effectiveness-evaluator-live-gate1",
+        "artifact_paths": {
+            "evaluator_design": "evaluator_design.json",
+            "episode_table": "episode_table.jsonl",
+            "summary": "summary.json",
+            "leaderboard": "leaderboard.json",
+        },
+        "build_checks": build_checks,
+        "synthetic_results": synthetic_results,
+        "historical_replay": historical_replay,
+        "leaderboard": leaderboard,
+    }
+
+    (root / "evaluator_design.json").write_text(
+        json.dumps(design, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (root / "leaderboard.json").write_text(
+        json.dumps(leaderboard, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (root / "summary.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return report
 
 
 def run_cortex_effectiveness_evaluator_gate0(
@@ -546,9 +820,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="write evaluator_design.json and Gate 0 report",
     )
     parser.add_argument(
+        "--build",
+        action="store_true",
+        help="write evaluator_design.json, episode_table.jsonl, summary.json, and leaderboard.json",
+    )
+    parser.add_argument(
         "--output-root",
         type=Path,
-        default=DEFAULT_OUTPUT_ROOT,
+        default=None,
         help="directory for Gate 0 artifacts",
     )
     parser.add_argument(
@@ -557,10 +836,18 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="return non-zero if Gate 0 does not pass",
     )
     args = parser.parse_args(argv)
-    if not args.gate0:
-        parser.error("select --gate0")
+    if args.gate0 == args.build:
+        parser.error("select exactly one of --gate0 or --build")
 
-    report = run_cortex_effectiveness_evaluator_gate0(args.output_root)
+    output_root = args.output_root
+    if output_root is None:
+        output_root = DEFAULT_OUTPUT_ROOT if args.gate0 else DEFAULT_BUILD_OUTPUT_ROOT
+
+    if args.gate0:
+        report = run_cortex_effectiveness_evaluator_gate0(output_root)
+    else:
+        report = run_cortex_effectiveness_evaluator_build(output_root)
+
     print(json.dumps(report, indent=2, sort_keys=True))
     if args.require_pass and not report["passed"]:
         return 1

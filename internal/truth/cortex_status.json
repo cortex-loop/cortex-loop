@@ -104,7 +104,8 @@
     "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_live_probe.md",
     "docs/recon/cortex_effectiveness_strategy_reset.md",
     "docs/recon/cortex_executive_effectiveness_evaluator_gate0.md",
-    "docs/recon/cortex_overnight_evaluator_automation_hardening.md"
+    "docs/recon/cortex_overnight_evaluator_automation_hardening.md",
+    "docs/recon/cortex_executive_effectiveness_evaluator_build.md"
   ],
   "bio_to_code_matrix": [
     {
@@ -450,7 +451,8 @@
           "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_live_probe.md",
           "docs/recon/cortex_effectiveness_strategy_reset.md",
           "docs/recon/cortex_executive_effectiveness_evaluator_gate0.md",
-          "docs/recon/cortex_overnight_evaluator_automation_hardening.md"
+          "docs/recon/cortex_overnight_evaluator_automation_hardening.md",
+          "docs/recon/cortex_executive_effectiveness_evaluator_build.md"
         ],
         "update_rule": "Add a recon when a proof or decision is earned; do not treat recon alone as shipping truth without status promotion."
       }
@@ -924,13 +926,13 @@
     ]
   },
   "next_product_train": {
-    "slug": "cortex-executive-effectiveness-evaluator-build",
-    "surface": "no-live lab/proof evaluator build",
-    "executive_benefit": "Build the automatic paired evaluator that can decide whether Cortex lifecycle policies improve model behavior over both no-Cortex and the mandatory simple-hook challenger before any more actuator expansion.",
-    "why_now": "The Cortex executive effectiveness evaluator Gate 0 passed: it defined the hard objective, four arms (`no_cortex_baseline`, `simple_hook_baseline`, `cortex_silent_perception`, `cortex_active_policy`), initial task families, lifecycle policy candidates, dominance gates, and contraction obligations. The prior PostToolUse paired live result remains `failure_no_value`, so the next work must build the general evaluator rather than tune PostToolUse or run another same-shape live probe.",
-    "primary_metric": "Build a dedicated evaluator module and episode table, not an expansion of the old PostToolUse-specific harness. The build passes only if it emits `evaluator_design.json`, `episode_table.jsonl`, `summary.json`, and `leaderboard.json`; preserves the PostToolUse `failure_no_value` historical replay; proves synthetic pass/no-value/overcontrol/trace-ambiguous/root-mutated/runtime-snapshot/hidden-leakage rows; treats simple-hook parity and silent perception success as no Cortex value; and records contraction candidates for repeatedly losing machinery.",
-    "guardrail": "No live Codex run. No product host behavior change. No PostToolUse text or policy tuning. No AlphaEvolve mutation loop yet. Do not change signed UserPromptSubmit text, PostToolUse text, Stop text, SRE law, matcher thresholds, fixture scoring, root hooks, hidden-verifier boundary, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed intervention pressure, or host-runtime extraction.",
-    "kill_rule": "Fail the seam if it omits the simple-hook baseline, gives Cortex value when simple or silent succeeds equally, extends the 7K-line PostToolUse harness as the new owner instead of a general episode table, cannot preserve known PostToolUse negative evidence while scoring clean passes, lacks dominance gates, starts a live run, or starts AlphaEvolve-style candidate mutation before the evaluator passes no-live proof.",
+    "slug": "cortex-executive-effectiveness-evaluator-live-gate1",
+    "surface": "no-live lab/proof evaluator live-interface gate",
+    "executive_benefit": "Add the approval-gated live evaluator interface that can later run the four-arm Cortex effectiveness matrix without changing product policy or starting candidate mutation.",
+    "why_now": "The evaluator build passed: it now emits the required design, episode table, summary, and leaderboard artifacts; preserves the historical PostToolUse `failure_no_value` replay; and hardens overnight automation with cycle state, allowed commands, bloat budgets, no-op dedupe, and exact live-command registration. The next work is to define the live matrix interface before any live execution or AlphaEvolve-style candidate loop.",
+    "primary_metric": "Implement a no-live Gate 1 interface that registers exact future live command/env pairs, refuses without approval, proves the four required arms and task families can be scheduled, writes a dry-run live plan without running Codex, and keeps simple-hook parity, silent contamination, overcontrol, trace ambiguity, root/runtime mutation, and hidden-verifier leakage as dominance gates.",
+    "guardrail": "No live Codex run in this seam. No product host behavior change. No candidate mutation. Do not change signed UserPromptSubmit text, PostToolUse text, Stop text, SRE law, matcher thresholds, fixture scoring, root hooks, hidden-verifier boundary, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed intervention pressure, or host-runtime extraction.",
+    "kill_rule": "Fail if the interface omits any required arm, lacks the simple-hook challenger, registers a live command without exact env approval requirements, starts a live run, weakens dominance gates, changes fixtures/scoring, or authorizes AlphaEvolve-style mutation before live Gate 1 proof passes.",
     "last_reviewed_at": "2026-05-08T00:00:00+00:00"
   },
   "packet_to_code_anchors": [
@@ -1588,7 +1590,7 @@
     "The Codex App/CLI PostToolUse task-standard narrow live probe harness seam then added `--task-standard-posttooluse-live`, approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running a live Codex command. The live probe remains unearned until explicitly approved and run; this seam earns harness readiness only and preserves signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport deferral, PreToolUse denial deferral, and PermissionRequest policy."
   ],
   "work_today": {
-    "slug": "cortex-overnight-evaluator-automation-hardening",
-    "note": "The Cortex overnight evaluator automation hardening seam adds `python3 internal/automation/cortex_overnight_loop.py --once` as the repo-owned local overnight runner contract. Each cycle acquires a lock, inspects clean synced `main` or a managed session branch, reads `internal/truth/cortex_status.json`, classifies only evaluator-authorized next work, records one ignored local digest under `.cortex/automation/overnight/YYYY-MM-DD/digest.md`, and stops for dirty main, non-managed branches, non-evaluator trains, strategic user-review boundaries, product law revision, fixture/scoring or hidden-verifier mutation, external paid/service-lane credentials, unsafe live runs, old PostToolUse task-specific harness growth, or positive value/lift claims outside the registered evaluator. The runner records LOC added/deleted, changed files, new policy paths, duplicate-policy removal, contraction-debt increase, candidate provenance fields, and contraction candidates when a policy loses to the simple baseline twice. Codex CLI live runs remain allowed only when current truth registers them inside the evaluator plan; external paid APIs remain disallowed. Routine overnight digests are local ignored artifacts, not active docs. The next train remains `cortex-executive-effectiveness-evaluator-build`; no product host behavior, model-visible text, SRE law, matcher threshold, fixture scoring, hidden scoring, root hook, or AlphaEvolve mutation loop changed."
+    "slug": "cortex-executive-effectiveness-evaluator-build",
+    "note": "The Cortex executive effectiveness evaluator build passed as a no-live lab/proof seam. The dedicated `lab/cortex_effectiveness_evaluator.py --build --require-pass` path now emits `evaluator_design.json`, `episode_table.jsonl`, `summary.json`, and `leaderboard.json` under `.cortex/live_validation/cortex_effectiveness_evaluator_build/`. The episode table preserves all four arms (`no_cortex_baseline`, `simple_hook_baseline`, `cortex_silent_perception`, `cortex_active_policy`), proves simple-hook parity and silent perception success are no-value, applies dominance gates before value scoring, and preserves the historical PostToolUse paired-value artifact `task_standard_posttooluse_paired_value_live_20260508T120907Z` as `failure_no_value` without counting it as a new live run. The overnight runner now records cycle state, enforces the 22:00-07:00 window, emits allowed command lists, blocks repeated clean-main no-op cycles, requires exact registered live command/env pairs, budgets non-test LOC outside evaluator-build seams, and requires contraction candidates when policy/lab LOC grows outside evaluator-build. No live Codex run occurred; no product host behavior, model-visible text, SRE law, matcher threshold, fixture scoring, hidden scoring, root hook, or AlphaEvolve mutation loop changed."
   }
 }

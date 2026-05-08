@@ -283,6 +283,10 @@ Active docs:
   no-live design gate defining the hard objective, four evaluator arms,
   mandatory simple-hook challenger, dominance gates, and contraction
   obligations before any more actuator work
+- [Cortex Executive Effectiveness Evaluator Build](recon/cortex_executive_effectiveness_evaluator_build.md) —
+  no-live evaluator build emitting the episode table, leaderboard, summary,
+  historical PostToolUse no-value replay, and stricter overnight runner
+  execution contract before any live matrix or candidate mutation
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation
