@@ -24,6 +24,7 @@ from lab.codex_app_cli_hook_native_behavior_comparison import (
     run_task_standard_posttooluse_phase_aware_gate0,
     run_task_standard_posttooluse_gate0,
     run_task_standard_posttooluse_live_probe,
+    run_task_standard_posttooluse_measurement_stack_gate0,
     run_task_standard_posttooluse_overcontrol_gate0,
     run_task_standard_posttooluse_shared_tool_evidence_gate0,
     run_task_standard_raw_vs_silent_artifact_readout,
@@ -433,6 +434,109 @@ def test_task_standard_posttooluse_context_loop_trace_gate0(
     assert boundary_results["missing_fingerprint_marked_ambiguous"] is True
     assert boundary_results["legacy_trace_not_interpreted_without_join"] is True
     assert boundary_results["no_ordinal_trace_join"] is True
+
+
+def test_task_standard_posttooluse_measurement_stack_gate0(
+    tmp_path: Path,
+) -> None:
+    report = run_task_standard_posttooluse_measurement_stack_gate0(
+        output_root=tmp_path,
+    )
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_posttooluse_measurement_stack_gate0"
+    assert report["live_trials_ran"] is False
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["next_product_train"] == (
+        "codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0"
+    )
+    boundary_results = report["boundary_results"]
+    assert boundary_results["all_historical_artifacts_loaded"] is True
+    assert boundary_results["five_artifacts_replayed"] is True
+    assert boundary_results["preserves_true_next_action_ignore"] is True
+    assert boundary_results["preserves_no_context"] is True
+    assert boundary_results["preserves_overcontrol"] is True
+    assert boundary_results["preserves_repeated_context_and_trace_blocker"] is True
+    assert boundary_results["recognizes_final_closure_metric_underfit"] is True
+    assert boundary_results["registered_verdicts_preserved"] is True
+    assert boundary_results["semantic_evidence_does_not_mask_boundary_failures"] is True
+    assert boundary_results["final_closure_helper_scoped_to_measurement_table"] is True
+    episodes = {
+        episode["artifact_id"]: episode for episode in report["episode_table"]
+    }
+    assert episodes["task_standard_posttooluse_live_20260507T100836Z"][
+        "episode_classification"
+    ] == "true_next_action_ignore"
+    assert episodes["task_standard_posttooluse_live_20260507T142129Z"][
+        "episode_classification"
+    ] == "failure_no_context"
+    assert episodes["task_standard_posttooluse_live_20260507T153242Z"][
+        "episode_classification"
+    ] == "failure_overcontrol"
+    assert episodes["task_standard_posttooluse_live_20260507T213732Z"][
+        "episode_classification"
+    ] == "repeated_context_trace_not_interpretable"
+    latest = episodes["task_standard_posttooluse_live_20260507T225019Z"]
+    assert latest["registered_verdict"] == "failure_context_ignored"
+    assert latest["old_final_closure_reports_context_evidence"] is False
+    assert latest["semantic_final_closure_evidence"] is True
+    assert latest["episode_classification"] == "final_closure_metric_underfit"
+
+
+def test_task_standard_posttooluse_measurement_episode_accepts_synthetic_pass() -> None:
+    row = comparison._posttooluse_measurement_synthetic_row(
+        final_closure_reports_context_evidence=True,
+        next_tool_matches_context=True,
+    )
+    row["output_excerpt"] = (
+        "Result: PASS bytes=16 hex=616c7068612062657461206f6d656761 "
+        "content alpha beta omega"
+    )
+    report = {
+        "verdict": "pass_posttooluse_next_step_observed",
+        "decision": {"verdict": "pass_posttooluse_next_step_observed"},
+        "rows": [row],
+    }
+
+    episode = comparison.build_posttooluse_evidence_recovery_episode(
+        artifact_id="synthetic_pass",
+        report=report,
+    )
+
+    assert episode.episode_classification == "candidate_pass"
+    assert episode.semantic_final_closure_evidence is True
+    assert episode.old_final_closure_reports_context_evidence is True
+
+
+def test_task_standard_posttooluse_measurement_episode_keeps_boundary_dominance() -> None:
+    mismatch = comparison._posttooluse_measurement_synthetic_row(
+        final_closure_reports_context_evidence=True,
+        next_tool_matches_context=True,
+    )
+    mismatch["output_excerpt"] = (
+        "Result: PASS bytes=16 hex=616c7068612062657461206f6d656761 "
+        "content alpha beta omega"
+    )
+    clean_control = {
+        "case": "clean_evidenced",
+        "posttooluse_context_count": 1,
+    }
+    report = {
+        "verdict": "failure_overcontrol",
+        "decision": {
+            "verdict": "failure_overcontrol",
+            "failure_reason": "clean_or_control_case_received_context",
+        },
+        "rows": [mismatch, clean_control],
+    }
+
+    episode = comparison.build_posttooluse_evidence_recovery_episode(
+        artifact_id="synthetic_overcontrol",
+        report=report,
+    )
+
+    assert episode.semantic_final_closure_evidence is True
+    assert episode.episode_classification == "failure_overcontrol"
 
 
 def test_task_standard_posttooluse_live_refuses_without_explicit_approval(
