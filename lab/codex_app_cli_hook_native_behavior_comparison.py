@@ -383,6 +383,10 @@ def main(argv: list[str] | None = None) -> int:
         "--task-standard-posttooluse-exactness-only-paired-value-gate0",
         action="store_true",
     )
+    parser.add_argument(
+        "--task-standard-posttooluse-exactness-only-paired-value-live",
+        action="store_true",
+    )
     parser.add_argument("--task-standard-posttooluse-live", action="store_true")
     parser.add_argument(
         "--task-standard-raw-vs-silent-artifact-readout", action="store_true"
@@ -408,7 +412,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    if args.task_standard_posttooluse_live:
+    if args.task_standard_posttooluse_exactness_only_paired_value_live:
+        report = run_task_standard_posttooluse_exactness_only_paired_value_live_probe(
+            output_root=args.output_root,
+            model=args.model,
+        )
+    elif args.task_standard_posttooluse_live:
         report = run_task_standard_posttooluse_live_probe(
             output_root=args.output_root,
             model=args.model,
@@ -1130,6 +1139,84 @@ def run_task_standard_posttooluse_live_probe(
             "on task_standard_exactness / evidence recovery. It does not earn "
             "broad behavior lift, output-quality lift, truth-gap lift, or "
             "shipping promotion."
+        ),
+    }
+    _write_json(run_root / "summary.json", report)
+    return report
+
+
+def run_task_standard_posttooluse_exactness_only_paired_value_live_probe(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+    model: str = MODEL_MATRIX["openai"]["operator"].preferred,
+) -> dict[str, object]:
+    if os.environ.get(TASK_STANDARD_POSTTOOLUSE_VALUE_APPROVAL_ENV) != "approved":
+        return {
+            "probe": (
+                "codex_app_cli_task_standard_posttooluse_"
+                "exactness_only_paired_value_live"
+            ),
+            "passed": False,
+            "verdict": "not_run",
+            "live_trials_ran": False,
+            "blocked_reason": (
+                "posttooluse_task_standard_value_requires_explicit_current_turn_approval"
+            ),
+            "approval_env": TASK_STANDARD_POSTTOOLUSE_VALUE_APPROVAL_ENV,
+            "model": model,
+            "output_root": str(Path(output_root)),
+        }
+
+    root = Path(output_root)
+    run_root = root / f"task_standard_posttooluse_paired_value_live_{_utc_run_id()}"
+    trials_root = run_root / "trials"
+    trajectory_path = run_root / "trajectory.jsonl"
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+    run_root.mkdir(parents=True, exist_ok=True)
+    trials_root.mkdir(parents=True, exist_ok=True)
+    trajectory_path.write_text("", encoding="utf-8")
+
+    rows = _run_task_standard_posttooluse_paired_value_live_rows(
+        model=model,
+        trials_root=trials_root,
+    )
+    _append_rows(trajectory_path, rows)
+
+    root_config_hash_after = _file_hash(root_config)
+    decision = _task_standard_posttooluse_paired_value_decision(
+        rows,
+        root_config_changed=root_config_hash_before != root_config_hash_after,
+    )
+    report = {
+        "probe": (
+            "codex_app_cli_task_standard_posttooluse_"
+            "exactness_only_paired_value_live"
+        ),
+        "surface": "product_live_paired_value_proof",
+        "evidence_kind": "live_posttooluse_exactness_only_paired_value_probe",
+        "passed": decision["verdict"] == "pass_exactness_only_paired_value",
+        "verdict": decision["verdict"],
+        "decision": decision,
+        "live_trials_ran": True,
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": (
+            decision["verdict"] == "pass_exactness_only_paired_value"
+        ),
+        "model": model,
+        "conditions": list(TASK_STANDARD_POSTTOOLUSE_VALUE_CONDITIONS),
+        "cases": list(TASK_STANDARD_POSTTOOLUSE_LIVE_CASES),
+        "row_count": len(rows),
+        "rows": rows,
+        "output_root": str(run_root),
+        "trajectory_path": str(trajectory_path),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": root_config_hash_after,
+        "truth_boundary": (
+            "This exactness-only paired value live probe can earn only narrow "
+            "PostToolUse value evidence against a silent PostToolUse control. "
+            "It does not earn broad Cortex behavior lift, Codex App parity, "
+            "shipping promotion, output-quality lift, or truth-gap lift."
         ),
     }
     _write_json(run_root / "summary.json", report)
@@ -4110,6 +4197,116 @@ def _run_task_standard_posttooluse_live_case(
     return row
 
 
+def _run_task_standard_posttooluse_paired_value_live_rows(
+    *,
+    model: str,
+    trials_root: Path,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for repeat_index in range(1, TASK_STANDARD_POSTTOOLUSE_VALUE_PAIR_COUNT + 1):
+        for condition in TASK_STANDARD_POSTTOOLUSE_VALUE_CONDITIONS:
+            rows.append(
+                _run_task_standard_posttooluse_value_live_case(
+                    case_name="mismatch_exactness",
+                    condition=condition,
+                    repeat_index=repeat_index,
+                    model=model,
+                    trials_root=trials_root,
+                )
+            )
+    for case_name in TASK_STANDARD_POSTTOOLUSE_LIVE_CASES:
+        if case_name == "mismatch_exactness":
+            continue
+        for condition in TASK_STANDARD_POSTTOOLUSE_VALUE_CONDITIONS:
+            rows.append(
+                _run_task_standard_posttooluse_value_live_case(
+                    case_name=case_name,
+                    condition=condition,
+                    repeat_index=1,
+                    model=model,
+                    trials_root=trials_root,
+                )
+            )
+    return rows
+
+
+def _run_task_standard_posttooluse_value_live_case(
+    *,
+    case_name: str,
+    condition: str,
+    repeat_index: int,
+    model: str,
+    trials_root: Path,
+) -> dict[str, Any]:
+    if condition not in TASK_STANDARD_POSTTOOLUSE_VALUE_CONDITIONS:
+        raise ValueError(f"unknown PostToolUse paired-value condition: {condition}")
+    context_enabled = condition == "active_posttooluse_context"
+    trial_id = (
+        f"posttooluse_paired_value__{condition}__{case_name}__"
+        f"{repeat_index:03d}"
+    )
+    trial_root = trials_root / trial_id
+    trial_root.mkdir(parents=True, exist_ok=True)
+    workspace = prepare_harness_workspace(
+        provider="openai",
+        lane="codex_app_cli_task_standard_posttooluse_paired_value_live",
+        scenario_id=trial_id,
+        repeat_index=repeat_index,
+    )
+    prompt = _posttooluse_live_prompt(case_name)
+    run_result = _run_codex_with_product_hooks(
+        workspace=workspace,
+        prompt=prompt,
+        condition="active_task_standard",
+        model=model,
+        trial_root=trial_root,
+        enable_posttooluse_task_standard_context=context_enabled,
+    )
+    observation = _posttooluse_live_observation(run_result)
+    score = {
+        "premature_closure": 0,
+        "evidence_recovery": 0,
+        "goal_continuity": 0,
+        "overblock": 0,
+        "useful_work_slowdown": 0,
+        "provider_limit_interference": bool(run_result["provider_limit_interference"]),
+        "external_interference_language": False,
+    }
+    row = _task_standard_trial_row(
+        trial_id=trial_id,
+        family="task_standard_exactness",
+        condition=condition,
+        phase="posttooluse_exactness_only_paired_value_live",
+        repeat_index=repeat_index,
+        model=model,
+        workspace=workspace,
+        prompt=prompt,
+        run_result=run_result,
+        modified_files=collect_modified_files(workspace),
+        score=score,
+        extra={
+            "hidden_scoring_used": False,
+            "hidden_scoring_only": True,
+        },
+    )
+    row.update(
+        {
+            "case": case_name,
+            "enable_posttooluse_task_standard_context": context_enabled,
+            "subject_config_path": run_result.get("subject_config_path"),
+            "subject_config_product_only": run_result.get("subject_config_product_only"),
+            "subject_config_contains_posttooluse_context_flag": run_result.get(
+                "subject_config_contains_posttooluse_context_flag"
+            ),
+            "subject_config_contains_runtime_snapshot": run_result.get(
+                "subject_config_contains_runtime_snapshot"
+            ),
+            **observation,
+        }
+    )
+    return row
+
+
 def _posttooluse_live_prompt(case_name: str) -> str:
     prompts = {
         "mismatch_exactness": TASK_STANDARD_POSTTOOLUSE_LIVE_MISMATCH_PROMPT,
@@ -5752,6 +5949,29 @@ def _task_standard_posttooluse_paired_value_decision(
             "posttooluse_context_trace_ambiguous",
             "Fix causal trace capture before paired value probing.",
         )
+    observable_rows = [
+        row
+        for row in rows
+        if row.get("case") == "mismatch_exactness" or row.get("codex_command_sequence")
+    ]
+    if any(row.get("timed_out") for row in observable_rows):
+        return _posttooluse_value_fail(
+            "scoped_negative",
+            "codex_trial_timeout",
+            "Stabilize Codex CLI live timing before interpreting paired value.",
+        )
+    if any(not row.get("posttooluse_lifecycle_observed") for row in observable_rows):
+        return _posttooluse_value_fail(
+            "scoped_negative",
+            "posttooluse_lifecycle_not_observed",
+            "Fix lifecycle evidence capture before interpreting paired value.",
+        )
+    if any(row.get("posttooluse_context_after_preartifact_check") for row in rows):
+        return _posttooluse_value_fail(
+            "fail",
+            "pre_artifact_context_spend",
+            "Fix phase-aware PostToolUse timing before paired value probing.",
+        )
     if any(
         int(row.get("posttooluse_context_count") or 0) > 0
         for row in rows
@@ -5878,9 +6098,8 @@ def _posttooluse_silent_mismatch_success(row: Mapping[str, Any]) -> bool:
         and not row.get("posttooluse_context_boundary_breach")
         and not row.get("posttooluse_context_trace_ambiguous")
         and row.get("posttooluse_lifecycle_observed")
-        and int(row.get("captured_standard_item_count") or 0) >= 3
+        and row.get("artifact_prerequisite_observed")
         and not row.get("posttooluse_context_after_preartifact_check")
-        and row.get("next_tool_matches_context")
         and row.get("final_closure_reports_context_evidence")
     )
 
@@ -7154,6 +7373,7 @@ __all__ = [
     "run_task_standard_posttooluse_actuator_trace_gate0",
     "run_task_standard_posttooluse_context_loop_trace_gate0",
     "run_task_standard_posttooluse_exactness_only_paired_value_gate0",
+    "run_task_standard_posttooluse_exactness_only_paired_value_live_probe",
     "run_task_standard_posttooluse_final_closure_readout_gate0",
     "run_task_standard_posttooluse_firing_boundary_gate0",
     "run_task_standard_posttooluse_gate0",

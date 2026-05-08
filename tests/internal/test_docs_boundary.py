@@ -338,10 +338,10 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_PATH = (
 )
 
 CURRENT_WORK_SLUG = (
-    "codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-probe-gate0"
+    "codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-live-probe"
 )
 NEXT_PRODUCT_TRAIN_SLUG = (
-    "codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-live-probe"
+    "codex-app-cli-posttooluse-task-standard-value-claims-pause-decision"
 )
 CONTEXT_LOOP_TRACE_REMEDIATION_RECON_PATH = (
     REPO_ROOT
@@ -386,6 +386,12 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_EXACTNESS_ONLY_PAIRED_VALUE_GATE0_PATH =
     / "docs"
     / "recon"
     / "cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_probe_gate0.md"
+)
+CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_EXACTNESS_ONLY_PAIRED_VALUE_LIVE_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_live_probe.md"
 )
 
 CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_AFTER_SHARED_TOOL_EVIDENCE_PATH = (
@@ -500,81 +506,71 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
 ) -> None:
     assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     work_note = status["work_today"]["note"].lower()
-    assert "exactness-only paired value probe gate 0 passed" in work_note
-    assert "active_posttooluse_context" in work_note
-    assert "silent_posttooluse_control" in work_note
-    assert "mismatch_exactness" in work_note
-    assert "clean_evidenced" in work_note
-    assert "honest_blocker" in work_note
-    assert "waiting_on_user" in work_note
-    assert "unrelated_tool" in work_note
-    assert "same-model/same-prompt/isolated-workspace/matched-repeat" in work_note
-    assert "enable_posttooluse_task_standard_context" in work_note
-    assert "cortex_codex_app_cli_task_standard_posttooluse_value_approved" in work_note
+    assert "exactness-only paired value live probe ran" in work_note
+    assert "failure_no_value" in work_note
+    assert "task_standard_posttooluse_paired_value_live_20260508t120907z" in work_note
+    assert "registered 18-row matrix" in work_note
+    assert "active/silent conditions" in work_note
     assert "4/5" in work_note
-    assert "active-beats-silent" in work_note
-    assert "no-value tie" in work_note
-    assert "active-ignore" in work_note
-    assert "overcontrol" in work_note
-    assert "repeated-context" in work_note
-    assert "trace-ambiguity" in work_note
-    assert "boundary-breach" in work_note
-    assert "root-config-mutation" in work_note
-    assert "runtime-snapshot" in work_note
-    assert "20260507t225019z" in work_note
-    assert "active-arm feasibility only" in work_note
-    assert "not value lift" in work_note
-    assert "no live codex run" in work_note
-    assert "product behavior change" in work_note
-    assert "no exactness value lift" in work_note
+    assert "0/5 mismatch pairs" in work_note
+    assert "tie_no_value" in work_note
+    assert "repeats 2-4" in work_note
+    assert "repeats 1 and 5" in work_note
+    assert "failure_no_context" in work_note
+    assert "candidate_artifact_without_posttooluse_context" in work_note
+    assert "clean/control rows emitted zero posttooluse contexts" in work_note
+    assert "no repeated context loop" in work_note
+    assert "trace ambiguity" in work_note
+    assert "root config stayed unchanged" in work_note
+    assert "no runtime snapshot" in work_note
+    assert "repaired from `scoped_negative`" in work_note
+    assert "no-tool blocker/waiting controls" in work_note
+    assert "no behavior lift" in work_note
+    assert "exactness value lift" in work_note
     assert "broad cortex lift" in work_note
     assert "codex app parity" in work_note
     assert "shipping promotion" in work_note
 
     next_train = status["next_product_train"]
     assert next_train["slug"] == NEXT_PRODUCT_TRAIN_SLUG
-    assert next_train["surface"] == "approval-gated live paired value probe"
-    assert "posttooluse task-standard additionalcontext" in next_train[
+    assert next_train["surface"] == "no-live architecture decision"
+    assert "pause posttooluse task-standard value claims" in next_train[
         "executive_benefit"
     ].lower()
-    assert "silent posttooluse control" in next_train[
+    assert "failed to show active value over silent control" in next_train[
         "executive_benefit"
     ].lower()
-    assert "exactness-only paired value gate 0 passed" in next_train["why_now"].lower()
-    assert "active_posttooluse_context" in next_train["why_now"].lower()
-    assert "silent_posttooluse_control" in next_train["why_now"].lower()
-    assert "mismatch_exactness" in next_train["why_now"].lower()
-    assert "enable_posttooluse_task_standard_context" in next_train[
+    assert "task_standard_posttooluse_paired_value_live_20260508t120907z" in next_train[
         "why_now"
     ].lower()
-    assert "cortex_codex_app_cli_task_standard_posttooluse_value_approved" in next_train[
-        "why_now"
-    ].lower()
+    assert "failure_no_value" in next_train["why_now"].lower()
+    assert "0/5 mismatch pairs" in next_train["why_now"].lower()
     assert "4/5" in next_train["why_now"].lower()
-    assert "20260507t225019z" in next_train["why_now"].lower()
+    assert "tie_no_value" in next_train["why_now"].lower()
+    assert "failure_no_context" in next_train["why_now"].lower()
+    assert "zero posttooluse contexts" in next_train["why_now"].lower()
+    assert "no exactness value lift" in next_train["why_now"].lower()
     primary_metric = next_train["primary_metric"].lower()
-    assert "active beats silent in at least 4/5 mismatch pairs" in primary_metric
-    assert "clean/control row emits zero posttooluse context" in primary_metric
-    assert "tie/no-value" in primary_metric
-    assert "not an active win" in primary_metric
+    assert "records the negative paired value evidence" in primary_metric
+    assert "pause posttooluse value claims" in primary_metric
+    assert "retire this exactness probe shape" in primary_metric
+    assert "lifecycle-actuator architecture redesign" in primary_metric
+    assert "must not tune posttooluse text" in primary_metric
     guardrail = next_train["guardrail"].lower()
-    assert "no live codex run unless explicitly approved" in guardrail
-    assert "cortex_codex_app_cli_task_standard_posttooluse_value_approved" in guardrail
+    assert "no live codex run" in guardrail
+    assert "no text or policy tuning" in guardrail
     assert "no broad behavior comparison" in next_train["guardrail"].lower()
     assert "no product host behavior change" in next_train["guardrail"].lower()
     assert "do not change signed userpromptsubmit text" in next_train[
         "guardrail"
     ].lower()
     kill_rule = next_train["kill_rule"].lower()
-    assert "clean/control context emission" in kill_rule
-    assert "repeated context loop" in kill_rule
-    assert "ambiguous trace" in kill_rule
-    assert "boundary breach" in kill_rule
-    assert "root config mutation" in kill_rule
-    assert "runtime snapshot" in kill_rule
-    assert "active context ignore" in kill_rule
-    assert "if active and silent both pass" in kill_rule
-    assert "pause posttooluse value claims" in next_train["kill_rule"].lower()
+    assert "same-shape live rerun" in kill_rule
+    assert "text tuning" in kill_rule
+    assert "policy tuning" in kill_rule
+    assert "active beat silent in 0/5 pairs" in kill_rule
+    assert "failure_no_value" in kill_rule
+    assert "exactness value lift must remain forbidden" in kill_rule
 
 
 def _find_repo_files(filename: str) -> list[str]:
@@ -1352,6 +1348,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_codex_app_cli_posttooluse_task_standard_calibration_decision.md",
         "cortex_codex_app_cli_posttooluse_task_standard_closure_reporting_architecture_decision.md",
         "cortex_codex_app_cli_posttooluse_task_standard_context_loop_trace_remediation.md",
+        "cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_live_probe.md",
         "cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_probe_gate0.md",
         "cortex_codex_app_cli_posttooluse_task_standard_final_closure_readout_remediation_gate0.md",
         "cortex_codex_app_cli_posttooluse_task_standard_firing_boundary_remediation.md",
@@ -3720,13 +3717,67 @@ def test_codex_app_cli_posttooluse_exactness_only_paired_value_gate0_records_pro
     ):
         assert forbidden in text
 
-    assert NEXT_PRODUCT_TRAIN_SLUG in text
+    assert (
+        "codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-live-probe"
+        in text
+    )
     assert (
         "recon/cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_probe_gate0.md"
         in docs_index
     )
     assert (
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_probe_gate0.md"
+        in status["active_docs"]
+    )
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
+
+
+def test_codex_app_cli_posttooluse_exactness_only_paired_value_live_records_negative_value() -> None:
+    text = _read(
+        CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_EXACTNESS_ONLY_PAIRED_VALUE_LIVE_PATH
+    )
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product live paired value proof" in text
+    assert "Artifact: `task_standard_posttooluse_paired_value_live_20260508T120907Z`" in text
+    assert "Verdict: `failure_no_value`." in text
+    for phrase in (
+        "`CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_VALUE_APPROVED=approved`",
+        "18-row matrix",
+        "0/5",
+        "`4/5` threshold",
+        "`live_trials_ran=true`",
+        "`behavior_lift_claim_allowed=false`",
+        "`exactness_value_lift_claim_allowed=false`",
+        "root config hash unchanged",
+        "no runtime snapshot",
+        "clean/control rows emitted zero PostToolUse contexts",
+        "no repeated context loop",
+        "no trace ambiguity",
+        "`failure_no_context` / `candidate_artifact_without_posttooluse_context`",
+        "`tie_no_value`",
+        "first-pass paired readout marked the run `scoped_negative`",
+        "corrected decision is `failure_no_value`",
+    ):
+        assert phrase in text
+
+    for forbidden in (
+        "No behavior lift",
+        "No exactness value lift",
+        "No broad Cortex lift",
+        "No Codex App parity",
+        "No shipping promotion",
+    ):
+        assert forbidden in text
+
+    assert NEXT_PRODUCT_TRAIN_SLUG in text
+    assert (
+        "recon/cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_live_probe.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_live_probe.md"
         in status["active_docs"]
     )
     _assert_current_posttooluse_strategy_failure_audit_status(status)
@@ -4142,7 +4193,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     ].lower()
     assert (
         status["next_product_train"]["surface"]
-        == "approval-gated live paired value probe"
+        == "no-live architecture decision"
     )
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
     assert "brain-capability-observation-and-inference" in deferred_lines
@@ -4229,11 +4280,11 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
     assert (
-        "`codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-probe-gate0`"
+        "`codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-live-probe`"
         in text
     )
-    assert "- Next product train after the current focus: `codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-live-probe`" in text
-    assert "- Train: `codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-live-probe`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-posttooluse-task-standard-value-claims-pause-decision`" in text
+    assert "- Train: `codex-app-cli-posttooluse-task-standard-value-claims-pause-decision`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
