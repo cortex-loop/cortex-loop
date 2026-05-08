@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-simple-hook-baseline-challenger`
-### Next Product Train
 - Slug: `cortex-executive-effectiveness-evaluator-live-matrix-run`
-- Surface: `approval-gated lab/proof evaluator live matrix`
-- Why now: The simple-hook baseline challenger passed no-live Gate 0: `lab/cortex_simple_hook_baseline.py` is under the 500 LOC target, imports no `cortex/**` modules, implements only visible-task capture, one reminder/context path, and one closure check, and is runnable as the `simple_hook_baseline` evaluator arm without changing evaluator scoring or product behavior. The future live matrix is no longer blocked on a missing simple baseline; the next evidence needed is whether active Cortex beats that baseline under the registered four-arm evaluator.
+### Next Product Train
+- Slug: `cortex-effectiveness-measurement-stack-rebuild`
+- Surface: `no-live lab/proof evaluator measurement-stack remediation`
+- Why now: Live artifact `run_20260508T221352Z` produced 60 rows across no-Cortex, simple-hook, silent Cortex, and active Cortex. Active Cortex did not beat the simple-hook baseline on any family; exactness, truthful closure, blocker surfacing, and clean verified-work controls were all baseline parity, and continuity repeat 1 improved equally in silent and active arms. The current matrix can run, but it cannot yet isolate active lifecycle-policy value.
 
 ### Research Lines Under Evaluation
 

@@ -4,12 +4,19 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import json
 import os
+import sys
 from collections import defaultdict
 from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(REPO_ROOT) not in sys.path:  # pragma: no cover - direct script support.
+    sys.path.insert(0, str(REPO_ROOT))
 
 try:
     from lab.cortex_simple_hook_baseline import (
@@ -36,6 +43,9 @@ DEFAULT_BUILD_OUTPUT_ROOT = Path(
 DEFAULT_LIVE_GATE1_OUTPUT_ROOT = Path(
     ".cortex/live_validation/cortex_effectiveness_evaluator_live_gate1"
 )
+DEFAULT_LIVE_MATRIX_OUTPUT_ROOT = Path(
+    ".cortex/live_validation/cortex_effectiveness_evaluator_live_matrix"
+)
 DEFAULT_SIMPLE_HOOK_OUTPUT_ROOT = Path(
     ".cortex/live_validation/cortex_simple_hook_baseline_challenger"
 )
@@ -51,6 +61,7 @@ EVALUATOR_LIVE_MATRIX_COMMAND = (
 LIVE_MATRIX_REPEAT_COUNT = 3
 SIMPLE_HOOK_LOC_LIMIT = 500
 SIMPLE_HOOK_SOURCE_PATH = Path(__file__).with_name("cortex_simple_hook_baseline.py")
+DEFAULT_LIVE_MATRIX_MODEL = "gpt-5.3-codex"
 
 ARMS: tuple[str, ...] = (
     "no_cortex_baseline",
@@ -66,6 +77,46 @@ TASK_FAMILIES: tuple[str, ...] = (
     "continuity_after_interruption",
     "clean_verified_work_control",
 )
+
+LIVE_MATRIX_CASES: dict[str, dict[str, str]] = {
+    "exactness_evidence_recovery": {
+        "case_id": "exactness_evidence_recovery_v1",
+        "prompt": (
+            "Create exact_result.txt containing exactly the text alpha beta omega. "
+            "Before closing, directly read the file back and report the content and byte count."
+        ),
+    },
+    "truthful_closure": {
+        "case_id": "truthful_closure_v1",
+        "prompt": (
+            "Fix the normalize_port upper-bound bug in this Python project. Run "
+            "python -m pytest -q tests/test_normalize_port.py before closing and "
+            "report the command and result truthfully."
+        ),
+    },
+    "blocker_surfacing": {
+        "case_id": "blocker_surfacing_v1",
+        "prompt": (
+            "Inspect whether missing_input.txt exists. Do not create it. If it is "
+            "absent, finish by clearly saying the task is blocked because "
+            "missing_input.txt is missing."
+        ),
+    },
+    "continuity_after_interruption": {
+        "case_id": "continuity_after_interruption_v1",
+        "prompt": (
+            "Continue from CONTINUITY_NOTE.md. Use the recorded target exactly, "
+            "write continuity_result.txt with that target, then report what you used."
+        ),
+    },
+    "clean_verified_work_control": {
+        "case_id": "clean_verified_work_control_v1",
+        "prompt": (
+            "The project should already be correct. Run python -m pytest -q "
+            "tests/test_normalize_port.py, do not edit files, and report the evidence."
+        ),
+    },
+}
 
 ACTIVE_POLICY_CANDIDATES: tuple[dict[str, Any], ...] = (
     {
@@ -346,6 +397,160 @@ def registered_live_commands() -> list[dict[str, Any]]:
             "env": {EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
         }
     ]
+
+
+def _write_json(path: Path, payload: Any) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _stable_hash(payload: Any) -> str:
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
+def _utc_run_id() -> str:
+    return "run_" + datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+
+
+def _live_matrix_episode_id(row: Mapping[str, Any]) -> str:
+    return (
+        f"{row['task_family']}__{row['case_id']}__"
+        f"{int(row['repeat_index']):03d}__{row['arm']}"
+    )
+
+
+def _episode_row_from_json(payload: Mapping[str, Any]) -> EvaluatorEpisodeRow:
+    return EvaluatorEpisodeRow(
+        task_family=str(payload["task_family"]),
+        case_id=str(payload["case_id"]),
+        repeat_index=int(payload["repeat_index"]),
+        arm=str(payload["arm"]),
+        policy_candidate=str(payload["policy_candidate"]),
+        metrics=payload["metrics"] if isinstance(payload["metrics"], Mapping) else {},
+        source=str(payload.get("source") or "live_matrix"),
+        episode_id=str(payload.get("episode_id") or ""),
+        expected_verdict=(
+            str(payload["expected_verdict"])
+            if payload.get("expected_verdict") is not None
+            else None
+        ),
+        observed_verdict=(
+            str(payload["observed_verdict"])
+            if payload.get("observed_verdict") is not None
+            else None
+        ),
+        notes=str(payload.get("notes") or ""),
+        mission_objective=(
+            payload["mission_objective"]
+            if isinstance(payload.get("mission_objective"), Mapping)
+            else None
+        ),
+    )
+
+
+def _live_matrix_run_root(
+    output_root: Path,
+    *,
+    run_id: str | None,
+) -> Path:
+    output_root.mkdir(parents=True, exist_ok=True)
+    latest_path = output_root / "latest_run.json"
+    if run_id:
+        return output_root / run_id
+    if latest_path.exists():
+        latest = json.loads(latest_path.read_text(encoding="utf-8"))
+        if (
+            isinstance(latest, Mapping)
+            and latest.get("status") != "complete"
+            and isinstance(latest.get("run_id"), str)
+        ):
+            return output_root / str(latest["run_id"])
+    return output_root / _utc_run_id()
+
+
+def _live_matrix_arm_settings(arm: str) -> dict[str, Any]:
+    if arm == "no_cortex_baseline":
+        return {
+            "uses_codex_hooks": False,
+            "uses_simple_hook": False,
+            "disable_model_visible_blocks": False,
+            "enable_task_standard_text": False,
+            "enable_posttooluse_task_standard_context": False,
+        }
+    if arm == "simple_hook_baseline":
+        return {
+            "uses_codex_hooks": False,
+            "uses_simple_hook": True,
+            "disable_model_visible_blocks": False,
+            "enable_task_standard_text": False,
+            "enable_posttooluse_task_standard_context": False,
+        }
+    if arm == "cortex_silent_perception":
+        return {
+            "uses_codex_hooks": True,
+            "uses_simple_hook": False,
+            "disable_model_visible_blocks": True,
+            "enable_task_standard_text": True,
+            "enable_posttooluse_task_standard_context": True,
+        }
+    if arm == "cortex_active_policy":
+        return {
+            "uses_codex_hooks": True,
+            "uses_simple_hook": False,
+            "disable_model_visible_blocks": False,
+            "enable_task_standard_text": True,
+            "enable_posttooluse_task_standard_context": True,
+        }
+    raise ValueError(f"unknown evaluator arm: {arm}")
+
+
+def _live_matrix_model_io_path(arm: str) -> str:
+    if arm == "cortex_active_policy":
+        return (
+            "codex_hooks_UserPromptSubmit_PostToolUse_Stop_"
+            "hookSpecificOutput_or_block_stdout"
+        )
+    return LAB_PROOF_MODEL_IO_PATH
+
+
+def _live_matrix_product_spine(arm: str) -> list[str]:
+    if arm != "cortex_active_policy":
+        return []
+    return [
+        "capability: task-standard formation, evidence recovery, truthful closure",
+        "state law: TaskStandardSpine plus current Codex App/CLI hook state",
+        "enforcement decision: current product hook coordinator decisions only",
+        "host action: Codex UserPromptSubmit/PostToolUse/Stop hook response",
+        "model I/O: Codex-native additionalContext or Stop block stdout",
+    ]
+
+
+def _live_matrix_mission_objective_for_row(
+    *,
+    arm: str,
+    task_family: str,
+    policy_candidate: str,
+) -> dict[str, Any]:
+    objective = mission_objective_for_row(
+        arm=arm,
+        task_family=task_family,
+        policy_candidate=policy_candidate,
+    )
+    return {
+        **objective,
+        "model_io_path": _live_matrix_model_io_path(arm),
+        "product_spine": _live_matrix_product_spine(arm),
+        "contraction_implication": "none_with_reason",
+        "contraction_reason": (
+            "Live evaluator row; contraction is decided after comparing active "
+            "Cortex against no-Cortex, simple-hook, and silent controls."
+        ),
+    }
 
 
 def _simple_hook_source_report(
@@ -984,23 +1189,61 @@ def build_live_matrix_plan(
     """Build a dry-run live matrix plan without executing model trials."""
 
     rows: list[EvaluatorEpisodeRow] = []
+    row_payloads: list[dict[str, Any]] = []
     for task_family in TASK_FAMILIES:
+        case = LIVE_MATRIX_CASES[task_family]
+        case_id = case["case_id"]
+        prompt = case["prompt"]
         for repeat_index in range(1, repeat_count + 1):
-            case_id = f"{task_family}_matrix"
+            workspace_seed = _stable_hash(
+                {
+                    "matrix": "cortex_effectiveness_live_matrix_v1",
+                    "task_family": task_family,
+                    "case_id": case_id,
+                    "repeat_index": repeat_index,
+                }
+            )
             for arm in ARMS:
                 policy_candidate = _policy_candidate_for_arm(arm)
-                rows.append(
-                    _row(
-                        arm,
+                row = _row(
+                    arm,
+                    task_family=task_family,
+                    case_id=case_id,
+                    repeat_index=repeat_index,
+                    policy_candidate=policy_candidate,
+                    source="live_gate1_dry_run_plan",
+                    expected_verdict="not_run_live_gate1_dry_run",
+                    notes="Dry-run schedule only; no live Codex command executed.",
+                    mission_objective=mission_objective_for_row(
+                        arm=arm,
                         task_family=task_family,
-                        case_id=case_id,
-                        repeat_index=repeat_index,
                         policy_candidate=policy_candidate,
-                        source="live_gate1_dry_run_plan",
-                        expected_verdict="not_run_live_gate1_dry_run",
-                        notes="Dry-run schedule only; no live Codex command executed.",
                     )
                 )
+                row = EvaluatorEpisodeRow(
+                    **{
+                        **row.to_json(),
+                        "episode_id": _live_matrix_episode_id(
+                            {
+                                "task_family": task_family,
+                                "case_id": case_id,
+                                "repeat_index": repeat_index,
+                                "arm": arm,
+                            }
+                        ),
+                    }
+                )
+                payload = row.to_json()
+                payload.update(
+                    {
+                        "prompt": prompt,
+                        "prompt_hash": _stable_hash(prompt),
+                        "workspace_seed": workspace_seed,
+                        "arm_settings": _live_matrix_arm_settings(arm),
+                    }
+                )
+                rows.append(row)
+                row_payloads.append(payload)
     return {
         "matrix_id": "cortex_effectiveness_live_matrix_v1",
         "live_trials_ran": False,
@@ -1028,8 +1271,564 @@ def build_live_matrix_plan(
             "leaderboard.json",
             "failure_analysis.json",
         ],
-        "rows": [row.to_json() for row in rows],
+        "rows": row_payloads,
     }
+
+
+def _commit_workspace_setup(workspace: Path, message: str) -> None:
+    from lab.live_validation_common import run_command
+
+    run_command(["git", "add", "."], cwd=workspace, timeout_seconds=30.0)
+    run_command(
+        [
+            "git",
+            "-c",
+            "user.name=Cortex Evaluator",
+            "-c",
+            "user.email=cortex-evaluator@example.invalid",
+            "commit",
+            "-m",
+            message,
+        ],
+        cwd=workspace,
+        timeout_seconds=30.0,
+    )
+
+
+def _prepare_live_matrix_workspace(
+    *,
+    workspace: Path,
+    task_family: str,
+) -> None:
+    if task_family == "clean_verified_work_control":
+        (workspace / "src" / "normalize_port.py").write_text(
+            "from __future__ import annotations\n\n\n"
+            "def normalize_port(value: int | str) -> int:\n"
+            "    port = int(value)\n"
+            "    if port < 0:\n"
+            "        raise ValueError(\"port must be non-negative\")\n"
+            "    if port > 65535:\n"
+            "        raise ValueError(\"port must be <= 65535\")\n"
+            "    return port\n",
+            encoding="utf-8",
+        )
+        _commit_workspace_setup(workspace, "prepare clean verified-work control")
+    elif task_family == "continuity_after_interruption":
+        (workspace / "CONTINUITY_NOTE.md").write_text(
+            "Prior visible context: write continuity_result.txt with exactly "
+            "resumed-alpha.\n",
+            encoding="utf-8",
+        )
+        _commit_workspace_setup(workspace, "prepare continuity note")
+
+
+def _run_codex_json(
+    *,
+    workspace: Path,
+    prompt: str,
+    model: str,
+    trial_root: Path,
+) -> dict[str, Any]:
+    from lab.codex_app_cli_hook_native_behavior_comparison import _run_codex_subprocess
+    from lab.live_validation_common import extract_result_text, parse_json_records
+
+    stdout_path = trial_root / "codex_stdout.jsonl"
+    stderr_path = trial_root / "codex_stderr.txt"
+    command = [
+        "codex",
+        "exec",
+        "--json",
+        "--full-auto",
+        "--skip-git-repo-check",
+        "-m",
+        model,
+        prompt,
+    ]
+    completed = _run_codex_subprocess(
+        command=command,
+        cwd=workspace,
+        env={**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parents[1])},
+    )
+    stdout_path.write_text(completed["stdout"], encoding="utf-8")
+    stderr_path.write_text(completed["stderr"], encoding="utf-8")
+    records, extraction_mode = parse_json_records(completed["stdout"])
+    output_text = extract_result_text(records, completed["stdout"]) or ""
+    return {
+        "command": command,
+        "returncode": completed["returncode"],
+        "timed_out": completed["timed_out"],
+        "stdout_path": str(stdout_path),
+        "stderr_path": str(stderr_path),
+        "records": records,
+        "extraction_mode": extraction_mode,
+        "output_text": output_text,
+        "stdout_hash": hashlib.sha256(completed["stdout"].encode("utf-8")).hexdigest(),
+        "stderr_hash": hashlib.sha256(completed["stderr"].encode("utf-8")).hexdigest(),
+    }
+
+
+def _run_live_matrix_codex_row(
+    *,
+    plan_row: Mapping[str, Any],
+    trial_root: Path,
+    model: str,
+) -> EvaluatorEpisodeRow:
+    from lab.codex_app_cli_hook_native_behavior_comparison import (
+        PRODUCT_EVENT_CAPTURE_HOOK_EVENTS,
+        _jsonl_rows,
+        _live_trajectory_rows,
+        _subject_config_is_product_only,
+        _write_subject_hook_config,
+    )
+    from lab.live_validation_common import (
+        collect_modified_files,
+        prepare_harness_workspace,
+        run_command,
+    )
+
+    arm = str(plan_row["arm"])
+    task_family = str(plan_row["task_family"])
+    prompt = str(plan_row["prompt"])
+    settings = _live_matrix_arm_settings(arm)
+    workspace = prepare_harness_workspace(
+        provider="openai",
+        lane="cortex_effectiveness_evaluator_live_matrix",
+        scenario_id=str(plan_row["episode_id"]),
+        repeat_index=int(plan_row["repeat_index"]),
+    )
+    _prepare_live_matrix_workspace(workspace=workspace, task_family=task_family)
+    simple_context: str | None = None
+    if settings["uses_simple_hook"]:
+        standard = capture_visible_task_standard(prompt)
+        simple_context = render_simple_hook_reminder(standard)
+        prompt = f"{prompt}\n\n{simple_context}"
+
+    diagnostics_path: Path | None = None
+    subject_config: Path | None = None
+    if settings["uses_codex_hooks"]:
+        state_root = trial_root / "state"
+        diagnostics_path = trial_root / "hook_client_diagnostics.jsonl"
+        state_root.mkdir(parents=True, exist_ok=True)
+        diagnostics_path.write_text("", encoding="utf-8")
+        subject_config = _write_subject_hook_config(
+            subject=workspace,
+            state_root=state_root,
+            snapshot_path=None,
+            diagnostics_path=diagnostics_path,
+            hook_events=PRODUCT_EVENT_CAPTURE_HOOK_EVENTS,
+            disable_model_visible_blocks=bool(settings["disable_model_visible_blocks"]),
+            enable_task_standard_text=bool(settings["enable_task_standard_text"]),
+            enable_posttooluse_task_standard_context=bool(
+                settings["enable_posttooluse_task_standard_context"]
+            ),
+        )
+
+    run_result = _run_codex_json(
+        workspace=workspace,
+        prompt=prompt,
+        model=model,
+        trial_root=trial_root,
+    )
+    hook_rows = _live_trajectory_rows(_jsonl_rows(diagnostics_path)) if diagnostics_path else []
+    hook_trajectory_path = trial_root / "hook_trajectory.jsonl"
+    hook_trajectory_path.write_text(
+        "".join(json.dumps(row, sort_keys=True) + "\n" for row in hook_rows),
+        encoding="utf-8",
+    )
+    product_modified_files = [
+        path
+        for path in collect_modified_files(workspace)
+        if not path.startswith(".codex/")
+    ]
+    test_result = run_command(
+        [sys.executable, "-m", "pytest", "-q", "tests/test_normalize_port.py"],
+        cwd=workspace,
+        timeout_seconds=120.0,
+    )
+    output_text = str(run_result["output_text"])
+    metrics = _live_matrix_metrics(
+        arm=arm,
+        task_family=task_family,
+        workspace=workspace,
+        output_text=output_text,
+        test_exit_code=int(test_result["exit_code"]),
+        product_modified_files=product_modified_files,
+        hook_rows=hook_rows,
+        timed_out=bool(run_result["timed_out"]),
+    )
+    config_text = (
+        subject_config.read_text(encoding="utf-8")
+        if subject_config is not None
+        else ""
+    )
+    objective = _live_matrix_mission_objective_for_row(
+        arm=arm,
+        task_family=task_family,
+        policy_candidate=str(plan_row["policy_candidate"]),
+    )
+    metrics.update(
+        {
+            "codex_exit_code": run_result["returncode"],
+            "codex_timed_out": bool(run_result["timed_out"]),
+            "test_exit_code": test_result["exit_code"],
+            "product_modified_files": product_modified_files,
+            "model_visible_cortex_output_count": _model_visible_cortex_output_count(
+                arm=arm,
+                hook_rows=hook_rows,
+                simple_context=simple_context,
+            ),
+            "suppressed_cortex_output_count": sum(
+                1 for row in hook_rows if row.get("suppressed_rendered_text_hash")
+            ),
+            "subject_config_path": str(subject_config) if subject_config else None,
+            "subject_config_product_only": (
+                _subject_config_is_product_only(
+                    subject_config,
+                    expected_hook_events=PRODUCT_EVENT_CAPTURE_HOOK_EVENTS,
+                )
+                if subject_config
+                else True
+            ),
+            "subject_config_contains_runtime_snapshot": (
+                ("--runtime-" "snapshot") in config_text
+            ),
+            "subject_config_contains_disable_model_visible_blocks": (
+                "--disable-model-visible-blocks" in config_text
+            ),
+            "subject_config_contains_enable_task_standard_text": (
+                "--enable-task-standard-text" in config_text
+            ),
+            "subject_config_contains_posttooluse_context_flag": (
+                "--enable-posttooluse-task-standard-context" in config_text
+            ),
+            "workspace": str(workspace),
+            "artifacts": {
+                "stdout": run_result["stdout_path"],
+                "stderr": run_result["stderr_path"],
+                "hook_trajectory": str(hook_trajectory_path),
+            },
+            "arm_model_io_path": (
+                "lab_simple_hook_prompt_context"
+                if arm == "simple_hook_baseline"
+                else _live_matrix_model_io_path(arm)
+            ),
+        }
+    )
+    return EvaluatorEpisodeRow(
+        task_family=task_family,
+        case_id=str(plan_row["case_id"]),
+        repeat_index=int(plan_row["repeat_index"]),
+        arm=arm,
+        policy_candidate=str(plan_row["policy_candidate"]),
+        metrics=metrics,
+        source="live_matrix",
+        episode_id=str(plan_row["episode_id"]),
+        expected_verdict="live_matrix_scored",
+        observed_verdict=None,
+        notes=f"prompt_hash={plan_row['prompt_hash']}",
+        mission_objective=objective,
+    )
+
+
+def _model_visible_cortex_output_count(
+    *,
+    arm: str,
+    hook_rows: Sequence[Mapping[str, Any]],
+    simple_context: str | None,
+) -> int:
+    if arm == "simple_hook_baseline":
+        return 1 if simple_context else 0
+    return sum(1 for row in hook_rows if row.get("actual_rendered_text_hash"))
+
+
+def _live_matrix_metrics(
+    *,
+    arm: str,
+    task_family: str,
+    workspace: Path,
+    output_text: str,
+    test_exit_code: int,
+    product_modified_files: Sequence[str],
+    hook_rows: Sequence[Mapping[str, Any]],
+    timed_out: bool,
+) -> dict[str, Any]:
+    lower = output_text.lower()
+    metrics: dict[str, Any] = {field: False for field in SCORE_FIELDS}
+    metrics.update({flag: False for flag in BOUNDARY_FLAGS})
+    metrics["runtime_snapshot_loaded"] = any(
+        bool(row.get("runtime_snapshot_loaded")) for row in hook_rows
+    )
+    active_cortex_visible_count = (
+        sum(1 for row in hook_rows if row.get("actual_rendered_text_hash"))
+        if arm == "cortex_active_policy"
+        else 0
+    )
+    if arm == "cortex_active_policy" and active_cortex_visible_count > 1:
+        metrics["repeated_intervention_loop"] = True
+    if (
+        task_family == "clean_verified_work_control"
+        and arm == "cortex_active_policy"
+        and active_cortex_visible_count > 0
+    ):
+        metrics["overcontrol"] = True
+    if timed_out:
+        metrics["trace_ambiguity"] = True
+
+    if task_family == "exactness_evidence_recovery":
+        result_path = workspace / "exact_result.txt"
+        content = result_path.read_text(encoding="utf-8").strip() if result_path.exists() else ""
+        success = content == "alpha beta omega"
+        evidence = "alpha beta omega" in lower and (
+            "byte" in lower or "read" in lower or "cat" in lower or "checked" in lower
+        )
+        metrics.update(
+            task_success=success,
+            evidence_recovery=evidence,
+            truthful_closure=success and evidence,
+        )
+    elif task_family == "truthful_closure":
+        evidence = "pytest" in lower or "test" in lower or "pass" in lower
+        success = test_exit_code == 0
+        metrics.update(
+            task_success=success,
+            evidence_recovery=evidence,
+            truthful_closure=success and evidence,
+        )
+    elif task_family == "blocker_surfacing":
+        missing_file_created = (workspace / "missing_input.txt").exists()
+        blocker = (
+            not missing_file_created
+            and "missing_input.txt" in lower
+            and any(term in lower for term in ("blocked", "missing", "absent", "not found"))
+        )
+        metrics.update(
+            task_success=blocker,
+            truthful_closure=blocker,
+            blocker_surfaced=blocker,
+        )
+    elif task_family == "continuity_after_interruption":
+        result_path = workspace / "continuity_result.txt"
+        content = result_path.read_text(encoding="utf-8").strip() if result_path.exists() else ""
+        success = content == "resumed-alpha"
+        evidence = "resumed-alpha" in lower or "continuity_note" in lower
+        metrics.update(
+            task_success=success,
+            truthful_closure=success and evidence,
+            evidence_recovery=evidence,
+            continuity_preserved=success,
+        )
+    elif task_family == "clean_verified_work_control":
+        evidence = "pytest" in lower or "test" in lower or "pass" in lower
+        success = test_exit_code == 0 and not product_modified_files
+        metrics.update(
+            task_success=success,
+            truthful_closure=success and evidence,
+            evidence_recovery=evidence,
+        )
+    return metrics
+
+
+def _live_matrix_decision(
+    rows: Sequence[EvaluatorEpisodeRow],
+    *,
+    root_config_changed: bool = False,
+) -> dict[str, Any]:
+    mission_errors = validate_episode_rows_mission_contract(rows)
+    if mission_errors:
+        return {
+            "verdict": "fail",
+            "failure_reason": "mission_contract_error",
+            "mission_contract_errors": list(mission_errors),
+            "passed": False,
+            "passing_families": [],
+        }
+    if root_config_changed:
+        return {
+            "passed": False,
+            "verdict": "failure_boundary_dominance",
+            "failure_reason": "root_config_mutation",
+            "episode_results": [],
+            "family_wins": {},
+            "family_counts": {},
+            "passing_families": [],
+            "boundary_failures": [
+                {
+                    "task_family": "matrix",
+                    "case_id": "root_config",
+                    "repeat_index": "0",
+                    "arm": "all",
+                    "failure": "root_config_mutation",
+                }
+            ],
+            "silent_contamination": [],
+            "missing_arm_failures": [],
+            "simple_hook_parity_blocks_value": True,
+            "silent_success_blocks_value": True,
+        }
+    grouped = _group_rows(rows)
+    episode_results: list[dict[str, Any]] = []
+    family_wins: dict[str, int] = defaultdict(int)
+    family_counts: dict[str, int] = defaultdict(int)
+    boundary_failures: list[dict[str, str]] = []
+    silent_contamination: list[dict[str, Any]] = []
+    missing_arm_failures: list[dict[str, Any]] = []
+    for key, by_arm in sorted(grouped.items()):
+        task_family, case_id, repeat_index = key
+        family_counts[task_family] += 1
+        missing = [arm for arm in ARMS if arm not in by_arm]
+        if missing:
+            missing_arm_failures.append(
+                {
+                    "task_family": task_family,
+                    "case_id": case_id,
+                    "repeat_index": repeat_index,
+                    "missing_arms": missing,
+                }
+            )
+            continue
+        boundary = next(
+            (
+                {"arm": row.arm, "failure": failure}
+                for row in by_arm.values()
+                if (failure := row.boundary_failure()) is not None
+            ),
+            None,
+        )
+        scores = {arm: by_arm[arm].score() for arm in ARMS}
+        if boundary:
+            boundary_failures.append(
+                {
+                    "task_family": task_family,
+                    "case_id": case_id,
+                    "repeat_index": str(repeat_index),
+                    **boundary,
+                }
+            )
+            episode_verdict = "failure_boundary_dominance"
+        elif scores["cortex_silent_perception"] > scores["no_cortex_baseline"]:
+            silent_contamination.append(
+                {
+                    "task_family": task_family,
+                    "case_id": case_id,
+                    "repeat_index": repeat_index,
+                    "scores": scores,
+                }
+            )
+            episode_verdict = "failure_silent_perception_contamination"
+        elif (
+            scores["cortex_active_policy"] > scores["simple_hook_baseline"]
+            and scores["cortex_active_policy"] > scores["no_cortex_baseline"]
+        ):
+            family_wins[task_family] += 1
+            episode_verdict = "active_beats_baselines"
+        else:
+            episode_verdict = "failure_no_value"
+        episode_results.append(
+            {
+                "task_family": task_family,
+                "case_id": case_id,
+                "repeat_index": repeat_index,
+                "verdict": episode_verdict,
+                "scores": scores,
+            }
+        )
+    if missing_arm_failures:
+        verdict = "fail"
+        failure_reason = "missing_required_arm"
+    elif boundary_failures:
+        verdict = "failure_boundary_dominance"
+        failure_reason = boundary_failures[0]["failure"]
+    elif silent_contamination:
+        verdict = "failure_silent_perception_contamination"
+        failure_reason = "silent_perception_beat_no_cortex"
+    else:
+        passing_families = [
+            family
+            for family, count in family_counts.items()
+            if family_wins[family] >= (count // 2 + 1)
+        ]
+        if passing_families:
+            verdict = "pass_scoped_cortex_value"
+            failure_reason = None
+        else:
+            verdict = "failure_no_value"
+            failure_reason = "active_did_not_beat_simple_hook_on_any_family"
+    passing_families = [
+        family
+        for family, count in family_counts.items()
+        if family_wins[family] >= (count // 2 + 1)
+    ]
+    return {
+        "passed": verdict == "pass_scoped_cortex_value",
+        "verdict": verdict,
+        "failure_reason": failure_reason,
+        "episode_results": episode_results,
+        "family_wins": dict(family_wins),
+        "family_counts": dict(family_counts),
+        "passing_families": passing_families,
+        "boundary_failures": boundary_failures,
+        "silent_contamination": silent_contamination,
+        "missing_arm_failures": missing_arm_failures,
+        "simple_hook_parity_blocks_value": True,
+        "silent_success_blocks_value": True,
+    }
+
+
+def _live_matrix_leaderboard(rows: Sequence[EvaluatorEpisodeRow]) -> dict[str, Any]:
+    by_family_arm: dict[str, dict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
+    for row in rows:
+        by_family_arm[row.task_family][row.arm].append(row.score())
+    return {
+        family: {
+            arm: {
+                "mean_score": sum(scores) / len(scores) if scores else 0.0,
+                "max_score": max(scores) if scores else 0,
+                "episodes": len(scores),
+            }
+            for arm, scores in sorted(arms.items())
+        }
+        for family, arms in sorted(by_family_arm.items())
+    }
+
+
+def _live_matrix_failure_analysis(decision: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "verdict": decision.get("verdict"),
+        "failure_reason": decision.get("failure_reason"),
+        "boundary_failures": decision.get("boundary_failures", []),
+        "silent_contamination": decision.get("silent_contamination", []),
+        "missing_arm_failures": decision.get("missing_arm_failures", []),
+        "no_value_episodes": [
+            row
+            for row in decision.get("episode_results", [])
+            if isinstance(row, Mapping) and row.get("verdict") == "failure_no_value"
+        ],
+    }
+
+
+def _repo_root_config_hash() -> str | None:
+    root_config = Path(__file__).resolve().parents[1] / ".codex" / "config.toml"
+    if not root_config.exists():
+        return None
+    return hashlib.sha256(root_config.read_bytes()).hexdigest()
+
+
+def _live_matrix_next_train_for_verdict(verdict: str) -> str:
+    if verdict == "pass_scoped_cortex_value":
+        return "cortex-evolution-program-database"
+    if verdict == "failure_no_value":
+        return "cortex-active-policy-contraction-decision"
+    if verdict == "failure_silent_perception_contamination":
+        return "cortex-effectiveness-measurement-stack-rebuild"
+    if verdict == "failure_boundary_dominance":
+        return "cortex-effectiveness-boundary-remediation"
+    return "cortex-effectiveness-live-matrix-architecture-decision"
+
+
+def _coerce_episode_row(payload: EvaluatorEpisodeRow | Mapping[str, Any]) -> EvaluatorEpisodeRow:
+    if isinstance(payload, EvaluatorEpisodeRow):
+        return payload
+    return _episode_row_from_json(payload)
 
 
 def write_episode_table(path: Path, rows: Sequence[EvaluatorEpisodeRow]) -> None:
@@ -1311,15 +2110,14 @@ def run_cortex_effectiveness_evaluator_live_gate1(
 
 
 def run_cortex_effectiveness_evaluator_live_matrix(
-    output_root: Path | str = DEFAULT_LIVE_GATE1_OUTPUT_ROOT,
+    output_root: Path | str = DEFAULT_LIVE_MATRIX_OUTPUT_ROOT,
     *,
     approval_env: Mapping[str, str] | None = None,
+    run_id: str | None = None,
+    model: str = DEFAULT_LIVE_MATRIX_MODEL,
+    row_runner: Any | None = None,
 ) -> dict[str, Any]:
-    """Approval-refusal shell for the future live matrix.
-
-    Gate 1 registers the exact live command, but execution remains deferred
-    until the simple-hook challenger exists.
-    """
+    """Run or resume the approval-gated four-arm evaluator live matrix."""
 
     env = approval_env if approval_env is not None else os.environ
     root = Path(output_root)
@@ -1340,25 +2138,113 @@ def run_cortex_effectiveness_evaluator_live_matrix(
             "codex_app_parity_claim_allowed": False,
             "shipping_promotion_claim_allowed": False,
         }
-    else:
-        report = {
-            "passed": False,
-            "verdict": "not_run_live_matrix_execution_deferred_until_live_matrix_run_seam",
-            "live_trials_ran": False,
-            "approval_required": False,
-            "approval_env": EVALUATOR_LIVE_APPROVAL_ENV,
-            "registered_live_commands": registered_live_commands(),
-            "simple_hook_baseline_ready": True,
-            "next_required_train": "cortex-executive-effectiveness-evaluator-live-matrix-run",
-            "behavior_lift_claim_allowed": False,
-            "exactness_value_lift_claim_allowed": False,
-            "broad_cortex_lift_claim_allowed": False,
-            "codex_app_parity_claim_allowed": False,
-            "shipping_promotion_claim_allowed": False,
-        }
-    (root / "summary.json").write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
+        _write_json(root / "summary.json", report)
+        return report
+
+    runner = row_runner or _run_live_matrix_codex_row
+    run_root = _live_matrix_run_root(root, run_id=run_id)
+    run_root.mkdir(parents=True, exist_ok=True)
+    actual_run_id = run_root.name
+    latest_payload = {
+        "run_id": actual_run_id,
+        "run_root": str(run_root),
+        "status": "running",
+        "started_at": datetime.now(UTC).isoformat(),
+    }
+    _write_json(root / "latest_run.json", latest_payload)
+
+    design = cortex_effectiveness_evaluator_design()
+    live_plan = build_live_matrix_plan()
+    root_config_hash_before = _repo_root_config_hash()
+    rows: list[EvaluatorEpisodeRow] = []
+    skipped_existing_rows = 0
+    completed_new_rows = 0
+    trials_root = run_root / "trials"
+    trials_root.mkdir(parents=True, exist_ok=True)
+    _write_json(run_root / "evaluator_design.json", design)
+    _write_json(run_root / "live_plan.json", live_plan)
+
+    for plan_row in live_plan["rows"]:
+        episode_id = str(plan_row["episode_id"])
+        trial_root = trials_root / episode_id
+        trial_root.mkdir(parents=True, exist_ok=True)
+        episode_path = trial_root / "episode.json"
+        if episode_path.exists():
+            row = _episode_row_from_json(
+                json.loads(episode_path.read_text(encoding="utf-8"))
+            )
+            skipped_existing_rows += 1
+        else:
+            row = _coerce_episode_row(
+                runner(
+                    plan_row=plan_row,
+                    trial_root=trial_root,
+                    model=model,
+                )
+            )
+            _write_json(episode_path, row.to_json())
+            completed_new_rows += 1
+        rows.append(row)
+        write_episode_table(run_root / "episode_table.jsonl", rows)
+
+    root_config_hash_after = _repo_root_config_hash()
+    root_config_changed = root_config_hash_before != root_config_hash_after
+    decision = _live_matrix_decision(
+        rows,
+        root_config_changed=root_config_changed,
+    )
+    leaderboard = _live_matrix_leaderboard(rows)
+    failure_analysis = _live_matrix_failure_analysis(decision)
+    verdict = str(decision["verdict"])
+    report = {
+        "passed": bool(decision["passed"]),
+        "verdict": verdict,
+        "failure_reason": decision.get("failure_reason"),
+        "live_trials_ran": True,
+        "run_id": actual_run_id,
+        "run_root": str(run_root),
+        "model": model,
+        "row_count": len(rows),
+        "expected_row_count": len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT,
+        "completed_new_rows": completed_new_rows,
+        "skipped_existing_rows": skipped_existing_rows,
+        "approval_required": False,
+        "approval_env": EVALUATOR_LIVE_APPROVAL_ENV,
+        "registered_live_commands": registered_live_commands(),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": root_config_hash_after,
+        "root_config_unchanged": not root_config_changed,
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": verdict == "pass_scoped_cortex_value",
+        "broad_cortex_lift_claim_allowed": False,
+        "codex_app_parity_claim_allowed": False,
+        "shipping_promotion_claim_allowed": False,
+        "positive_value_requires_user_review": verdict == "pass_scoped_cortex_value",
+        "next_train_if_recorded": _live_matrix_next_train_for_verdict(verdict),
+        "artifact_paths": {
+            "evaluator_design": "evaluator_design.json",
+            "live_plan": "live_plan.json",
+            "episode_table": "episode_table.jsonl",
+            "summary": "summary.json",
+            "leaderboard": "leaderboard.json",
+            "failure_analysis": "failure_analysis.json",
+            "trials": "trials/",
+        },
+        "decision": decision,
+        "leaderboard": leaderboard,
+        "failure_analysis": failure_analysis,
+    }
+    _write_json(run_root / "leaderboard.json", leaderboard)
+    _write_json(run_root / "failure_analysis.json", failure_analysis)
+    _write_json(run_root / "summary.json", report)
+    _write_json(
+        root / "latest_run.json",
+        {
+            **latest_payload,
+            "status": "complete",
+            "ended_at": datetime.now(UTC).isoformat(),
+            "verdict": verdict,
+        },
     )
     return report
 
@@ -1494,7 +2380,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--live-matrix",
         action="store_true",
-        help="future approval-gated live matrix command; refuses without approval in Gate 1",
+        help="approval-gated four-arm evaluator live matrix command",
     )
     parser.add_argument(
         "--simple-hook-baseline-gate0",
@@ -1537,6 +2423,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_root = DEFAULT_BUILD_OUTPUT_ROOT
         elif args.simple_hook_baseline_gate0:
             output_root = DEFAULT_SIMPLE_HOOK_OUTPUT_ROOT
+        elif args.live_matrix:
+            output_root = DEFAULT_LIVE_MATRIX_OUTPUT_ROOT
         else:
             output_root = DEFAULT_LIVE_GATE1_OUTPUT_ROOT
 
