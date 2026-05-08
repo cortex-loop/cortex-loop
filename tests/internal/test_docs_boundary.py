@@ -338,10 +338,10 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_PATH = (
 )
 
 CURRENT_WORK_SLUG = (
-    "codex-app-cli-posttooluse-task-standard-measurement-stack-rebuild-gate0"
+    "codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0"
 )
 NEXT_PRODUCT_TRAIN_SLUG = (
-    "codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0"
+    "codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-probe-gate0"
 )
 CONTEXT_LOOP_TRACE_REMEDIATION_RECON_PATH = (
     REPO_ROOT
@@ -374,6 +374,12 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_MEASUREMENT_STACK_REBUILD_GATE0_PATH = (
     / "docs"
     / "recon"
     / "cortex_codex_app_cli_posttooluse_task_standard_measurement_stack_rebuild_gate0.md"
+)
+CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_FINAL_CLOSURE_READOUT_GATE0_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_posttooluse_task_standard_final_closure_readout_remediation_gate0.md"
 )
 
 CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_AFTER_SHARED_TOOL_EVIDENCE_PATH = (
@@ -488,13 +494,15 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
 ) -> None:
     assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     work_note = status["work_today"]["note"].lower()
-    assert "measurement-stack gate 0 passed" in work_note
-    assert "evidence-recovery episode table" in work_note
+    assert "final-closure readout remediation gate 0 passed" in work_note
+    assert "lab final-closure predicate" in work_note
+    assert "semantic exactness evidence" in work_note
+    assert "live decision ordering unchanged" in work_note
     assert "true next-action ignore" in work_note
     assert "no-context" in work_note
     assert "overcontrol" in work_note
     assert "repeated-context/ambiguous-trace" in work_note
-    assert "final-closure metric-underfit" in work_note
+    assert "corrected `pass_posttooluse_next_step_observed`" in work_note
     assert "failure_context_ignored" in work_note
     assert "task_standard_posttooluse_live_20260507t100836z" in work_note
     assert "20260507t142129z" in work_note
@@ -505,6 +513,8 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
     assert "bytes=16" in work_note
     assert "616c7068612062657461206f6d656761" in work_note
     assert "alpha beta omega" in work_note
+    assert "cmp_exit=0" in work_note
+    assert "exact byte-match" in work_note
     assert "no live codex run" in work_note
     assert "product behavior change" in work_note
     assert "no exactness value lift" in work_note
@@ -514,39 +524,41 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
 
     next_train = status["next_product_train"]
     assert next_train["slug"] == NEXT_PRODUCT_TRAIN_SLUG
-    assert next_train["surface"] == "lab proof readout remediation"
-    assert "final-closure evidence readout" in next_train[
+    assert next_train["surface"] == "lab proof paired-value design gate"
+    assert "exactness-only paired value probe" in next_train[
         "executive_benefit"
     ].lower()
-    assert "measurement-stack gate 0" in next_train["executive_benefit"].lower()
-    assert "all five historical failure classes" in next_train[
+    assert "final-closure readout gate 0" in next_train[
         "executive_benefit"
     ].lower()
-    assert "one evidence-recovery episode table" in next_train["why_now"].lower()
-    for artifact in (
-        "20260507T100836Z",
-        "142129Z",
-        "153242Z",
-        "213732Z",
-        "225019Z",
-    ):
-        assert artifact in next_train["primary_metric"]
+    assert "only `task_standard_posttooluse_live_20260507t225019z` pass" in next_train[
+        "executive_benefit"
+    ].lower()
+    assert "pass" in next_train["why_now"].lower()
+    assert "bytes=16" in next_train["why_now"].lower()
+    assert "616c7068612062657461206f6d656761" in next_train["why_now"].lower()
+    assert "alpha beta omega" in next_train["why_now"].lower()
+    assert "no-live paired-value design gate" in next_train["why_now"].lower()
     primary_metric = next_train["primary_metric"].lower()
-    assert "pass" in primary_metric
-    assert "bytes=16" in primary_metric
-    assert "616c7068612062657461206f6d656761" in primary_metric
-    assert "alpha beta omega" in primary_metric
-    assert "earlier historical failure classes must remain preserved" in primary_metric
-    assert "no live codex run" in next_train["guardrail"].lower()
+    assert "paired exactness-only probe" in primary_metric
+    assert "active/control arms" in primary_metric
+    assert "preregistered success and failure conjuncts" in primary_metric
+    assert "corrected final-closure predicate" in primary_metric
+    assert "without changing product policy" in primary_metric
+    assert "latest corrected replay as value lift" in primary_metric
+    assert "no live codex run unless explicitly approved" in next_train[
+        "guardrail"
+    ].lower()
+    assert "no broad behavior comparison" in next_train["guardrail"].lower()
     assert "no product host behavior change" in next_train["guardrail"].lower()
     assert "do not change signed userpromptsubmit text" in next_train[
         "guardrail"
     ].lower()
-    assert "masks any prior historical failure" in next_train["kill_rule"].lower()
+    assert "fixture salience" in next_train["kill_rule"].lower()
+    assert "lab compliance" in next_train["kill_rule"].lower()
+    assert "final-closure readout repair" in next_train["kill_rule"].lower()
     assert "pause posttooluse value claims" in next_train["kill_rule"].lower()
-    assert "do not queue a live rerun or exactness value probe" in next_train[
-        "kill_rule"
-    ].lower()
+    assert "do not run live or claim exactness value lift" in next_train["kill_rule"].lower()
 
 
 def _find_repo_files(filename: str) -> list[str]:
@@ -1324,6 +1336,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_codex_app_cli_posttooluse_task_standard_calibration_decision.md",
         "cortex_codex_app_cli_posttooluse_task_standard_closure_reporting_architecture_decision.md",
         "cortex_codex_app_cli_posttooluse_task_standard_context_loop_trace_remediation.md",
+        "cortex_codex_app_cli_posttooluse_task_standard_final_closure_readout_remediation_gate0.md",
         "cortex_codex_app_cli_posttooluse_task_standard_firing_boundary_remediation.md",
         "cortex_codex_app_cli_posttooluse_task_standard_measurement_stack_rebuild_gate0.md",
         "cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md",
@@ -3575,6 +3588,75 @@ def test_codex_app_cli_posttooluse_measurement_stack_gate0_records_episode_table
     _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
+def test_codex_app_cli_posttooluse_final_closure_readout_gate0_records_corrected_replay() -> None:
+    text = _read(
+        CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_FINAL_CLOSURE_READOUT_GATE0_PATH
+    )
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: lab proof readout remediation" in text
+    assert "Verdict: `pass_posttooluse_final_closure_readout_gate0`." in text
+    assert "live_trials_ran=false" in text
+    assert "behavior_lift_claim_allowed=false" in text
+    for phrase in (
+        "`PASS`",
+        "`bytes=16`",
+        "`616c7068612062657461206f6d656761`",
+        "`alpha beta omega`",
+        "`cmp_exit=0`",
+        "exact byte match",
+        "decision ordering is unchanged",
+        "`pass_posttooluse_next_step_observed`",
+    ):
+        assert phrase in text
+
+    for artifact, preserved in (
+        (
+            "task_standard_posttooluse_live_20260507T100836Z",
+            "`failure_context_ignored` / `next_model_tool_did_not_run_named_direct_check`",
+        ),
+        (
+            "task_standard_posttooluse_live_20260507T142129Z",
+            "`failure_no_context` / `candidate_artifact_without_posttooluse_context`",
+        ),
+        (
+            "task_standard_posttooluse_live_20260507T153242Z",
+            "`failure_overcontrol` / `clean_or_control_case_received_context`",
+        ),
+        (
+            "task_standard_posttooluse_live_20260507T213732Z",
+            "`fail` / `repeated_posttooluse_context_loop`",
+        ),
+        (
+            "task_standard_posttooluse_live_20260507T225019Z",
+            "`pass_posttooluse_next_step_observed`",
+        ),
+    ):
+        assert artifact in text
+        assert preserved in text
+
+    for forbidden in (
+        "No behavior lift",
+        "exactness value lift",
+        "broad Cortex lift",
+        "Codex App parity",
+        "shipping promotion",
+    ):
+        assert forbidden in text
+
+    assert NEXT_PRODUCT_TRAIN_SLUG in text
+    assert (
+        "recon/cortex_codex_app_cli_posttooluse_task_standard_final_closure_readout_remediation_gate0.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_final_closure_readout_remediation_gate0.md"
+        in status["active_docs"]
+    )
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
+
+
 def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
     cortex_doc = _read(CORTEX_DOC_PATH)
     sre_doc = _read(CORTEX_V2_SRE_PATH)
@@ -3983,7 +4065,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "pretooluse denial" in status["next_product_train"][
         "guardrail"
     ].lower()
-    assert status["next_product_train"]["surface"] == "lab proof readout remediation"
+    assert status["next_product_train"]["surface"] == "lab proof paired-value design gate"
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
     assert "brain-capability-observation-and-inference" in deferred_lines
     assert (
@@ -4069,11 +4151,11 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
     assert (
-        "`codex-app-cli-posttooluse-task-standard-measurement-stack-rebuild-gate0`"
+        "`codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0`"
         in text
     )
-    assert "- Next product train after the current focus: `codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0`" in text
-    assert "- Train: `codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-probe-gate0`" in text
+    assert "- Train: `codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-probe-gate0`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()

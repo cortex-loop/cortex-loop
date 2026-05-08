@@ -265,6 +265,10 @@ Active docs:
 - [Cortex Codex App/CLI PostToolUse Task-Standard Measurement-Stack Rebuild Gate 0](recon/cortex_codex_app_cli_posttooluse_task_standard_measurement_stack_rebuild_gate0.md) —
   no-live measurement table replaying all five PostToolUse live artifacts and
   preserving historical failures while isolating final-closure metric underfit
+- [Cortex Codex App/CLI PostToolUse Task-Standard Final-Closure Readout Remediation Gate 0](recon/cortex_codex_app_cli_posttooluse_task_standard_final_closure_readout_remediation_gate0.md) —
+  no-live readout remediation proving semantic exactness closure evidence
+  makes only the latest PostToolUse live artifact pass while preserving the
+  earlier historical failure classes
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed
