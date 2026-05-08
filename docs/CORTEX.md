@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-task-standard-closure-reporting-architecture-decision`
+- Slug: `codex-app-cli-posttooluse-strategy-failure-audit`
 ### Next Product Train
-- Slug: `codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0`
-- Surface: `lab proof remediation`
-- Why now: The architecture decision localized the latest failure to readout underfit: context delivery, repeated-context prevention, causal trace joining, next tool action, clean controls, and hidden/root/runtime boundaries all passed, while the harness predicate missed a final output that semantically reported the direct evidence.
+- Slug: `codex-app-cli-posttooluse-task-standard-measurement-stack-rebuild-gate0`
+- Surface: `lab proof architecture remediation`
+- Why now: The strategy audit found that the five PostToolUse live failures moved across different unmodeled boundaries: phase timing, live payload completion, clean-control failed-check classification, context-loop/trace causality, and final-closure readout. The final-closure readout fix is still a candidate, but it must be replayed with the whole historical failure set before another live run or value probe.
 
 ### Research Lines Under Evaluation
 

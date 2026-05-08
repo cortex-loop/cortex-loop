@@ -337,8 +337,10 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_PATH = (
     / "cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun.md"
 )
 
-CURRENT_WORK_SLUG = "codex-app-cli-posttooluse-task-standard-closure-reporting-architecture-decision"
-NEXT_PRODUCT_TRAIN_SLUG = "codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0"
+CURRENT_WORK_SLUG = "codex-app-cli-posttooluse-strategy-failure-audit"
+NEXT_PRODUCT_TRAIN_SLUG = (
+    "codex-app-cli-posttooluse-task-standard-measurement-stack-rebuild-gate0"
+)
 CONTEXT_LOOP_TRACE_REMEDIATION_RECON_PATH = (
     REPO_ROOT
     / "docs"
@@ -358,6 +360,12 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_CLOSURE_REPORTING_ARCHITECTURE_DECISION_
     / "docs"
     / "recon"
     / "cortex_codex_app_cli_posttooluse_task_standard_closure_reporting_architecture_decision.md"
+)
+CODEX_APP_CLI_POSTTOOLUSE_STRATEGY_FAILURE_AUDIT_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_codex_app_cli_posttooluse_strategy_failure_audit.md"
 )
 
 CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_AFTER_SHARED_TOOL_EVIDENCE_PATH = (
@@ -467,43 +475,59 @@ def _load_status() -> dict[str, object]:
     return json.loads(_read(STATUS_REGISTRY_PATH))
 
 
-def _assert_current_posttooluse_closure_reporting_decision_status(
+def _assert_current_posttooluse_strategy_failure_audit_status(
     status: dict[str, object],
 ) -> None:
     assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     work_note = status["work_today"]["note"].lower()
-    assert "lab final-closure readout underfit" in work_note
+    assert "queue_measurement_stack_rebuild" in work_note
+    assert "not one repeated product failure" in work_note
+    assert "different unmodeled boundary" in work_note
+    assert "measurement-stack rebuild" in work_note
     assert "failure_context_ignored" in work_note
-    assert "task_standard_posttooluse_live_20260507t225019z" in work_note
-    assert "tool_event_fingerprint" in work_note
-    assert "next_tool_matches_context=true" in work_note
-    assert "final_closure_reports_context_evidence=false" in work_note
-    assert "pass" in work_note
-    assert "bytes=16" in work_note
-    assert "616c7068612062657461206f6d656761" in work_note
-    assert "alpha beta omega" in work_note
+    assert "task_standard_posttooluse_live_20260507t100836z" in work_note
+    assert "20260507t142129z" in work_note
+    assert "20260507t153242z" in work_note
+    assert "20260507t213732z" in work_note
+    assert "20260507t225019z" in work_note
     assert "behavior_lift_claim_allowed=false" in work_note
+    assert "no exactness value lift" in work_note
+    assert "broad cortex lift" in work_note
+    assert "shipping promotion" in work_note
 
     next_train = status["next_product_train"]
     assert next_train["slug"] == NEXT_PRODUCT_TRAIN_SLUG
-    assert next_train["surface"] == "lab proof remediation"
-    assert "final-closure evidence criterion" in next_train[
+    assert next_train["surface"] == "lab proof architecture remediation"
+    assert "evidence-recovery episode table" in next_train[
         "executive_benefit"
     ].lower()
-    assert "readout underfit" in next_train["why_now"].lower()
-    assert "task_standard_posttooluse_live_20260507T225019Z" in next_train[
-        "primary_metric"
-    ]
-    assert "pass/bytes=16/expected-hex/exact-content" in next_train[
-        "primary_metric"
+    assert "five posttooluse live failures" in next_train["why_now"].lower()
+    assert "final-closure readout fix is still a candidate" in next_train[
+        "why_now"
     ].lower()
+    for artifact in (
+        "20260507T100836Z",
+        "142129Z",
+        "153242Z",
+        "213732Z",
+        "225019Z",
+    ):
+        assert artifact in next_train["primary_metric"]
+    primary_metric = next_train["primary_metric"].lower()
+    assert "no-context" in primary_metric
+    assert "overcontrol" in primary_metric
+    assert "repeated-context" in primary_metric
+    assert "ambiguous-trace" in primary_metric
+    assert "true next-action-ignore" in primary_metric
+    assert "final-closure metric-underfit" in primary_metric
     assert "no live codex run" in next_train["guardrail"].lower()
     assert "no product host behavior change" in next_train["guardrail"].lower()
     assert "do not change signed userpromptsubmit text" in next_train[
         "guardrail"
     ].lower()
-    assert "scoped_negative" in next_train["kill_rule"]
-    assert "do not queue a live rerun or value probe" in next_train[
+    assert "preserve historical failures" in next_train["kill_rule"].lower()
+    assert "pause posttooluse value claims" in next_train["kill_rule"].lower()
+    assert "do not queue a live rerun or exactness value probe" in next_train[
         "kill_rule"
     ].lower()
 
@@ -1277,6 +1301,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
             "cortex_codex_app_cli_lifecycle_actuator_map_roadmap_update.md",
             "cortex_codex_app_cli_posttooluse_causal_trace_ids.md",
             "cortex_codex_app_cli_posttooluse_shared_tool_evidence_classification.md",
+            "cortex_codex_app_cli_posttooluse_strategy_failure_audit.md",
             "cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md",
         "cortex_codex_app_cli_posttooluse_task_standard_actuator_trace_repair.md",
         "cortex_codex_app_cli_posttooluse_task_standard_calibration_decision.md",
@@ -2659,7 +2684,7 @@ def test_codex_app_cli_communication_boundary_audit_records_proof_ladder() -> No
         "docs/recon/cortex_codex_app_cli_communication_boundary_audit_and_hardening.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_task_standard_pretool_transcript_capture_records_state_capture() -> None:
@@ -2689,7 +2714,7 @@ def test_codex_app_cli_task_standard_pretool_transcript_capture_records_state_ca
         "docs/recon/cortex_codex_app_cli_task_standard_pretool_transcript_capture.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_task_standard_live_capture_rerun_records_pass() -> None:
@@ -2720,7 +2745,7 @@ def test_codex_app_cli_task_standard_live_capture_rerun_records_pass() -> None:
         "docs/recon/cortex_codex_app_cli_task_standard_live_capture_rerun.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_task_standard_stop_gating_calibration_records_pass() -> None:
@@ -2745,7 +2770,7 @@ def test_codex_app_cli_task_standard_stop_gating_calibration_records_pass() -> N
         "docs/recon/cortex_codex_app_cli_task_standard_stop_gating_calibration_probe.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_task_standard_stop_gating_live_run_records_gate_use() -> None:
@@ -2770,7 +2795,7 @@ def test_codex_app_cli_task_standard_stop_gating_live_run_records_gate_use() -> 
         "docs/recon/cortex_codex_app_cli_task_standard_stop_gating_live_run.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_task_standard_behavior_comparison_harness_records_gate0() -> None:
@@ -2795,7 +2820,7 @@ def test_codex_app_cli_task_standard_behavior_comparison_harness_records_gate0()
         "docs/recon/cortex_codex_app_cli_task_standard_behavior_comparison_harness.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_lifecycle_actuator_map_records_event_control_order() -> None:
@@ -2831,7 +2856,7 @@ def test_codex_app_cli_lifecycle_actuator_map_records_event_control_order() -> N
         "docs/recon/cortex_codex_app_cli_lifecycle_actuator_map.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
     assert "failure_context_ignored" in tracker
     assert "PostToolUse next-action effect remains unearned" in tracker
     assert "PreToolUse motor inhibition should follow only as action blocking" in tracker
@@ -2865,7 +2890,7 @@ def test_codex_app_cli_posttooluse_task_standard_next_step_correction_records_ga
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_next_step_correction.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
     assert "three-arm behavior comparison" not in status["next_product_train"][
         "guardrail"
     ].lower()
@@ -2900,7 +2925,7 @@ def test_codex_app_cli_posttooluse_task_standard_calibration_decision_queues_nar
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_calibration_decision.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
     assert "failure_context_ignored" in tracker
 
 
@@ -2922,7 +2947,7 @@ def test_codex_app_cli_task_standard_stack_publication_hygiene_blocks_live_until
         "docs/recon/cortex_codex_app_cli_task_standard_stack_publication_hygiene.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_posttooluse_task_standard_narrow_live_probe_is_harness_ready_not_run() -> None:
@@ -2943,7 +2968,7 @@ def test_codex_app_cli_posttooluse_task_standard_narrow_live_probe_is_harness_re
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_probe.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
     assert "do not change" in status["next_product_train"][
         "guardrail"
     ].lower()
@@ -2972,7 +2997,7 @@ def test_codex_app_cli_posttooluse_task_standard_narrow_live_run_records_negativ
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_narrow_live_run.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
     assert "do not change" in status["next_product_train"]["guardrail"].lower()
 
 
@@ -3005,7 +3030,7 @@ def test_codex_app_cli_posttooluse_task_standard_architecture_decision_queues_ph
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_architecture_decision.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_posttooluse_phase_aware_gate0_records_structural_pass() -> None:
@@ -3042,7 +3067,7 @@ def test_codex_app_cli_posttooluse_phase_aware_gate0_records_structural_pass() -
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_calibration_gate0.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_posttooluse_phase_aware_narrow_live_run_records_no_context() -> None:
@@ -3079,7 +3104,7 @@ def test_codex_app_cli_posttooluse_phase_aware_narrow_live_run_records_no_contex
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_run.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
     assert "posttooluse text" in status["next_product_train"][
         "guardrail"
     ].lower()
@@ -3118,7 +3143,7 @@ def test_codex_app_cli_posttooluse_firing_boundary_remediation_records_gate0_pas
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_firing_boundary_remediation.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_posttooluse_phase_aware_narrow_live_rerun_records_overcontrol() -> None:
@@ -3148,7 +3173,7 @@ def test_codex_app_cli_posttooluse_phase_aware_narrow_live_rerun_records_overcon
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_posttooluse_overcontrol_remediation_records_gate0_pass() -> None:
@@ -3179,7 +3204,7 @@ def test_codex_app_cli_posttooluse_overcontrol_remediation_records_gate0_pass() 
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_overcontrol_remediation.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_posttooluse_actuator_trace_repair_records_gate0_pass() -> None:
@@ -3208,7 +3233,7 @@ def test_codex_app_cli_posttooluse_actuator_trace_repair_records_gate0_pass() ->
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_actuator_trace_repair.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_posttooluse_causal_trace_ids_records_gate0_pass() -> None:
@@ -3234,7 +3259,7 @@ def test_codex_app_cli_posttooluse_causal_trace_ids_records_gate0_pass() -> None
         "docs/recon/cortex_codex_app_cli_posttooluse_causal_trace_ids.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_posttooluse_shared_tool_evidence_records_gate0_pass() -> None:
@@ -3266,7 +3291,7 @@ def test_codex_app_cli_posttooluse_shared_tool_evidence_records_gate0_pass() -> 
         "docs/recon/cortex_codex_app_cli_posttooluse_shared_tool_evidence_classification.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_posttooluse_phase_aware_rerun_after_shared_tool_evidence_records_fail() -> None:
@@ -3301,7 +3326,7 @@ def test_codex_app_cli_posttooluse_phase_aware_rerun_after_shared_tool_evidence_
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun_after_shared_tool_evidence.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_posttooluse_context_loop_trace_remediation_records_gate0_pass() -> None:
@@ -3327,7 +3352,7 @@ def test_codex_app_cli_posttooluse_context_loop_trace_remediation_records_gate0_
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_context_loop_trace_remediation.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_posttooluse_phase_aware_rerun_after_context_loop_trace_records_failure() -> None:
@@ -3361,7 +3386,7 @@ def test_codex_app_cli_posttooluse_phase_aware_rerun_after_context_loop_trace_re
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun_after_context_loop_trace_remediation.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_codex_app_cli_posttooluse_closure_reporting_architecture_decision_records_readout_underfit() -> None:
@@ -3401,7 +3426,74 @@ def test_codex_app_cli_posttooluse_closure_reporting_architecture_decision_recor
         "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_closure_reporting_architecture_decision.md"
         in status["active_docs"]
     )
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
+
+
+def test_codex_app_cli_posttooluse_strategy_failure_audit_records_strategy_verdict() -> None:
+    text = _read(CODEX_APP_CLI_POSTTOOLUSE_STRATEGY_FAILURE_AUDIT_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: product strategy audit" in text
+    assert "Verdict: `queue_measurement_stack_rebuild`." in text
+    assert "not one repeated product failure" in text
+    assert "nothing to show" in text.lower()
+    assert "`codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0`" in text
+    for artifact, verdict in (
+        ("task_standard_posttooluse_live_20260507T100836Z", "`failure_context_ignored`"),
+        ("task_standard_posttooluse_live_20260507T142129Z", "`failure_no_context`"),
+        ("task_standard_posttooluse_live_20260507T153242Z", "`failure_overcontrol`"),
+        ("task_standard_posttooluse_live_20260507T213732Z", "`fail`"),
+        ("task_standard_posttooluse_live_20260507T225019Z", "`failure_context_ignored`"),
+    ):
+        assert artifact in text
+        assert verdict in text
+
+    for layer in (
+        "Lifecycle Strategy",
+        "Actuator Strategy",
+        "State Strategy",
+        "Proof Strategy",
+        "Product Strategy",
+    ):
+        assert f"### {layer}" in text
+
+    for phrase in (
+        "product timing / phase selection",
+        "live payload completion underfit",
+        "failed-check classification underfit",
+        "state lease and causal trace underfit",
+        "lab final-closure readout underfit",
+        "product-host failures",
+        "proof/readout failures",
+        "No live run or value probe should be queued until that table passes.",
+    ):
+        assert phrase in text
+
+    for forbidden in (
+        "no behavior lift",
+        "exactness value lift",
+        "shipping promotion",
+        "Codex App parity",
+    ):
+        assert forbidden in text
+
+    assert (
+        "cortex/hosts/openai/posttooluse_task_standard_actuator.py:63" in text
+    )
+    assert "cortex/hosts/openai/codex_app_cli_hook_coordinator.py:1003" in text
+    assert "cortex/sre/tool_evidence.py:12" in text
+    assert "cortex/sre/task_standard.py:403" in text
+    assert "lab/codex_app_cli_hook_native_behavior_comparison.py:4783" in text
+    assert (
+        "recon/cortex_codex_app_cli_posttooluse_strategy_failure_audit.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_codex_app_cli_posttooluse_strategy_failure_audit.md"
+        in status["active_docs"]
+    )
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
@@ -3805,14 +3897,14 @@ def test_status_registry_is_complete_and_stable() -> None:
         assert {"slug", "stage", "summary", "next_step"} <= set(entry)
         assert entry["slug"] != status["work_today"]["slug"]
     assert entry["slug"] != status["next_product_train"]["slug"]
-    _assert_current_posttooluse_closure_reporting_decision_status(status)
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
     assert "sinkhorn/transport" in status["next_product_train"][
         "guardrail"
     ].lower()
     assert "pretooluse denial" in status["next_product_train"][
         "guardrail"
     ].lower()
-    assert status["next_product_train"]["surface"] == "lab proof remediation"
+    assert status["next_product_train"]["surface"] == "lab proof architecture remediation"
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
     assert "brain-capability-observation-and-inference" in deferred_lines
     assert (
@@ -3897,9 +3989,9 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`codex-app-cli-posttooluse-task-standard-closure-reporting-architecture-decision`" in text
-    assert "- Next product train after the current focus: `codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0`" in text
-    assert "- Train: `codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0`" in text
+    assert "`codex-app-cli-posttooluse-strategy-failure-audit`" in text
+    assert "- Next product train after the current focus: `codex-app-cli-posttooluse-task-standard-measurement-stack-rebuild-gate0`" in text
+    assert "- Train: `codex-app-cli-posttooluse-task-standard-measurement-stack-rebuild-gate0`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
