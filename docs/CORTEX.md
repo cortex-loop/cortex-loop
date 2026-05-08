@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0`
-### Next Product Train
 - Slug: `codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-probe-gate0`
-- Surface: `lab proof paired-value design gate`
-- Why now: The final-closure readout remediation Gate 0 passed without live spend: it accepted `PASS`, `bytes=16`, expected hex `616c7068612062657461206f6d656761`, exact `alpha beta omega`, and byte-match language while preserving `20260507T100836Z`, `142129Z`, `153242Z`, and `213732Z` as earlier failures. The next lawful move is a no-live paired-value design gate, not a direct live rerun.
+### Next Product Train
+- Slug: `codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-live-probe`
+- Surface: `approval-gated live paired value probe`
+- Why now: The exactness-only paired value Gate 0 passed without live spend: it registered `active_posttooluse_context` and `silent_posttooluse_control`, cases `mismatch_exactness`, `clean_evidenced`, `honest_blocker`, `waiting_on_user`, and `unrelated_tool`, the only intended arm delta `enable_posttooluse_task_standard_context`, future approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_VALUE_APPROVED=approved`, and the `4/5` active-beats-silent threshold while forbidding value lift from the historical corrected replay `task_standard_posttooluse_live_20260507T225019Z`.
 
 ### Research Lines Under Evaluation
 
