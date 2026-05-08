@@ -298,6 +298,11 @@ Active docs:
   no-live independent small baseline for the four-arm evaluator: under 500 LOC,
   no `cortex/**` imports, visible-task capture, one reminder/context path, and
   one closure check
+- [Cortex Executive Effectiveness Evaluator Live Matrix Run](recon/cortex_executive_effectiveness_evaluator_live_matrix_run.md) —
+  approval-gated 60-row four-arm evaluator run producing
+  `failure_silent_perception_contamination`: active Cortex did not beat the
+  simple-hook baseline, and the only discriminating continuity repeat was
+  matched by silent Cortex
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation

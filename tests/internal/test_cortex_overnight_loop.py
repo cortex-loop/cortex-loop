@@ -126,7 +126,7 @@ def test_classify_next_work_refuses_strategic_or_paid_boundaries() -> None:
 def test_classify_next_work_allows_registered_live_but_never_auto_merges() -> None:
     decision = loop.classify_next_work(
         _status(
-            slug="cortex-executive-effectiveness-evaluator-live-matrix",
+            slug="cortex-executive-effectiveness-evaluator-live-matrix-run",
             surface="approval-gated live evaluator proof",
             guardrail="Codex CLI live matrix is allowed inside registered evaluator plan.",
             primary_metric="Run live evaluator matrix only after deterministic replay.",
@@ -147,12 +147,16 @@ def test_classify_next_work_allows_registered_live_but_never_auto_merges() -> No
     assert decision.status == "ready"
     assert decision.live_codex_allowed is True
     assert decision.safe_to_auto_merge is False
+    assert (
+        "CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --live-matrix"
+        in decision.allowed_commands
+    )
 
 
 def test_classify_next_work_refuses_unregistered_live() -> None:
     decision = loop.classify_next_work(
         _status(
-            slug="cortex-executive-effectiveness-evaluator-live-matrix",
+            slug="cortex-executive-effectiveness-evaluator-live-matrix-run",
             surface="approval-gated live evaluator proof",
             guardrail="Codex CLI live matrix is allowed inside registered evaluator plan.",
             primary_metric="Run live evaluator matrix only after deterministic replay.",

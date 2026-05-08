@@ -17,6 +17,7 @@ from lab.cortex_effectiveness_evaluator import (
     LAB_PROOF_MODEL_IO_PATH,
     LIVE_MATRIX_REPEAT_COUNT,
     MISSION_OBJECTIVE_REQUIRED_FIELDS,
+    SCORE_FIELDS,
     SIMPLE_HOOK_LOC_LIMIT,
     SIMPLE_HOOK_SOURCE_PATH,
     TASK_FAMILIES,
@@ -36,6 +37,64 @@ from lab.cortex_simple_hook_baseline import (
     capture_visible_task_standard,
     render_simple_hook_reminder,
 )
+
+
+def _fake_live_matrix_row(
+    *,
+    plan_row: dict[str, object],
+    trial_root: Path,
+    model: str,
+    mode: str = "active_wins",
+) -> EvaluatorEpisodeRow:
+    arm = str(plan_row["arm"])
+    task_family = str(plan_row["task_family"])
+    policy_candidate = str(plan_row["policy_candidate"])
+    score_by_arm = {
+        "no_cortex_baseline": 0,
+        "simple_hook_baseline": 1,
+        "cortex_silent_perception": 0,
+        "cortex_active_policy": 2,
+    }
+    if mode == "simple_parity" and arm == "cortex_active_policy":
+        score_by_arm[arm] = 1
+    if mode == "silent_contamination" and arm == "cortex_silent_perception":
+        score_by_arm[arm] = 2
+    metrics = {field: False for field in SCORE_FIELDS}
+    for field in SCORE_FIELDS[: score_by_arm[arm]]:
+        metrics[field] = True
+    if mode == "boundary" and arm == "cortex_active_policy":
+        metrics["overcontrol"] = True
+    metrics.update(
+        {
+            "model": model,
+            "workspace_seed": str(plan_row["workspace_seed"]),
+            "model_visible_cortex_output_count": 1
+            if arm in {"simple_hook_baseline", "cortex_active_policy"}
+            else 0,
+            "suppressed_cortex_output_count": 1
+            if arm == "cortex_silent_perception"
+            else 0,
+            "subject_config_product_only": True,
+            "runtime_snapshot_loaded": False,
+        }
+    )
+    return EvaluatorEpisodeRow(
+        task_family=task_family,
+        case_id=str(plan_row["case_id"]),
+        repeat_index=int(plan_row["repeat_index"]),
+        arm=arm,
+        policy_candidate=policy_candidate,
+        metrics=metrics,
+        source="live_matrix_fake",
+        episode_id=str(plan_row["episode_id"]),
+        expected_verdict="live_matrix_scored",
+        notes=f"trial_root={trial_root}",
+        mission_objective=evaluator._live_matrix_mission_objective_for_row(
+            arm=arm,
+            task_family=task_family,
+            policy_candidate=policy_candidate,
+        ),
+    )
 
 
 def test_gate0_design_registers_hard_objective_and_arms(tmp_path: Path) -> None:
@@ -322,27 +381,125 @@ def test_live_gate1_registers_approval_gated_dry_run_matrix(tmp_path: Path) -> N
     )
 
 
-def test_live_matrix_refuses_without_approval_and_defers_with_approval(tmp_path: Path) -> None:
+def test_live_matrix_refuses_without_approval_and_runs_fake_matrix(tmp_path: Path) -> None:
     refused = run_cortex_effectiveness_evaluator_live_matrix(
         output_root=tmp_path / "refused",
         approval_env={},
     )
-    approved_deferred = run_cortex_effectiveness_evaluator_live_matrix(
+    approved = run_cortex_effectiveness_evaluator_live_matrix(
         output_root=tmp_path / "approved",
         approval_env={EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
+        run_id="run_fake",
+        row_runner=_fake_live_matrix_row,
     )
+    run_root = tmp_path / "approved" / "run_fake"
+    rows = [
+        json.loads(line)
+        for line in (run_root / "episode_table.jsonl").read_text().splitlines()
+    ]
+    live_plan = json.loads((run_root / "live_plan.json").read_text())
 
     assert refused["verdict"] == "not_run_approval_required"
     assert refused["live_trials_ran"] is False
     assert refused["approval_env"] == EVALUATOR_LIVE_APPROVAL_ENV
-    assert approved_deferred["verdict"] == (
-        "not_run_live_matrix_execution_deferred_until_live_matrix_run_seam"
+    assert approved["verdict"] == "pass_scoped_cortex_value"
+    assert approved["live_trials_ran"] is True
+    assert approved["run_id"] == "run_fake"
+    assert approved["row_count"] == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT
+    assert approved["completed_new_rows"] == approved["row_count"]
+    assert approved["skipped_existing_rows"] == 0
+    assert approved["positive_value_requires_user_review"] is True
+    assert approved["next_train_if_recorded"] == "cortex-evolution-program-database"
+    assert len(rows) == approved["row_count"]
+    assert live_plan["row_count"] == approved["row_count"]
+    assert (run_root / "leaderboard.json").exists()
+    assert (run_root / "failure_analysis.json").exists()
+    assert (run_root / "trials").exists()
+    assert all(row["metrics"]["subject_config_product_only"] is True for row in rows)
+    assert {
+        row["mission_objective"]["model_io_path"]
+        for row in rows
+        if row["arm"] == "cortex_active_policy"
+    } == {
+        "codex_hooks_UserPromptSubmit_PostToolUse_Stop_hookSpecificOutput_or_block_stdout"
+    }
+
+
+def test_live_matrix_resume_skips_completed_fake_rows(tmp_path: Path) -> None:
+    first = run_cortex_effectiveness_evaluator_live_matrix(
+        output_root=tmp_path,
+        approval_env={EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
+        run_id="run_resume",
+        row_runner=_fake_live_matrix_row,
     )
-    assert approved_deferred["next_required_train"] == (
-        "cortex-executive-effectiveness-evaluator-live-matrix-run"
+
+    def forbidden_runner(**_: object) -> EvaluatorEpisodeRow:
+        raise AssertionError("completed rows should be reused")
+
+    second = run_cortex_effectiveness_evaluator_live_matrix(
+        output_root=tmp_path,
+        approval_env={EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
+        run_id="run_resume",
+        row_runner=forbidden_runner,
     )
-    assert approved_deferred["simple_hook_baseline_ready"] is True
-    assert approved_deferred["live_trials_ran"] is False
+
+    assert first["row_count"] == second["row_count"]
+    assert second["completed_new_rows"] == 0
+    assert second["skipped_existing_rows"] == first["row_count"]
+
+
+def test_live_matrix_plan_pairs_share_prompt_model_repeat_and_seed(tmp_path: Path) -> None:
+    report = run_cortex_effectiveness_evaluator_live_matrix(
+        output_root=tmp_path,
+        approval_env={EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
+        run_id="run_pairing",
+        row_runner=_fake_live_matrix_row,
+    )
+    plan = json.loads((tmp_path / "run_pairing" / "live_plan.json").read_text())
+    groups: dict[tuple[str, int], list[dict[str, object]]] = {}
+    for row in plan["rows"]:
+        groups.setdefault((row["task_family"], row["repeat_index"]), []).append(row)
+
+    assert report["model"] == "gpt-5.3-codex"
+    for rows in groups.values():
+        assert {row["arm"] for row in rows} == set(ARMS)
+        assert len({row["prompt_hash"] for row in rows}) == 1
+        assert len({row["workspace_seed"] for row in rows}) == 1
+
+
+def test_live_matrix_boundary_and_no_value_verdicts_dominate(tmp_path: Path) -> None:
+    simple_parity = run_cortex_effectiveness_evaluator_live_matrix(
+        output_root=tmp_path / "simple",
+        approval_env={EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
+        run_id="run_simple",
+        row_runner=lambda **kwargs: _fake_live_matrix_row(
+            **kwargs,
+            mode="simple_parity",
+        ),
+    )
+    silent = run_cortex_effectiveness_evaluator_live_matrix(
+        output_root=tmp_path / "silent",
+        approval_env={EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
+        run_id="run_silent",
+        row_runner=lambda **kwargs: _fake_live_matrix_row(
+            **kwargs,
+            mode="silent_contamination",
+        ),
+    )
+    boundary = run_cortex_effectiveness_evaluator_live_matrix(
+        output_root=tmp_path / "boundary",
+        approval_env={EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
+        run_id="run_boundary",
+        row_runner=lambda **kwargs: _fake_live_matrix_row(
+            **kwargs,
+            mode="boundary",
+        ),
+    )
+
+    assert simple_parity["verdict"] == "failure_no_value"
+    assert simple_parity["exactness_value_lift_claim_allowed"] is False
+    assert silent["verdict"] == "failure_silent_perception_contamination"
+    assert boundary["verdict"] == "failure_boundary_dominance"
 
 
 def test_simple_hook_baseline_module_is_small_independent_and_runnable() -> None:
