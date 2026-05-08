@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-effectiveness-strategy-reset`
-### Next Product Train
 - Slug: `cortex-executive-effectiveness-evaluator-gate0`
-- Surface: `no-live evaluator architecture gate`
-- Why now: The approval-gated paired live probe `task_standard_posttooluse_paired_value_live_20260508T120907Z` produced `failure_no_value`: active PostToolUse context beat silent in 0/5 mismatch pairs against the registered 4/5 threshold. The recent PostToolUse line improved proof visibility but not measured effectiveness; it added substantial lab/docs/tests machinery and only reached a hard paired value evaluator after multiple local boundary repairs. Cortex now needs a broader evaluator that compares lifecycle policies against baseline and silent controls before any more actuator expansion.
+### Next Product Train
+- Slug: `cortex-executive-effectiveness-evaluator-build`
+- Surface: `no-live lab/proof evaluator build`
+- Why now: The Cortex executive effectiveness evaluator Gate 0 passed: it defined the hard objective, four arms (`no_cortex_baseline`, `simple_hook_baseline`, `cortex_silent_perception`, `cortex_active_policy`), initial task families, lifecycle policy candidates, dominance gates, and contraction obligations. The prior PostToolUse paired live result remains `failure_no_value`, so the next work must build the general evaluator rather than tune PostToolUse or run another same-shape live probe.
 
 ### Research Lines Under Evaluation
 
