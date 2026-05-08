@@ -22,6 +22,7 @@ NON_TEST_LOC_ADDED_BUDGET = 250
 EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS = {
     "cortex-executive-effectiveness-evaluator-build",
     "cortex-executive-effectiveness-evaluator-live-gate1",
+    "cortex-simple-hook-baseline-challenger",
     "cortex-automation-product-boundary-contract",
 }
 SAFE_AUTO_MERGE_SURFACES = {
@@ -565,6 +566,16 @@ def _allowed_commands_for_slug(slug: str | None, git_state: GitState) -> tuple[s
         return (
             "python3 lab/cortex_effectiveness_evaluator.py --live-gate1 --require-pass",
             "python3 lab/cortex_effectiveness_evaluator.py --live-matrix",
+            "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
+            "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
+            "python3 -m pytest tests/internal/test_docs_boundary.py -q",
+            "python3 internal/truth/generate_status.py --check",
+            "python3 internal/truth/generate_cortex_doc.py --check",
+            "git diff --check",
+        )
+    if slug == "cortex-simple-hook-baseline-challenger":
+        return (
+            "python3 lab/cortex_effectiveness_evaluator.py --simple-hook-baseline-gate0 --require-pass",
             "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
             "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
             "python3 -m pytest tests/internal/test_docs_boundary.py -q",

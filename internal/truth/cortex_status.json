@@ -107,7 +107,8 @@
     "docs/recon/cortex_overnight_evaluator_automation_hardening.md",
     "docs/recon/cortex_executive_effectiveness_evaluator_build.md",
     "docs/recon/cortex_automation_product_boundary_contract.md",
-    "docs/recon/cortex_executive_effectiveness_evaluator_live_gate1.md"
+    "docs/recon/cortex_executive_effectiveness_evaluator_live_gate1.md",
+    "docs/recon/cortex_simple_hook_baseline_challenger.md"
   ],
   "bio_to_code_matrix": [
     {
@@ -456,7 +457,8 @@
           "docs/recon/cortex_overnight_evaluator_automation_hardening.md",
           "docs/recon/cortex_executive_effectiveness_evaluator_build.md",
           "docs/recon/cortex_automation_product_boundary_contract.md",
-          "docs/recon/cortex_executive_effectiveness_evaluator_live_gate1.md"
+          "docs/recon/cortex_executive_effectiveness_evaluator_live_gate1.md",
+          "docs/recon/cortex_simple_hook_baseline_challenger.md"
         ],
         "update_rule": "Add a recon when a proof or decision is earned; do not treat recon alone as shipping truth without status promotion."
       }
@@ -930,13 +932,21 @@
     ]
   },
   "next_product_train": {
-    "slug": "cortex-simple-hook-baseline-challenger",
-    "surface": "no-live lab/proof evaluator baseline",
-    "executive_benefit": "Add the deliberately small independent simple-hook challenger so rich Cortex policies must beat a serious low-complexity baseline before any value claim.",
-    "why_now": "Live Gate 1 passed without running Codex: it registered the future evaluator live matrix command/env, proved approval refusal, emitted a 60-row dry-run schedule for four arms across five task families and three repeats, preserved mission objective contract fields on every row, and kept dominance gates plus simple/silent no-value rules intact. The next dependency is the simple-hook baseline; without it, the future live matrix cannot answer whether rich Cortex earns its complexity.",
-    "primary_metric": "Implement a runnable simple-hook baseline under lab/evaluator ownership, target under 500 LOC, independent of cortex/core, cortex/sre, and cortex/aux, with only task-standard capture, one reminder/context path, and one closure check; prove it can be scheduled as the simple_hook_baseline arm without changing evaluator scoring or product behavior.",
-    "guardrail": "No live Codex run in this seam. No product host behavior change. No candidate mutation. Do not change signed UserPromptSubmit text, PostToolUse text, Stop text, SRE law, matcher thresholds, fixture scoring, root hooks, hidden-verifier boundary, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed intervention pressure, or host-runtime extraction.",
-    "kill_rule": "Fail if the simple hook imports cortex/core, cortex/sre, or cortex/aux; exceeds the LOC target without explicit status justification; implements Cortex scoring lattice, AUX memory, Core commitment law, or multi-hook policy search; changes evaluator scoring/fixtures; starts a live run; or authorizes AlphaEvolve-style mutation before the first real four-arm matrix is ready.",
+    "slug": "cortex-executive-effectiveness-evaluator-live-matrix-run",
+    "surface": "approval-gated lab/proof evaluator live matrix",
+    "executive_benefit": "Run the first real four-arm Cortex effectiveness matrix now that the simple-hook challenger exists, so Cortex is judged against no-Cortex, simple-hook, silent-perception, and active-policy arms before any candidate evolution.",
+    "why_now": "The simple-hook baseline challenger passed no-live Gate 0: `lab/cortex_simple_hook_baseline.py` is under the 500 LOC target, imports no `cortex/**` modules, implements only visible-task capture, one reminder/context path, and one closure check, and is runnable as the `simple_hook_baseline` evaluator arm without changing evaluator scoring or product behavior. The future live matrix is no longer blocked on a missing simple baseline; the next evidence needed is whether active Cortex beats that baseline under the registered four-arm evaluator.",
+    "primary_metric": "Run the exact registered evaluator live matrix command/env and produce `episode_table.jsonl`, `summary.json`, `leaderboard.json`, and `failure_analysis.json` for no-Cortex, simple-hook, silent-Cortex, and active-Cortex arms across the registered task families/repeats. Value is possible only if active Cortex beats the simple hook with no dominance-gate failure; simple-hook parity and silent success remain no-value.",
+    "guardrail": "Live Codex is allowed only through the exact registered evaluator command/env. Do not change product host behavior, signed UserPromptSubmit text, PostToolUse text, Stop text, candidate policy, evaluator scoring, fixtures, hidden-verifier boundaries, root hooks, SRE law, matcher threshold, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed-intervention, or host-runtime extraction.",
+    "kill_rule": "Fail if any arm is missing, simple-hook parity is credited as Cortex value, silent perception success is credited as Cortex value, clean/control rows overcontrol, trace ambiguity appears, hidden-verifier leakage appears, root config mutates, runtime snapshot loads, or a positive value/lift/shipping claim is auto-merged without user review.",
+    "registered_live_commands": [
+      {
+        "command": "python3 lab/cortex_effectiveness_evaluator.py --live-matrix",
+        "env": {
+          "CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED": "approved"
+        }
+      }
+    ],
     "last_reviewed_at": "2026-05-08T00:00:00+00:00"
   },
   "packet_to_code_anchors": [
@@ -1594,7 +1604,7 @@
     "The Codex App/CLI PostToolUse task-standard narrow live probe harness seam then added `--task-standard-posttooluse-live`, approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running a live Codex command. The live probe remains unearned until explicitly approved and run; this seam earns harness readiness only and preserves signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport deferral, PreToolUse denial deferral, and PermissionRequest policy."
   ],
   "work_today": {
-    "slug": "cortex-executive-effectiveness-evaluator-live-gate1",
-    "note": "The Cortex executive effectiveness evaluator Live Gate 1 passed as a no-live lab/proof interface seam. `lab/cortex_effectiveness_evaluator.py --live-gate1 --require-pass` now writes `evaluator_design.json`, `live_plan.json`, `episode_table.jsonl`, `summary.json`, `leaderboard.json`, and `failure_analysis.json` under `.cortex/live_validation/cortex_effectiveness_evaluator_live_gate1/`. The dry-run plan schedules 60 rows: four arms (`no_cortex_baseline`, `simple_hook_baseline`, `cortex_silent_perception`, `cortex_active_policy`) across five task families and three repeats, with isolated workspaces, no root config mutation, no runtime snapshot, and mission objective contract fields on every row. The registered future live command is `CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --live-matrix`; running `--live-matrix` without approval returns `not_run_approval_required`, and running it with approval remains deferred until `cortex-simple-hook-baseline-challenger` exists. Simple-hook parity and silent perception success remain no-value, dominance gates remain pre-scoring blockers, and positive value results still require user review. No live Codex run occurred; no product host behavior, model-visible text, SRE law, matcher threshold, fixture scoring, hidden scoring, root hook, or AlphaEvolve mutation loop changed."
+    "slug": "cortex-simple-hook-baseline-challenger",
+    "note": "The Cortex simple-hook baseline challenger passed as a no-live lab/proof baseline seam. `lab/cortex_simple_hook_baseline.py` now provides a deliberately small independent `simple_hook_baseline`: visible-task standard capture, one model-visible reminder/context renderer, and one closure check that accepts explicit evidence or blocker reporting while rejecting unsupported closure. The source is under the 500 nonblank noncomment LOC target, imports no `cortex/**` modules, uses no Core/SRE/AUX law, no Cortex scoring lattice, no AUX memory, no hidden verifier, no fixture-specific scoring, and no multi-hook policy search. `lab/cortex_effectiveness_evaluator.py --simple-hook-baseline-gate0 --require-pass` writes `simple_hook_baseline.json`, `gate0_report.json`, and `summary.json` under `.cortex/live_validation/cortex_simple_hook_baseline_challenger/`; the report proves the baseline is runnable as the `simple_hook_baseline` arm without changing evaluator scoring or product behavior. `--live-matrix` remains approval-gated and still does not run live inside this seam; with approval it now defers to `cortex-executive-effectiveness-evaluator-live-matrix-run` rather than missing-baseline remediation. Simple-hook parity and silent perception success remain no-value, dominance gates remain pre-scoring blockers, and positive value results still require user review. No live Codex run occurred; no product host behavior, model-visible Cortex text, SRE law, matcher threshold, fixture scoring, hidden scoring, root hook, or AlphaEvolve mutation loop changed."
   }
 }

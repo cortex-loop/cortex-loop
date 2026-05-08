@@ -87,6 +87,11 @@ def test_classify_next_work_allows_simple_hook_and_live_gate1_sequence() -> None
     assert live_gate.status == "ready"
     assert "python3 lab/cortex_effectiveness_evaluator.py --live-gate1 --require-pass" in live_gate.allowed_commands
     assert simple_hook.status == "ready"
+    assert (
+        "python3 lab/cortex_effectiveness_evaluator.py --simple-hook-baseline-gate0 --require-pass"
+        in simple_hook.allowed_commands
+    )
+    assert simple_hook.live_codex_allowed is False
 
 
 def test_classify_next_work_refuses_dirty_main_but_allows_managed_resume() -> None:
@@ -266,6 +271,36 @@ def test_non_test_loc_budget_blocks_non_exempt_growth() -> None:
     assert blocked.status == "blocked"
     assert any("non-test LOC budget" in reason for reason in blocked.reasons)
     assert exempt.status == "ready"
+
+
+def test_simple_hook_baseline_is_bloat_exempt_but_not_live_allowed() -> None:
+    bloat = loop.BloatMetrics(
+        loc_added=430,
+        loc_deleted=0,
+        changed_files=(
+            "lab/cortex_simple_hook_baseline.py",
+            "lab/cortex_effectiveness_evaluator.py",
+        ),
+        new_policy_paths=(),
+        duplicate_policy_removed=False,
+        contraction_debt_increased=False,
+        non_test_loc_added=430,
+        policy_lab_loc_added=430,
+        policy_lab_loc_deleted=0,
+    )
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-simple-hook-baseline-challenger",
+            surface="no-live lab/proof evaluator baseline",
+            guardrail="No live Codex run in this seam.",
+            primary_metric="Implement the simple-hook challenger.",
+        ),
+        _git(),
+        bloat,
+    )
+
+    assert decision.status == "ready"
+    assert decision.live_codex_allowed is False
 
 
 def test_managed_current_work_slug_preserves_build_exemption_after_next_train_advances() -> None:

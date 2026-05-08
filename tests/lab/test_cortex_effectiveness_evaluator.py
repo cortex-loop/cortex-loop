@@ -17,6 +17,8 @@ from lab.cortex_effectiveness_evaluator import (
     LAB_PROOF_MODEL_IO_PATH,
     LIVE_MATRIX_REPEAT_COUNT,
     MISSION_OBJECTIVE_REQUIRED_FIELDS,
+    SIMPLE_HOOK_LOC_LIMIT,
+    SIMPLE_HOOK_SOURCE_PATH,
     TASK_FAMILIES,
     EvaluatorEpisodeRow,
     evaluate_cortex_effectiveness_rows,
@@ -27,6 +29,12 @@ from lab.cortex_effectiveness_evaluator import (
     run_cortex_effectiveness_evaluator_gate0,
     run_cortex_effectiveness_evaluator_live_gate1,
     run_cortex_effectiveness_evaluator_live_matrix,
+    run_cortex_simple_hook_baseline_gate0,
+)
+from lab.cortex_simple_hook_baseline import (
+    assess_simple_hook_closure,
+    capture_visible_task_standard,
+    render_simple_hook_reminder,
 )
 
 
@@ -328,9 +336,88 @@ def test_live_matrix_refuses_without_approval_and_defers_with_approval(tmp_path:
     assert refused["live_trials_ran"] is False
     assert refused["approval_env"] == EVALUATOR_LIVE_APPROVAL_ENV
     assert approved_deferred["verdict"] == (
-        "not_run_live_matrix_execution_deferred_until_simple_hook_challenger"
+        "not_run_live_matrix_execution_deferred_until_live_matrix_run_seam"
     )
+    assert approved_deferred["next_required_train"] == (
+        "cortex-executive-effectiveness-evaluator-live-matrix-run"
+    )
+    assert approved_deferred["simple_hook_baseline_ready"] is True
     assert approved_deferred["live_trials_ran"] is False
+
+
+def test_simple_hook_baseline_module_is_small_independent_and_runnable() -> None:
+    source = SIMPLE_HOOK_SOURCE_PATH.read_text(encoding="utf-8")
+    loc = sum(
+        1
+        for line in source.splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    )
+    standard = capture_visible_task_standard(
+        "Create exact_result.txt with alpha beta omega and verify bytes."
+    )
+    reminder = render_simple_hook_reminder(standard)
+    evidence = assess_simple_hook_closure(
+        standard,
+        "PASS: checked exact_result.txt, content alpha beta omega, bytes=16.",
+    )
+    blocker = assess_simple_hook_closure(
+        standard,
+        "Blocked: exact_result.txt does not exist.",
+    )
+    unsupported = assess_simple_hook_closure(standard, "Done.")
+
+    assert loc <= SIMPLE_HOOK_LOC_LIMIT
+    assert "from cortex" not in source
+    assert "import cortex" not in source
+    assert standard.visible_task.startswith("Create exact_result.txt")
+    assert "Before closing" in reminder
+    assert "cortex" not in reminder.lower()
+    assert evidence.satisfied is True
+    assert evidence.evidence_reported is True
+    assert blocker.satisfied is True
+    assert blocker.blocker_reported is True
+    assert unsupported.satisfied is False
+
+
+def test_simple_hook_baseline_gate0_passes_and_writes_report(tmp_path: Path) -> None:
+    report = run_cortex_simple_hook_baseline_gate0(output_root=tmp_path)
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_cortex_simple_hook_baseline_challenger"
+    assert report["model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+    assert report["live_trials_ran"] is False
+    assert report["alphaevolve_mutation_loop_allowed"] is False
+    assert report["next_train_if_pass"] == (
+        "cortex-executive-effectiveness-evaluator-live-matrix-run"
+    )
+    assert report["checks"]["source_under_loc_limit"] is True
+    assert report["checks"]["no_cortex_imports"] is True
+    assert report["checks"]["simple_hook_arm_registered"] is True
+    assert report["checks"]["scoring_logic_unchanged"] is True
+    assert (tmp_path / "simple_hook_baseline.json").exists()
+    assert (tmp_path / "gate0_report.json").exists()
+    assert (tmp_path / "summary.json").exists()
+
+
+def test_simple_hook_baseline_cli_passes(tmp_path: Path) -> None:
+    output_root = tmp_path / "simple_hook"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--simple-hook-baseline-gate0",
+            "--require-pass",
+            "--output-root",
+            str(output_root),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "pass_cortex_simple_hook_baseline_challenger" in result.stdout
+    assert (output_root / "summary.json").exists()
 
 
 def test_live_gate1_cli_passes_and_live_matrix_cli_refuses(tmp_path: Path) -> None:
@@ -374,6 +461,7 @@ def test_gate0_source_keeps_alphaevolve_loop_deferred() -> None:
     assert "--gate0" in source
     assert "--live-gate1" in source
     assert "--live-matrix" in source
+    assert "--simple-hook-baseline-gate0" in source
     assert "alphaevolve_loop_later" in source
     assert "program_database_fields" in source
     assert "candidate_representation" in source
