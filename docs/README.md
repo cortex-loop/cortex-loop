@@ -276,6 +276,9 @@ Active docs:
 - [Cortex Codex App/CLI PostToolUse Task-Standard Exactness-Only Paired Value Live Probe](recon/cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_live_probe.md) —
   approval-gated paired live probe producing `failure_no_value`: active
   PostToolUse context beat silent in 0/5 exactness mismatch pairs
+- [Cortex Effectiveness Strategy Reset](recon/cortex_effectiveness_strategy_reset.md) —
+  no-live regroup that freezes the PostToolUse-only value path and queues a
+  Cortex-level effectiveness evaluator Gate 0
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed

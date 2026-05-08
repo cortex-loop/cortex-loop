@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-live-probe`
+- Slug: `cortex-effectiveness-strategy-reset`
 ### Next Product Train
-- Slug: `codex-app-cli-posttooluse-task-standard-value-claims-pause-decision`
-- Surface: `no-live architecture decision`
-- Why now: The approval-gated paired live probe `task_standard_posttooluse_paired_value_live_20260508T120907Z` produced `failure_no_value`: active PostToolUse context beat silent in 0/5 mismatch pairs against the registered 4/5 threshold. Repeats 2-4 were `tie_no_value` because active and silent both succeeded; repeats 1 and 5 were active `failure_no_context` rows. Clean/control rows emitted zero PostToolUse contexts, root config stayed unchanged, no runtime snapshot loaded, and no exactness value lift was earned.
+- Slug: `cortex-executive-effectiveness-evaluator-gate0`
+- Surface: `no-live evaluator architecture gate`
+- Why now: The approval-gated paired live probe `task_standard_posttooluse_paired_value_live_20260508T120907Z` produced `failure_no_value`: active PostToolUse context beat silent in 0/5 mismatch pairs against the registered 4/5 threshold. The recent PostToolUse line improved proof visibility but not measured effectiveness; it added substantial lab/docs/tests machinery and only reached a hard paired value evaluator after multiple local boundary repairs. Cortex now needs a broader evaluator that compares lifecycle policies against baseline and silent controls before any more actuator expansion.
 
 ### Research Lines Under Evaluation
 
