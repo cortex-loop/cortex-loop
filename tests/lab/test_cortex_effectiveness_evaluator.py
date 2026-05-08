@@ -12,9 +12,14 @@ from lab import cortex_effectiveness_evaluator as evaluator
 from lab.cortex_effectiveness_evaluator import (
     ARMS,
     DOMINANCE_GATES,
+    LAB_PROOF_MODEL_IO_PATH,
+    MISSION_OBJECTIVE_REQUIRED_FIELDS,
     TASK_FAMILIES,
+    EvaluatorEpisodeRow,
     evaluate_cortex_effectiveness_rows,
     gate0_synthetic_scenarios,
+    mission_contract_errors,
+    mission_objective_for_row,
     run_cortex_effectiveness_evaluator_build,
     run_cortex_effectiveness_evaluator_gate0,
 )
@@ -38,6 +43,13 @@ def test_gate0_design_registers_hard_objective_and_arms(tmp_path: Path) -> None:
     assert "cortex/aux" in design["simple_hook_challenger"]["independent_of"]
     assert set(TASK_FAMILIES).issubset(set(design["task_families"]))
     assert set(DOMINANCE_GATES).issubset(set(design["dominance_gates"]))
+    assert set(MISSION_OBJECTIVE_REQUIRED_FIELDS).issubset(
+        set(design["mission_objective_contract"]["required_fields"])
+    )
+    assert (
+        design["mission_objective_contract"]["lab_proof_model_io_path"]
+        == LAB_PROOF_MODEL_IO_PATH
+    )
     assert design["contraction_obligations"]
     assert (
         design["end_of_part_decision"]["if_pass"]
@@ -155,6 +167,93 @@ def test_build_checks_refuse_value_without_simple_and_silent_controls(tmp_path: 
     assert checks["simple_hook_parity_blocks_value"] is True
     assert checks["silent_success_blocks_value"] is True
     assert checks["dominance_gates_block_value"] is True
+    assert checks["mission_objective_contract_registered"] is True
+    assert checks["episode_rows_carry_valid_mission_contract"] is True
+    assert checks["lab_only_rows_do_not_claim_product_value"] is True
+
+
+def test_build_rows_carry_lab_proof_mission_contract(tmp_path: Path) -> None:
+    report = run_cortex_effectiveness_evaluator_build(output_root=tmp_path)
+    rows = [
+        json.loads(line)
+        for line in (tmp_path / "episode_table.jsonl").read_text().splitlines()
+    ]
+
+    assert report["mission_contract_errors"] == []
+    for row in rows:
+        objective = row["mission_objective"]
+        assert set(MISSION_OBJECTIVE_REQUIRED_FIELDS).issubset(set(objective))
+        assert objective["model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+        assert objective["product_spine"] == []
+
+
+def test_mission_contract_rejects_missing_fields_and_lab_only_value_claim() -> None:
+    valid = mission_objective_for_row(
+        arm="cortex_active_policy",
+        task_family="exactness_evidence_recovery",
+        policy_candidate="posttooluse_stop",
+    )
+    missing = EvaluatorEpisodeRow(
+        task_family="exactness_evidence_recovery",
+        case_id="missing_contract",
+        repeat_index=1,
+        arm="cortex_active_policy",
+        policy_candidate="posttooluse_stop",
+        metrics={},
+        mission_objective={},
+    )
+    lab_value = EvaluatorEpisodeRow(
+        task_family="exactness_evidence_recovery",
+        case_id="lab_value",
+        repeat_index=1,
+        arm="cortex_active_policy",
+        policy_candidate="posttooluse_stop",
+        metrics={"behavior_lift_claim_allowed": True},
+        mission_objective=valid,
+    )
+
+    assert any("executive_function missing" in error for error in mission_contract_errors(missing))
+    assert any("lab-only row cannot claim" in error for error in mission_contract_errors(lab_value))
+
+
+def test_product_claim_requires_model_io_path_and_product_spine() -> None:
+    base = mission_objective_for_row(
+        arm="cortex_active_policy",
+        task_family="exactness_evidence_recovery",
+        policy_candidate="posttooluse_stop",
+    )
+    bad_objective = dict(base)
+    bad_objective["model_io_path"] = "Codex PostToolUse additionalContext"
+    bad_objective["product_spine"] = []
+    good_objective = dict(bad_objective)
+    good_objective["product_spine"] = [
+        "truthful_closure",
+        "task_standard_state_law",
+        "posttooluse_context_decision",
+        "Codex PostToolUse",
+        "hookSpecificOutput.additionalContext",
+    ]
+    bad = EvaluatorEpisodeRow(
+        task_family="exactness_evidence_recovery",
+        case_id="bad_product",
+        repeat_index=1,
+        arm="cortex_active_policy",
+        policy_candidate="posttooluse_stop",
+        metrics={"exactness_value_lift_claim_allowed": True},
+        mission_objective=bad_objective,
+    )
+    good = EvaluatorEpisodeRow(
+        task_family="exactness_evidence_recovery",
+        case_id="good_product",
+        repeat_index=1,
+        arm="cortex_active_policy",
+        policy_candidate="posttooluse_stop",
+        metrics={"exactness_value_lift_claim_allowed": True},
+        mission_objective=good_objective,
+    )
+
+    assert any("product_spine" in error for error in mission_contract_errors(bad))
+    assert mission_contract_errors(good) == ()
 
 
 def test_build_cli_passes_and_emits_required_artifacts(tmp_path: Path) -> None:
