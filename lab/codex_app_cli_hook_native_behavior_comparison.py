@@ -366,6 +366,10 @@ def main(argv: list[str] | None = None) -> int:
         "--task-standard-posttooluse-measurement-stack-gate0",
         action="store_true",
     )
+    parser.add_argument(
+        "--task-standard-posttooluse-final-closure-readout-gate0",
+        action="store_true",
+    )
     parser.add_argument("--task-standard-posttooluse-live", action="store_true")
     parser.add_argument(
         "--task-standard-raw-vs-silent-artifact-readout", action="store_true"
@@ -422,6 +426,10 @@ def main(argv: list[str] | None = None) -> int:
         )
     elif args.task_standard_posttooluse_measurement_stack_gate0:
         report = run_task_standard_posttooluse_measurement_stack_gate0(
+            output_root=args.output_root
+        )
+    elif args.task_standard_posttooluse_final_closure_readout_gate0:
+        report = run_task_standard_posttooluse_final_closure_readout_gate0(
             output_root=args.output_root
         )
     elif args.task_standard_posttooluse_gate0:
@@ -2225,6 +2233,152 @@ def run_task_standard_posttooluse_measurement_stack_gate0(
     }
     _write_json(root / "gate0_report.json", report)
     _write_json(root / "episode_table.json", {"episodes": episode_payloads})
+    return report
+
+
+def run_task_standard_posttooluse_final_closure_readout_gate0(
+    *,
+    output_root: Path | str = DEFAULT_OUTPUT_ROOT,
+) -> dict[str, object]:
+    root = (
+        Path(output_root) / "task_standard_posttooluse_final_closure_readout_gate0"
+    )
+    root.mkdir(parents=True, exist_ok=True)
+    root_config = REPO_ROOT / ".codex" / "config.toml"
+    root_config_hash_before = _file_hash(root_config)
+    replays, missing_artifacts = _posttooluse_final_closure_replay_rows()
+    by_artifact = {str(row["artifact_id"]): row for row in replays}
+    expected = TASK_STANDARD_POSTTOOLUSE_MEASUREMENT_STACK_ARTIFACTS
+    first_four = expected[:4]
+    latest_id = "task_standard_posttooluse_live_20260507T225019Z"
+    boundary_results = {
+        "all_historical_artifacts_loaded": not missing_artifacts,
+        "five_artifacts_replayed": len(replays) == len(expected),
+        "old_cat_a_shape_still_recognized": _final_reports_posttooluse_evidence(
+            "I ran cat -A exact_result.txt and confirmed alpha beta omega. "
+            "The result is one line, and wc -l returned 1 exact_result.txt."
+        ),
+        "old_line_count_shape_still_recognized": _final_reports_posttooluse_evidence(
+            "exact_result.txt contains alpha beta omega; one line; "
+            "1 exact_result.txt."
+        ),
+        "semantic_pass_bytes_hex_content_recognized": (
+            _final_reports_posttooluse_evidence(
+                "Result: PASS bytes=16 "
+                "hex=616c7068612062657461206f6d656761; "
+                "content is exactly alpha beta omega."
+            )
+        ),
+        "semantic_cmp_exact_match_recognized": _final_reports_posttooluse_evidence(
+            "cmp_exit=0; exact byte match for exact_result.txt; "
+            "the content is exactly alpha beta omega."
+        ),
+        "incomplete_semantic_shapes_rejected": not any(
+            _final_reports_posttooluse_evidence(text)
+            for text in (
+                "PASS bytes=16 but no content is shown.",
+                "alpha beta omega without any verification result.",
+                "hex=616c7068612062657461206f6d656761 without the content.",
+            )
+        ),
+        "registered_verdicts_preserved": _corrected_replay_registered_verdicts_preserved(
+            by_artifact
+        ),
+        "preserves_true_next_action_ignore": _corrected_replay_verdict_is(
+            by_artifact,
+            "task_standard_posttooluse_live_20260507T100836Z",
+            "failure_context_ignored",
+            "next_model_tool_did_not_run_named_direct_check",
+        ),
+        "preserves_no_context": _corrected_replay_verdict_is(
+            by_artifact,
+            "task_standard_posttooluse_live_20260507T142129Z",
+            "failure_no_context",
+            "candidate_artifact_without_posttooluse_context",
+        ),
+        "preserves_overcontrol": _corrected_replay_verdict_is(
+            by_artifact,
+            "task_standard_posttooluse_live_20260507T153242Z",
+            "failure_overcontrol",
+            "clean_or_control_case_received_context",
+        ),
+        "preserves_repeated_context_and_trace_blocker": _corrected_replay_verdict_is(
+            by_artifact,
+            "task_standard_posttooluse_live_20260507T213732Z",
+            "fail",
+            "repeated_posttooluse_context_loop",
+        ),
+        "corrects_latest_final_closure_readout_to_pass": (
+            latest_id in by_artifact
+            and by_artifact[latest_id]["registered_verdict"]
+            == "failure_context_ignored"
+            and by_artifact[latest_id][
+                "old_final_closure_reports_context_evidence"
+            ]
+            is False
+            and by_artifact[latest_id][
+                "corrected_final_closure_reports_context_evidence"
+            ]
+            is True
+            and by_artifact[latest_id]["corrected_verdict"]
+            == "pass_posttooluse_next_step_observed"
+        ),
+        "only_latest_artifact_passes_after_correction": (
+            sum(
+                1
+                for row in replays
+                if row.get("corrected_verdict")
+                == "pass_posttooluse_next_step_observed"
+            )
+            == 1
+            and latest_id in by_artifact
+            and by_artifact[latest_id]["corrected_verdict"]
+            == "pass_posttooluse_next_step_observed"
+        ),
+        "boundary_dominance_preserved": all(
+            artifact_id in by_artifact
+            and by_artifact[artifact_id]["corrected_verdict"]
+            != "pass_posttooluse_next_step_observed"
+            for artifact_id in first_four
+        ),
+        "root_config_unchanged": root_config_hash_before == _file_hash(root_config),
+        "no_live_trials": True,
+        "behavior_lift_claim_forbidden": True,
+    }
+    passed = all(boundary_results.values())
+    report = {
+        "probe": (
+            "codex_app_cli_task_standard_posttooluse_"
+            "final_closure_readout_gate0"
+        ),
+        "surface": "lab_proof_readout_remediation",
+        "evidence_kind": "no_live_posttooluse_final_closure_readout_remediation",
+        "passed": passed,
+        "verdict": "pass_posttooluse_final_closure_readout_gate0"
+        if passed
+        else "fail_posttooluse_final_closure_readout_gate0",
+        "live_trials_ran": False,
+        "behavior_lift_claim_allowed": False,
+        "corrected_replay_table": replays,
+        "missing_artifacts": missing_artifacts,
+        "boundary_results": boundary_results,
+        "output_root": str(root),
+        "root_config_hash_before": root_config_hash_before,
+        "root_config_hash_after": _file_hash(root_config),
+        "next_product_train": (
+            "codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-probe-gate0"
+            if passed
+            else "codex-app-cli-posttooluse-final-closure-readout-architecture-decision"
+        ),
+        "truth_boundary": (
+            "Final-closure readout Gate 0 replays existing PostToolUse live "
+            "artifacts only. It can repair lab final-output interpretation "
+            "after earlier conjuncts pass, but it does not run live Codex, "
+            "change product behavior, or earn behavior lift."
+        ),
+    }
+    _write_json(root / "gate0_report.json", report)
+    _write_json(root / "corrected_replay_table.json", {"replays": replays})
     return report
 
 
@@ -5207,6 +5361,105 @@ def _posttooluse_measurement_stack_episodes() -> tuple[
     return episodes, missing_artifacts
 
 
+def _posttooluse_final_closure_replay_rows() -> tuple[
+    list[dict[str, object]],
+    list[str],
+]:
+    replays: list[dict[str, object]] = []
+    missing_artifacts: list[str] = []
+    for artifact_id in TASK_STANDARD_POSTTOOLUSE_MEASUREMENT_STACK_ARTIFACTS:
+        summary_path = DEFAULT_OUTPUT_ROOT / artifact_id / "summary.json"
+        if not summary_path.exists():
+            missing_artifacts.append(str(summary_path))
+            continue
+        report = json.loads(summary_path.read_text(encoding="utf-8"))
+        replays.append(
+            _posttooluse_final_closure_corrected_replay(
+                artifact_id=artifact_id,
+                report=report,
+            )
+        )
+    return replays, missing_artifacts
+
+
+def _posttooluse_final_closure_corrected_replay(
+    *,
+    artifact_id: str,
+    report: Mapping[str, Any],
+) -> dict[str, object]:
+    corrected_rows: list[dict[str, Any]] = []
+    mismatch_row: Mapping[str, Any] | None = None
+    corrected_final_closure: bool | None = None
+    old_final_closure: bool | None = None
+    for row in report.get("rows", []):
+        if not isinstance(row, Mapping):
+            continue
+        corrected = dict(row)
+        if corrected.get("case") == "mismatch_exactness":
+            mismatch_row = corrected
+            old_final_closure = _bool_or_none(
+                corrected.get("final_closure_reports_context_evidence")
+            )
+            final_output_text = _posttooluse_final_output_text_for_row(corrected)
+            corrected_final_closure = _final_reports_posttooluse_evidence(
+                final_output_text
+            )
+            corrected[
+                "old_final_closure_reports_context_evidence"
+            ] = old_final_closure
+            corrected[
+                "corrected_final_closure_reports_context_evidence"
+            ] = corrected_final_closure
+            corrected[
+                "final_closure_reports_context_evidence"
+            ] = corrected_final_closure
+        corrected_rows.append(corrected)
+    decision = _task_standard_posttooluse_live_decision(
+        corrected_rows,
+        root_config_changed=_historical_report_root_config_changed(report),
+    )
+    episode = build_posttooluse_evidence_recovery_episode(
+        artifact_id=artifact_id,
+        report=report,
+    )
+    return {
+        "artifact_id": artifact_id,
+        "registered_verdict": str(report.get("verdict") or ""),
+        "registered_failure_reason": _registered_failure_reason(report),
+        "registered_episode_classification": episode.episode_classification,
+        "old_final_closure_reports_context_evidence": old_final_closure,
+        "corrected_final_closure_reports_context_evidence": corrected_final_closure,
+        "semantic_final_closure_evidence": (
+            _semantic_final_reports_posttooluse_evidence_for_row(mismatch_row)
+            if mismatch_row is not None
+            else False
+        ),
+        "corrected_verdict": str(decision.get("verdict") or ""),
+        "corrected_failure_reason": (
+            str(decision.get("failure_reason"))
+            if decision.get("failure_reason")
+            else None
+        ),
+        "boundary_status": episode.boundary_status,
+        "context_count": episode.context_count,
+        "repeated_context": episode.repeated_context,
+        "trace_join_source": episode.trace_join_source,
+        "trace_ambiguous": episode.trace_ambiguous,
+        "next_tool_matches_context": episode.next_tool_matches_context,
+        "clean_control_context_counts": episode.clean_control_context_counts,
+    }
+
+
+def _historical_report_root_config_changed(report: Mapping[str, Any]) -> bool:
+    before = report.get("root_config_hash_before")
+    after = report.get("root_config_hash_after")
+    return bool(before and after and before != after)
+
+
+def _posttooluse_final_output_text_for_row(row: Mapping[str, Any]) -> str:
+    return str(row.get("output_text") or row.get("output_excerpt") or "")
+
+
 def build_posttooluse_evidence_recovery_episode(
     *,
     artifact_id: str,
@@ -5402,9 +5655,14 @@ def _semantic_final_reports_posttooluse_evidence_for_row(
             next_tool,
         )
     )
-    lowered = evidence_text.lower()
+    return _semantic_final_reports_posttooluse_evidence_text(evidence_text)
+
+
+def _semantic_final_reports_posttooluse_evidence_text(text: str) -> bool:
+    lowered = text.lower()
+    normalized = " ".join(lowered.split())
     expected_hex = "616c7068612062657461206f6d656761"
-    spaced_hex = "61  6c  70  68  61  20  62  65  74  61  20  6f  6d  65  67  61"
+    spaced_hex = "61 6c 70 68 61 20 62 65 74 61 20 6f 6d 65 67 61"
     has_exact_content = "alpha beta omega" in lowered
     has_byte_count = any(
         marker in lowered
@@ -5416,7 +5674,7 @@ def _semantic_final_reports_posttooluse_evidence_for_row(
             "16 exact_result.txt",
         )
     )
-    has_hex = expected_hex in lowered or spaced_hex in lowered
+    has_hex = expected_hex in lowered or spaced_hex in normalized
     has_pass_signal = any(
         marker in lowered
         for marker in (
@@ -5428,7 +5686,24 @@ def _semantic_final_reports_posttooluse_evidence_for_row(
             "byte-for-byte match",
         )
     )
-    return has_exact_content and (has_byte_count or has_hex) and has_pass_signal
+    has_byte_match_signal = any(
+        marker in lowered
+        for marker in (
+            "cmp_exit=0",
+            "cmp: exact match",
+            "exact byte match",
+            "byte-for-byte match",
+            "byte-level test",
+            "strict byte",
+            "no extra bytes",
+            "no extra characters",
+        )
+    )
+    return bool(
+        has_exact_content
+        and (has_byte_count or has_hex or has_byte_match_signal)
+        and (has_pass_signal or has_byte_match_signal)
+    )
 
 
 def _episode_classification_is(
@@ -5454,6 +5729,38 @@ def _historical_episode_registered_verdicts_preserved(
         episodes.get(artifact_id) is not None
         and episodes[artifact_id].registered_verdict == verdict
         for artifact_id, verdict in expected.items()
+    )
+
+
+def _corrected_replay_registered_verdicts_preserved(
+    replays: Mapping[str, Mapping[str, object]],
+) -> bool:
+    expected = {
+        "task_standard_posttooluse_live_20260507T100836Z": "failure_context_ignored",
+        "task_standard_posttooluse_live_20260507T142129Z": "failure_no_context",
+        "task_standard_posttooluse_live_20260507T153242Z": "failure_overcontrol",
+        "task_standard_posttooluse_live_20260507T213732Z": "fail",
+        "task_standard_posttooluse_live_20260507T225019Z": "failure_context_ignored",
+    }
+    return all(
+        replays.get(artifact_id) is not None
+        and replays[artifact_id].get("registered_verdict") == verdict
+        for artifact_id, verdict in expected.items()
+    )
+
+
+def _corrected_replay_verdict_is(
+    replays: Mapping[str, Mapping[str, object]],
+    artifact_id: str,
+    verdict: str,
+    failure_reason: str | None = None,
+) -> bool:
+    replay = replays.get(artifact_id)
+    if replay is None or replay.get("corrected_verdict") != verdict:
+        return False
+    return (
+        failure_reason is None
+        or replay.get("corrected_failure_reason") == failure_reason
     )
 
 
@@ -6072,7 +6379,7 @@ def _command_matches_posttooluse_context(command: Mapping[str, object] | None) -
 
 def _final_reports_posttooluse_evidence(output_text: str) -> bool:
     lowered = output_text.lower()
-    return bool(
+    old_readback_shape = bool(
         "alpha beta omega" in lowered
         and (
             "cat -a" in lowered
@@ -6080,6 +6387,9 @@ def _final_reports_posttooluse_evidence(output_text: str) -> bool:
             or "one line" in lowered
             or "1 exact_result.txt" in lowered
         )
+    )
+    return old_readback_shape or _semantic_final_reports_posttooluse_evidence_text(
+        output_text
     )
 
 
@@ -6295,6 +6605,7 @@ __all__ = [
     "run_task_standard_offline_readiness_gate",
     "run_task_standard_posttooluse_actuator_trace_gate0",
     "run_task_standard_posttooluse_context_loop_trace_gate0",
+    "run_task_standard_posttooluse_final_closure_readout_gate0",
     "run_task_standard_posttooluse_firing_boundary_gate0",
     "run_task_standard_posttooluse_gate0",
     "run_task_standard_posttooluse_measurement_stack_gate0",

@@ -19,6 +19,7 @@ from lab.codex_app_cli_hook_native_behavior_comparison import (
     run_live_comparison,
     run_task_standard_offline_readiness_gate,
     run_task_standard_posttooluse_context_loop_trace_gate0,
+    run_task_standard_posttooluse_final_closure_readout_gate0,
     run_task_standard_posttooluse_firing_boundary_gate0,
     run_task_standard_posttooluse_actuator_trace_gate0,
     run_task_standard_posttooluse_phase_aware_gate0,
@@ -481,6 +482,80 @@ def test_task_standard_posttooluse_measurement_stack_gate0(
     assert latest["old_final_closure_reports_context_evidence"] is False
     assert latest["semantic_final_closure_evidence"] is True
     assert latest["episode_classification"] == "final_closure_metric_underfit"
+
+
+def test_task_standard_posttooluse_final_closure_readout_gate0(
+    tmp_path: Path,
+) -> None:
+    report = run_task_standard_posttooluse_final_closure_readout_gate0(
+        output_root=tmp_path,
+    )
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_posttooluse_final_closure_readout_gate0"
+    assert report["live_trials_ran"] is False
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["next_product_train"] == (
+        "codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-probe-gate0"
+    )
+    boundary_results = report["boundary_results"]
+    assert boundary_results["all_historical_artifacts_loaded"] is True
+    assert boundary_results["five_artifacts_replayed"] is True
+    assert boundary_results["old_cat_a_shape_still_recognized"] is True
+    assert boundary_results["old_line_count_shape_still_recognized"] is True
+    assert boundary_results["semantic_pass_bytes_hex_content_recognized"] is True
+    assert boundary_results["semantic_cmp_exact_match_recognized"] is True
+    assert boundary_results["incomplete_semantic_shapes_rejected"] is True
+    assert boundary_results["registered_verdicts_preserved"] is True
+    assert boundary_results["preserves_true_next_action_ignore"] is True
+    assert boundary_results["preserves_no_context"] is True
+    assert boundary_results["preserves_overcontrol"] is True
+    assert boundary_results["preserves_repeated_context_and_trace_blocker"] is True
+    assert boundary_results["corrects_latest_final_closure_readout_to_pass"] is True
+    assert boundary_results["only_latest_artifact_passes_after_correction"] is True
+    assert boundary_results["boundary_dominance_preserved"] is True
+
+    replays = {
+        replay["artifact_id"]: replay for replay in report["corrected_replay_table"]
+    }
+    assert replays["task_standard_posttooluse_live_20260507T100836Z"][
+        "corrected_failure_reason"
+    ] == "next_model_tool_did_not_run_named_direct_check"
+    assert replays["task_standard_posttooluse_live_20260507T142129Z"][
+        "corrected_verdict"
+    ] == "failure_no_context"
+    assert replays["task_standard_posttooluse_live_20260507T153242Z"][
+        "corrected_verdict"
+    ] == "failure_overcontrol"
+    assert replays["task_standard_posttooluse_live_20260507T213732Z"][
+        "corrected_failure_reason"
+    ] == "repeated_posttooluse_context_loop"
+    latest = replays["task_standard_posttooluse_live_20260507T225019Z"]
+    assert latest["registered_verdict"] == "failure_context_ignored"
+    assert latest["old_final_closure_reports_context_evidence"] is False
+    assert latest["corrected_final_closure_reports_context_evidence"] is True
+    assert latest["corrected_verdict"] == "pass_posttooluse_next_step_observed"
+
+
+def test_task_standard_posttooluse_final_closure_predicate_shapes() -> None:
+    assert comparison._final_reports_posttooluse_evidence(
+        "cat -A exact_result.txt showed alpha beta omega; one line; "
+        "1 exact_result.txt."
+    )
+    assert comparison._final_reports_posttooluse_evidence(
+        "Result: PASS bytes=16 hex=616c7068612062657461206f6d656761; "
+        "content is exactly alpha beta omega."
+    )
+    assert comparison._final_reports_posttooluse_evidence(
+        "cmp_exit=0; exact byte match; exact_result.txt contains "
+        "alpha beta omega."
+    )
+    assert not comparison._final_reports_posttooluse_evidence(
+        "PASS bytes=16 but the content was not printed."
+    )
+    assert not comparison._final_reports_posttooluse_evidence(
+        "alpha beta omega with no verification evidence."
+    )
 
 
 def test_task_standard_posttooluse_measurement_episode_accepts_synthetic_pass() -> None:
@@ -963,6 +1038,7 @@ def test_behavior_comparison_harness_does_not_use_forbidden_sources() -> None:
     assert "--task-standard-posttooluse-actuator-trace-gate0" in source
     assert "--task-standard-posttooluse-shared-tool-evidence-gate0" in source
     assert "--task-standard-posttooluse-context-loop-trace-gate0" in source
+    assert "--task-standard-posttooluse-final-closure-readout-gate0" in source
 
 
 def _trial(

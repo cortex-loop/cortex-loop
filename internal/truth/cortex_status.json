@@ -98,7 +98,8 @@
     "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun_after_context_loop_trace_remediation.md",
     "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_closure_reporting_architecture_decision.md",
     "docs/recon/cortex_codex_app_cli_posttooluse_strategy_failure_audit.md",
-    "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_measurement_stack_rebuild_gate0.md"
+    "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_measurement_stack_rebuild_gate0.md",
+    "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_final_closure_readout_remediation_gate0.md"
   ],
   "bio_to_code_matrix": [
     {
@@ -438,7 +439,8 @@
           "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun_after_context_loop_trace_remediation.md",
           "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_closure_reporting_architecture_decision.md",
           "docs/recon/cortex_codex_app_cli_posttooluse_strategy_failure_audit.md",
-          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_measurement_stack_rebuild_gate0.md"
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_measurement_stack_rebuild_gate0.md",
+          "docs/recon/cortex_codex_app_cli_posttooluse_task_standard_final_closure_readout_remediation_gate0.md"
         ],
         "update_rule": "Add a recon when a proof or decision is earned; do not treat recon alone as shipping truth without status promotion."
       }
@@ -912,13 +914,13 @@
     ]
   },
   "next_product_train": {
-    "slug": "codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0",
-    "surface": "lab proof readout remediation",
-    "executive_benefit": "Repair the PostToolUse task-standard final-closure evidence readout now that the measurement-stack Gate 0 preserved all five historical failure classes and isolated `task_standard_posttooluse_live_20260507T225019Z` as final-closure metric underfit.",
-    "why_now": "The measurement-stack rebuild replayed `20260507T100836Z`, `142129Z`, `153242Z`, `213732Z`, and `225019Z` through one evidence-recovery episode table, preserving true next-action ignore, no-context, overcontrol, repeated-context/ambiguous-trace, and final-closure metric-underfit classifications. The next narrow move is to update the final-closure readout predicate and replay the same table before any live rerun or value probe.",
-    "primary_metric": "No-live Gate 0 updates final-closure readout so `PASS`, `bytes=16`, expected hex `616c7068612062657461206f6d656761`, and exact `alpha beta omega` count as closure evidence only when earlier context, control, trace, and next-action conjuncts have passed. Earlier historical failure classes must remain preserved for `20260507T100836Z`, `142129Z`, `153242Z`, `213732Z`, and `225019Z`.",
-    "guardrail": "No live Codex run. No product host behavior change. Do not change signed UserPromptSubmit text, PostToolUse text, Stop text, SRE law, matcher thresholds, fixtures, scoring semantics, root hooks, hidden-verifier boundary, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed intervention pressure, or host-runtime extraction.",
-    "kill_rule": "If the final-closure readout remediation masks any prior historical failure or turns the measurement-stack table into a lift claim, queue measurement-stack architecture remediation or pause PostToolUse value claims; do not queue a live rerun or exactness value probe.",
+    "slug": "codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-probe-gate0",
+    "surface": "lab proof paired-value design gate",
+    "executive_benefit": "Pre-register an exactness-only paired value probe design now that final-closure readout Gate 0 makes only `task_standard_posttooluse_live_20260507T225019Z` pass under corrected semantic closure while preserving all earlier historical failure classes.",
+    "why_now": "The final-closure readout remediation Gate 0 passed without live spend: it accepted `PASS`, `bytes=16`, expected hex `616c7068612062657461206f6d656761`, exact `alpha beta omega`, and byte-match language while preserving `20260507T100836Z`, `142129Z`, `153242Z`, and `213732Z` as earlier failures. The next lawful move is a no-live paired-value design gate, not a direct live rerun.",
+    "primary_metric": "No-live Gate 0 defines the paired exactness-only probe, its active/control arms, preregistered success and failure conjuncts, clean controls, artifact ids, and expected readout table before any live spend. It must use the corrected final-closure predicate from `pass_posttooluse_final_closure_readout_gate0` without changing product policy or treating the latest corrected replay as value lift.",
+    "guardrail": "No live Codex run unless explicitly approved in the implementation turn. No broad behavior comparison. No product host behavior change. Do not change signed UserPromptSubmit text, PostToolUse text, Stop text, SRE law, matcher thresholds, fixture scoring, root hooks, hidden-verifier boundary, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed intervention pressure, or host-runtime extraction.",
+    "kill_rule": "If the paired-value Gate 0 cannot isolate exactness-only PostToolUse value from fixture salience, lab compliance, final-closure readout repair, or measurement-stack artifacts, pause PostToolUse value claims or queue measurement-stack architecture remediation; do not run live or claim exactness value lift.",
     "last_reviewed_at": "2026-05-08T00:00:00+00:00"
   },
   "packet_to_code_anchors": [
@@ -1576,7 +1578,7 @@
     "The Codex App/CLI PostToolUse task-standard narrow live probe harness seam then added `--task-standard-posttooluse-live`, approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running a live Codex command. The live probe remains unearned until explicitly approved and run; this seam earns harness readiness only and preserves signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport deferral, PreToolUse denial deferral, and PermissionRequest policy."
   ],
   "work_today": {
-    "slug": "codex-app-cli-posttooluse-task-standard-measurement-stack-rebuild-gate0",
-    "note": "The Codex App/CLI PostToolUse measurement-stack Gate 0 passed without live spend. It added one lab-owned evidence-recovery episode table and replayed `task_standard_posttooluse_live_20260507T100836Z`, `20260507T142129Z`, `20260507T153242Z`, `20260507T213732Z`, and `20260507T225019Z`, preserving true next-action ignore, no-context, overcontrol, repeated-context/ambiguous-trace, and final-closure metric-underfit classifications. The table recognizes semantic final-closure evidence in `20260507T225019Z` (`PASS`, `bytes=16`, expected hex `616c7068612062657461206f6d656761`, exact `alpha beta omega`) while preserving its old registered `failure_context_ignored` verdict. No live Codex run, no product behavior change, no exactness value lift, broad Cortex lift, Codex App parity, or shipping promotion is earned; the next train is the no-live final-closure readout remediation Gate 0."
+    "slug": "codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0",
+    "note": "The Codex App/CLI PostToolUse final-closure readout remediation Gate 0 passed without live spend. It updated the lab final-closure predicate to accept semantic exactness evidence (`PASS`, `bytes=16`, expected hex `616c7068612062657461206f6d656761`, exact `alpha beta omega`, `cmp_exit=0`, and exact byte-match language) while leaving live decision ordering unchanged. The corrected replay table preserves `task_standard_posttooluse_live_20260507T100836Z` as true next-action ignore, `20260507T142129Z` as no-context, `20260507T153242Z` as overcontrol, and `20260507T213732Z` as repeated-context/ambiguous-trace, while only `20260507T225019Z` becomes corrected `pass_posttooluse_next_step_observed`; its old registered `failure_context_ignored` evidence remains recorded in the measurement table. No live Codex run, no product behavior change, no exactness value lift, broad Cortex lift, Codex App parity, or shipping promotion is earned; the next train is a no-live exactness-only paired value probe Gate 0."
   }
 }

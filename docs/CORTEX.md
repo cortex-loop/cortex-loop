@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-task-standard-measurement-stack-rebuild-gate0`
-### Next Product Train
 - Slug: `codex-app-cli-posttooluse-task-standard-final-closure-readout-remediation-gate0`
-- Surface: `lab proof readout remediation`
-- Why now: The measurement-stack rebuild replayed `20260507T100836Z`, `142129Z`, `153242Z`, `213732Z`, and `225019Z` through one evidence-recovery episode table, preserving true next-action ignore, no-context, overcontrol, repeated-context/ambiguous-trace, and final-closure metric-underfit classifications. The next narrow move is to update the final-closure readout predicate and replay the same table before any live rerun or value probe.
+### Next Product Train
+- Slug: `codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-probe-gate0`
+- Surface: `lab proof paired-value design gate`
+- Why now: The final-closure readout remediation Gate 0 passed without live spend: it accepted `PASS`, `bytes=16`, expected hex `616c7068612062657461206f6d656761`, exact `alpha beta omega`, and byte-match language while preserving `20260507T100836Z`, `142129Z`, `153242Z`, and `213732Z` as earlier failures. The next lawful move is a no-live paired-value design gate, not a direct live rerun.
 
 ### Research Lines Under Evaluation
 
