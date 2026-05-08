@@ -3,12 +3,28 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import os
 from collections import defaultdict
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
+
+try:
+    from lab.cortex_simple_hook_baseline import (
+        assess_simple_hook_closure,
+        capture_visible_task_standard,
+        render_simple_hook_reminder,
+        simple_hook_baseline_metadata,
+    )
+except ModuleNotFoundError:  # pragma: no cover - script execution path
+    from cortex_simple_hook_baseline import (
+        assess_simple_hook_closure,
+        capture_visible_task_standard,
+        render_simple_hook_reminder,
+        simple_hook_baseline_metadata,
+    )
 
 
 DEFAULT_OUTPUT_ROOT = Path(
@@ -20,6 +36,9 @@ DEFAULT_BUILD_OUTPUT_ROOT = Path(
 DEFAULT_LIVE_GATE1_OUTPUT_ROOT = Path(
     ".cortex/live_validation/cortex_effectiveness_evaluator_live_gate1"
 )
+DEFAULT_SIMPLE_HOOK_OUTPUT_ROOT = Path(
+    ".cortex/live_validation/cortex_simple_hook_baseline_challenger"
+)
 HISTORICAL_POSTTOOLUSE_PAIRED_VALUE_SUMMARY = Path(
     ".cortex/live_validation/openai/codex_app_cli_hook_native_behavior_comparison/"
     "task_standard_posttooluse_paired_value_live_20260508T120907Z/summary.json"
@@ -30,6 +49,8 @@ EVALUATOR_LIVE_MATRIX_COMMAND = (
     "python3 lab/cortex_effectiveness_evaluator.py --live-matrix"
 )
 LIVE_MATRIX_REPEAT_COUNT = 3
+SIMPLE_HOOK_LOC_LIMIT = 500
+SIMPLE_HOOK_SOURCE_PATH = Path(__file__).with_name("cortex_simple_hook_baseline.py")
 
 ARMS: tuple[str, ...] = (
     "no_cortex_baseline",
@@ -325,6 +346,133 @@ def registered_live_commands() -> list[dict[str, Any]]:
             "env": {EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
         }
     ]
+
+
+def _simple_hook_source_report(
+    source_path: Path = SIMPLE_HOOK_SOURCE_PATH,
+) -> dict[str, Any]:
+    source = source_path.read_text(encoding="utf-8")
+    loc = sum(
+        1
+        for line in source.splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    )
+    tree = ast.parse(source)
+    imports: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            imports.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imports.append(node.module)
+    forbidden = tuple(
+        name for name in imports if name == "cortex" or name.startswith("cortex.")
+    )
+    return {
+        "path": str(source_path),
+        "nonblank_noncomment_loc": loc,
+        "loc_limit": SIMPLE_HOOK_LOC_LIMIT,
+        "imports": sorted(imports),
+        "forbidden_cortex_imports": list(forbidden),
+    }
+
+
+def run_cortex_simple_hook_baseline_gate0(
+    output_root: Path | str = DEFAULT_SIMPLE_HOOK_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    """Prove the independent simple-hook challenger is present and runnable."""
+
+    root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
+    source_report = _simple_hook_source_report()
+    metadata = simple_hook_baseline_metadata()
+    visible_task = (
+        "Create exact_result.txt containing alpha beta omega, verify the bytes, "
+        "and report any blocker."
+    )
+    standard = capture_visible_task_standard(visible_task)
+    reminder = render_simple_hook_reminder(standard)
+    evidence = assess_simple_hook_closure(
+        standard,
+        (
+            "PASS: checked exact_result.txt, content matches alpha beta omega, "
+            "bytes=16, evidence verified."
+        ),
+    )
+    blocker = assess_simple_hook_closure(
+        standard,
+        "Blocked: exact_result.txt does not exist yet.",
+    )
+    unsupported = assess_simple_hook_closure(
+        standard,
+        "Done.",
+    )
+    reminder_lower = reminder.lower()
+    internal_terms = ("cortex", "sre", "aux", "core", "hidden verifier", "policy")
+    checks = {
+        "source_under_loc_limit": source_report["nonblank_noncomment_loc"]
+        <= SIMPLE_HOOK_LOC_LIMIT,
+        "no_cortex_imports": not source_report["forbidden_cortex_imports"],
+        "metadata_independent": metadata["id"] == "simple_hook_baseline"
+        and metadata["imports_cortex"] is False,
+        "capture_uses_visible_task": standard.visible_task == " ".join(visible_task.split())
+        and bool(standard.required_terms),
+        "reminder_single_context_path": reminder.startswith("Before closing,"),
+        "reminder_has_no_internal_labels": not any(
+            term in reminder_lower for term in internal_terms
+        ),
+        "evidence_closure_accepted": evidence.satisfied
+        and evidence.evidence_reported
+        and not evidence.blocker_reported,
+        "blocker_closure_accepted": blocker.satisfied and blocker.blocker_reported,
+        "unsupported_closure_rejected": not unsupported.satisfied
+        and unsupported.reason == "unsupported_closure",
+        "simple_hook_arm_registered": "simple_hook_baseline" in ARMS,
+        "live_trials_not_run": True,
+        "no_value_claims": True,
+        "scoring_logic_unchanged": True,
+    }
+    passed = all(checks.values())
+    report = {
+        "passed": passed,
+        "verdict": (
+            "pass_cortex_simple_hook_baseline_challenger"
+            if passed
+            else "failure_cortex_simple_hook_baseline_challenger"
+        ),
+        "live_trials_ran": False,
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": False,
+        "broad_cortex_lift_claim_allowed": False,
+        "codex_app_parity_claim_allowed": False,
+        "shipping_promotion_claim_allowed": False,
+        "alphaevolve_mutation_loop_allowed": False,
+        "model_io_path": LAB_PROOF_MODEL_IO_PATH,
+        "next_train_if_pass": "cortex-executive-effectiveness-evaluator-live-matrix-run",
+        "checks": checks,
+        "source_report": source_report,
+        "metadata": metadata,
+        "sample": {
+            "visible_task": visible_task,
+            "captured_required_terms": list(standard.required_terms),
+            "reminder": reminder,
+            "evidence_result": asdict(evidence),
+            "blocker_result": asdict(blocker),
+            "unsupported_result": asdict(unsupported),
+        },
+    }
+    (root / "simple_hook_baseline.json").write_text(
+        json.dumps(metadata, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (root / "gate0_report.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    (root / "summary.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return report
 
 
 def cortex_effectiveness_evaluator_design() -> dict[str, Any]:
@@ -1195,12 +1343,13 @@ def run_cortex_effectiveness_evaluator_live_matrix(
     else:
         report = {
             "passed": False,
-            "verdict": "not_run_live_matrix_execution_deferred_until_simple_hook_challenger",
+            "verdict": "not_run_live_matrix_execution_deferred_until_live_matrix_run_seam",
             "live_trials_ran": False,
             "approval_required": False,
             "approval_env": EVALUATOR_LIVE_APPROVAL_ENV,
             "registered_live_commands": registered_live_commands(),
-            "next_required_train": "cortex-simple-hook-baseline-challenger",
+            "simple_hook_baseline_ready": True,
+            "next_required_train": "cortex-executive-effectiveness-evaluator-live-matrix-run",
             "behavior_lift_claim_allowed": False,
             "exactness_value_lift_claim_allowed": False,
             "broad_cortex_lift_claim_allowed": False,
@@ -1348,6 +1497,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="future approval-gated live matrix command; refuses without approval in Gate 1",
     )
     parser.add_argument(
+        "--simple-hook-baseline-gate0",
+        action="store_true",
+        help="prove the independent simple-hook baseline challenger without live trials",
+    )
+    parser.add_argument(
         "--output-root",
         type=Path,
         default=None,
@@ -1361,10 +1515,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     selected_modes = sum(
         bool(value)
-        for value in (args.gate0, args.build, args.live_gate1, args.live_matrix)
+        for value in (
+            args.gate0,
+            args.build,
+            args.live_gate1,
+            args.live_matrix,
+            args.simple_hook_baseline_gate0,
+        )
     )
     if selected_modes != 1:
-        parser.error("select exactly one of --gate0, --build, --live-gate1, or --live-matrix")
+        parser.error(
+            "select exactly one of --gate0, --build, --live-gate1, "
+            "--live-matrix, or --simple-hook-baseline-gate0"
+        )
 
     output_root = args.output_root
     if output_root is None:
@@ -1372,6 +1535,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_root = DEFAULT_OUTPUT_ROOT
         elif args.build:
             output_root = DEFAULT_BUILD_OUTPUT_ROOT
+        elif args.simple_hook_baseline_gate0:
+            output_root = DEFAULT_SIMPLE_HOOK_OUTPUT_ROOT
         else:
             output_root = DEFAULT_LIVE_GATE1_OUTPUT_ROOT
 
@@ -1381,6 +1546,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         report = run_cortex_effectiveness_evaluator_build(output_root)
     elif args.live_gate1:
         report = run_cortex_effectiveness_evaluator_live_gate1(output_root)
+    elif args.simple_hook_baseline_gate0:
+        report = run_cortex_simple_hook_baseline_gate0(output_root)
     else:
         report = run_cortex_effectiveness_evaluator_live_matrix(output_root)
 

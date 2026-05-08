@@ -294,6 +294,10 @@ Active docs:
 - [Cortex Executive Effectiveness Evaluator Live Gate 1](recon/cortex_executive_effectiveness_evaluator_live_gate1.md) —
   no-live live-interface gate registering the future four-arm evaluator matrix,
   approval refusal, dry-run schedule, and next simple-hook dependency
+- [Cortex Simple-Hook Baseline Challenger](recon/cortex_simple_hook_baseline_challenger.md) —
+  no-live independent small baseline for the four-arm evaluator: under 500 LOC,
+  no `cortex/**` imports, visible-task capture, one reminder/context path, and
+  one closure check
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation
