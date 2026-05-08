@@ -13,12 +13,14 @@ from lab.codex_app_cli_hook_native_behavior_comparison import (
     EXPECTED_OVERDUE_VERIFICATION_TEXT,
     TASK_STANDARD_BEHAVIOR_APPROVAL_ENV,
     TASK_STANDARD_POSTTOOLUSE_APPROVAL_ENV,
+    TASK_STANDARD_POSTTOOLUSE_VALUE_APPROVAL_ENV,
     run_astro_three_arm_gate0_probe,
     run_astro_three_arm_live,
     run_gate0_probe,
     run_live_comparison,
     run_task_standard_offline_readiness_gate,
     run_task_standard_posttooluse_context_loop_trace_gate0,
+    run_task_standard_posttooluse_exactness_only_paired_value_gate0,
     run_task_standard_posttooluse_final_closure_readout_gate0,
     run_task_standard_posttooluse_firing_boundary_gate0,
     run_task_standard_posttooluse_actuator_trace_gate0,
@@ -558,6 +560,142 @@ def test_task_standard_posttooluse_final_closure_predicate_shapes() -> None:
     )
 
 
+def test_task_standard_posttooluse_exactness_only_paired_value_gate0(
+    tmp_path: Path,
+) -> None:
+    report = run_task_standard_posttooluse_exactness_only_paired_value_gate0(
+        output_root=tmp_path,
+    )
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_posttooluse_exactness_only_paired_value_gate0"
+    assert report["live_trials_ran"] is False
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["exactness_value_lift_claim_allowed"] is False
+    assert report["next_product_train"] == (
+        "codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-live-probe"
+    )
+    design = report["probe_design"]
+    assert design["conditions"] == [
+        "active_posttooluse_context",
+        "silent_posttooluse_control",
+    ]
+    assert design["cases"] == [
+        "mismatch_exactness",
+        "clean_evidenced",
+        "honest_blocker",
+        "waiting_on_user",
+        "unrelated_tool",
+    ]
+    assert design["future_live_approval_env"] == (
+        TASK_STANDARD_POSTTOOLUSE_VALUE_APPROVAL_ENV
+    )
+    assert design["arm_delta"] == ["enable_posttooluse_task_standard_context"]
+    assert design["pass_threshold"] == {"active_wins": 4, "pairs": 5}
+    assert design["historical_feasibility_counts_as_value_lift"] is False
+
+    boundary_results = report["boundary_results"]
+    for key in (
+        "design_conditions_registered",
+        "design_cases_registered",
+        "approval_env_registered",
+        "active_silent_arm_delta_only_context_flag",
+        "threshold_registered",
+        "passing_design_row_passes",
+        "passing_design_has_5_active_wins",
+        "no_value_row_fails_no_value",
+        "silent_success_is_tie_not_active_win",
+        "active_ignore_row_fails_context_ignored",
+        "overcontrol_dominates_value",
+        "repeated_context_dominates_value",
+        "trace_ambiguity_dominates_value",
+        "boundary_breach_dominates_value",
+        "root_config_mutation_dominates_value",
+        "runtime_snapshot_dominates_value",
+        "latest_corrected_replay_is_feasibility_only",
+        "no_live_trials",
+        "behavior_lift_claim_forbidden",
+        "exactness_value_lift_claim_forbidden",
+    ):
+        assert boundary_results[key] is True
+
+
+def test_task_standard_posttooluse_paired_value_decision_boundaries() -> None:
+    passing = comparison._task_standard_posttooluse_paired_value_decision(
+        comparison._posttooluse_paired_value_synthetic_rows(
+            silent_mismatch_success=False,
+        )
+    )
+    assert passing["verdict"] == "pass_exactness_only_paired_value"
+    assert passing["active_wins"] == 5
+
+    no_value = comparison._task_standard_posttooluse_paired_value_decision(
+        comparison._posttooluse_paired_value_synthetic_rows(
+            silent_mismatch_success=True,
+        )
+    )
+    assert no_value["verdict"] == "failure_no_value"
+    assert no_value["active_wins"] == 0
+
+    active_ignore = comparison._task_standard_posttooluse_paired_value_decision(
+        comparison._posttooluse_paired_value_synthetic_rows(
+            active_next_tool_matches_context=False,
+            silent_mismatch_success=False,
+        )
+    )
+    assert active_ignore["verdict"] == "failure_context_ignored"
+
+    overcontrol = comparison._task_standard_posttooluse_paired_value_decision(
+        comparison._posttooluse_paired_value_synthetic_rows(
+            active_control_context_count=1,
+            silent_mismatch_success=False,
+        )
+    )
+    assert overcontrol["verdict"] == "failure_overcontrol"
+
+    repeated = comparison._task_standard_posttooluse_paired_value_decision(
+        comparison._posttooluse_paired_value_synthetic_rows(
+            active_context_count=2,
+            active_repeated_context=True,
+            silent_mismatch_success=False,
+        )
+    )
+    assert repeated["failure_reason"] == "repeated_posttooluse_context_loop"
+
+    trace = comparison._task_standard_posttooluse_paired_value_decision(
+        comparison._posttooluse_paired_value_synthetic_rows(
+            active_trace_ambiguous=True,
+            silent_mismatch_success=False,
+        )
+    )
+    assert trace["verdict"] == "scoped_negative"
+    assert trace["failure_reason"] == "posttooluse_context_trace_ambiguous"
+
+    boundary = comparison._task_standard_posttooluse_paired_value_decision(
+        comparison._posttooluse_paired_value_synthetic_rows(
+            active_boundary_breach=True,
+            silent_mismatch_success=False,
+        )
+    )
+    assert boundary["failure_reason"] == "model_visible_context_boundary_breached"
+
+    root_mutation = comparison._task_standard_posttooluse_paired_value_decision(
+        comparison._posttooluse_paired_value_synthetic_rows(
+            silent_mismatch_success=False,
+        ),
+        root_config_changed=True,
+    )
+    assert root_mutation["failure_reason"] == "root_config_changed"
+
+    runtime_snapshot = comparison._task_standard_posttooluse_paired_value_decision(
+        comparison._posttooluse_paired_value_synthetic_rows(
+            active_runtime_snapshot_loaded=True,
+            silent_mismatch_success=False,
+        )
+    )
+    assert runtime_snapshot["failure_reason"] == "runtime_snapshot_loaded"
+
+
 def test_task_standard_posttooluse_measurement_episode_accepts_synthetic_pass() -> None:
     row = comparison._posttooluse_measurement_synthetic_row(
         final_closure_reports_context_evidence=True,
@@ -1039,6 +1177,9 @@ def test_behavior_comparison_harness_does_not_use_forbidden_sources() -> None:
     assert "--task-standard-posttooluse-shared-tool-evidence-gate0" in source
     assert "--task-standard-posttooluse-context-loop-trace-gate0" in source
     assert "--task-standard-posttooluse-final-closure-readout-gate0" in source
+    assert (
+        "--task-standard-posttooluse-exactness-only-paired-value-gate0" in source
+    )
 
 
 def _trial(

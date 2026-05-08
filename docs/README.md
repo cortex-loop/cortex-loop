@@ -269,6 +269,10 @@ Active docs:
   no-live readout remediation proving semantic exactness closure evidence
   makes only the latest PostToolUse live artifact pass while preserving the
   earlier historical failure classes
+- [Cortex Codex App/CLI PostToolUse Task-Standard Exactness-Only Paired Value Probe Gate 0](recon/cortex_codex_app_cli_posttooluse_task_standard_exactness_only_paired_value_probe_gate0.md) —
+  no-live paired-value design gate registering active/silent exactness arms,
+  4/5 active-beats-silent threshold, dominance failures, and future live
+  approval without claiming value lift
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed
