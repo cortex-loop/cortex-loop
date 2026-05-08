@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-probe-gate0`
-### Next Product Train
 - Slug: `codex-app-cli-posttooluse-task-standard-exactness-only-paired-value-live-probe`
-- Surface: `approval-gated live paired value probe`
-- Why now: The exactness-only paired value Gate 0 passed without live spend: it registered `active_posttooluse_context` and `silent_posttooluse_control`, cases `mismatch_exactness`, `clean_evidenced`, `honest_blocker`, `waiting_on_user`, and `unrelated_tool`, the only intended arm delta `enable_posttooluse_task_standard_context`, future approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_VALUE_APPROVED=approved`, and the `4/5` active-beats-silent threshold while forbidding value lift from the historical corrected replay `task_standard_posttooluse_live_20260507T225019Z`.
+### Next Product Train
+- Slug: `codex-app-cli-posttooluse-task-standard-value-claims-pause-decision`
+- Surface: `no-live architecture decision`
+- Why now: The approval-gated paired live probe `task_standard_posttooluse_paired_value_live_20260508T120907Z` produced `failure_no_value`: active PostToolUse context beat silent in 0/5 mismatch pairs against the registered 4/5 threshold. Repeats 2-4 were `tie_no_value` because active and silent both succeeded; repeats 1 and 5 were active `failure_no_context` rows. Clean/control rows emitted zero PostToolUse contexts, root config stayed unchanged, no runtime snapshot loaded, and no exactness value lift was earned.
 
 ### Research Lines Under Evaluation
 

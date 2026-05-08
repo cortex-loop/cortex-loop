@@ -21,6 +21,7 @@ from lab.codex_app_cli_hook_native_behavior_comparison import (
     run_task_standard_offline_readiness_gate,
     run_task_standard_posttooluse_context_loop_trace_gate0,
     run_task_standard_posttooluse_exactness_only_paired_value_gate0,
+    run_task_standard_posttooluse_exactness_only_paired_value_live_probe,
     run_task_standard_posttooluse_final_closure_readout_gate0,
     run_task_standard_posttooluse_firing_boundary_gate0,
     run_task_standard_posttooluse_actuator_trace_gate0,
@@ -637,6 +638,33 @@ def test_task_standard_posttooluse_paired_value_decision_boundaries() -> None:
     assert no_value["verdict"] == "failure_no_value"
     assert no_value["active_wins"] == 0
 
+    silent_without_context_relative_next_tool = (
+        comparison._posttooluse_paired_value_synthetic_rows(
+            silent_mismatch_success=True,
+        )
+    )
+    for row in silent_without_context_relative_next_tool:
+        if row["condition"] == "silent_posttooluse_control":
+            row["next_tool_matches_context"] = False
+    no_value_without_context_relative_next_tool = (
+        comparison._task_standard_posttooluse_paired_value_decision(
+            silent_without_context_relative_next_tool
+        )
+    )
+    assert no_value_without_context_relative_next_tool["verdict"] == "failure_no_value"
+    assert no_value_without_context_relative_next_tool["active_wins"] == 0
+
+    no_tool_controls = comparison._posttooluse_paired_value_synthetic_rows(
+        silent_mismatch_success=False,
+    )
+    for row in no_tool_controls:
+        if row["case"] in {"honest_blocker", "waiting_on_user"}:
+            row["posttooluse_lifecycle_observed"] = False
+            row["codex_command_sequence"] = []
+    assert comparison._task_standard_posttooluse_paired_value_decision(
+        no_tool_controls
+    )["verdict"] == "pass_exactness_only_paired_value"
+
     active_ignore = comparison._task_standard_posttooluse_paired_value_decision(
         comparison._posttooluse_paired_value_synthetic_rows(
             active_next_tool_matches_context=False,
@@ -694,6 +722,82 @@ def test_task_standard_posttooluse_paired_value_decision_boundaries() -> None:
         )
     )
     assert runtime_snapshot["failure_reason"] == "runtime_snapshot_loaded"
+
+
+def test_task_standard_posttooluse_paired_value_live_refuses_without_explicit_approval(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.delenv(TASK_STANDARD_POSTTOOLUSE_VALUE_APPROVAL_ENV, raising=False)
+
+    report = run_task_standard_posttooluse_exactness_only_paired_value_live_probe(
+        output_root=tmp_path
+    )
+
+    assert report["passed"] is False
+    assert report["verdict"] == "not_run"
+    assert report["live_trials_ran"] is False
+    assert report["approval_env"] == TASK_STANDARD_POSTTOOLUSE_VALUE_APPROVAL_ENV
+
+
+def test_task_standard_posttooluse_paired_value_live_builds_registered_matrix(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    monkeypatch.setenv(TASK_STANDARD_POSTTOOLUSE_VALUE_APPROVAL_ENV, "approved")
+
+    def fake_codex_subprocess(**kwargs):
+        return {
+            "stdout": (
+                '{"type":"item.completed","item":{"type":"agent_message",'
+                '"text":"No hook lifecycle emitted in fake subprocess."}}\n'
+            ),
+            "stderr": "",
+            "returncode": 0,
+            "timed_out": False,
+        }
+
+    monkeypatch.setattr(comparison, "_run_codex_subprocess", fake_codex_subprocess)
+
+    report = run_task_standard_posttooluse_exactness_only_paired_value_live_probe(
+        output_root=tmp_path
+    )
+
+    assert report["verdict"] == "scoped_negative"
+    assert report["decision"]["failure_reason"] == "posttooluse_lifecycle_not_observed"
+    assert report["live_trials_ran"] is True
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["exactness_value_lift_claim_allowed"] is False
+    assert report["row_count"] == 18
+    assert len(report["rows"]) == 18
+
+    rows = report["rows"]
+    mismatch_rows = [row for row in rows if row["case"] == "mismatch_exactness"]
+    assert len(mismatch_rows) == 10
+    for repeat_index in range(1, 6):
+        pair = {
+            row["condition"]: row
+            for row in mismatch_rows
+            if row["repeat_index"] == repeat_index
+        }
+        assert set(pair) == {
+            "active_posttooluse_context",
+            "silent_posttooluse_control",
+        }
+
+    control_rows = [row for row in rows if row["case"] != "mismatch_exactness"]
+    assert len(control_rows) == 8
+    for row in rows:
+        assert row["subject_config_product_only"] is True
+        assert row["subject_config_contains_runtime_snapshot"] is False
+        assert row["runtime_snapshot_loaded"] is False
+        if row["condition"] == "active_posttooluse_context":
+            assert row["enable_posttooluse_task_standard_context"] is True
+            assert row["subject_config_contains_posttooluse_context_flag"] is True
+        else:
+            assert row["condition"] == "silent_posttooluse_control"
+            assert row["enable_posttooluse_task_standard_context"] is False
+            assert row["subject_config_contains_posttooluse_context_flag"] is False
 
 
 def test_task_standard_posttooluse_measurement_episode_accepts_synthetic_pass() -> None:
@@ -1179,6 +1283,9 @@ def test_behavior_comparison_harness_does_not_use_forbidden_sources() -> None:
     assert "--task-standard-posttooluse-final-closure-readout-gate0" in source
     assert (
         "--task-standard-posttooluse-exactness-only-paired-value-gate0" in source
+    )
+    assert (
+        "--task-standard-posttooluse-exactness-only-paired-value-live" in source
     )
 
 
