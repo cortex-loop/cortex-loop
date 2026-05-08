@@ -337,8 +337,8 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_PATH = (
     / "cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun.md"
 )
 
-CURRENT_WORK_SLUG = "cortex-effectiveness-strategy-reset"
-NEXT_PRODUCT_TRAIN_SLUG = "cortex-executive-effectiveness-evaluator-gate0"
+CURRENT_WORK_SLUG = "cortex-executive-effectiveness-evaluator-gate0"
+NEXT_PRODUCT_TRAIN_SLUG = "cortex-executive-effectiveness-evaluator-build"
 CONTEXT_LOOP_TRACE_REMEDIATION_RECON_PATH = (
     REPO_ROOT
     / "docs"
@@ -391,6 +391,12 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_EXACTNESS_ONLY_PAIRED_VALUE_LIVE_PATH = 
 )
 CORTEX_EFFECTIVENESS_STRATEGY_RESET_PATH = (
     REPO_ROOT / "docs" / "recon" / "cortex_effectiveness_strategy_reset.md"
+)
+CORTEX_EXECUTIVE_EFFECTIVENESS_EVALUATOR_GATE0_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_executive_effectiveness_evaluator_gate0.md"
 )
 
 CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_AFTER_SHARED_TOOL_EVIDENCE_PATH = (
@@ -505,79 +511,92 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
 ) -> None:
     assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     work_note = status["work_today"]["note"].lower()
-    assert "cortex effectiveness strategy reset" in work_note
-    assert "posttooluse-only task-standard value path should stop" in work_note
-    assert "same-shape live rerun" in work_note
-    assert "failure_no_value" in work_note
-    assert "task_standard_posttooluse_paired_value_live_20260508t120907z" in work_note
-    assert "4/5" in work_note
-    assert "0/5 mismatch pairs" in work_note
-    assert "tie_no_value" in work_note
-    assert "repeats 2-4" in work_note
-    assert "repeats 1 and 5" in work_note
-    assert "failure_no_context" in work_note
-    assert "improved proof visibility but no measured effectiveness" in work_note
-    assert "not yet alphaevolve-style optimization" in work_note
-    assert "hard objective and paired evaluator arrived late" in work_note
-    assert "only one hook policy was defended" in work_note
-    assert "proof machinery accumulated before value was tested" in work_note
+    assert "cortex executive effectiveness evaluator gate 0 passed" in work_note
+    assert "no-live design gate" in work_note
+    assert "hard objective" in work_note
+    assert "active lifecycle policy improves next model behavior" in work_note
+    assert "no_cortex_baseline" in work_note
+    assert "simple_hook_baseline" in work_note
+    assert "cortex_silent_perception" in work_note
+    assert "cortex_active_policy" in work_note
+    assert "exactness/evidence recovery" in work_note
+    assert "truthful closure" in work_note
+    assert "blocker surfacing" in work_note
+    assert "continuity after interruption" in work_note
+    assert "clean verified-work controls" in work_note
+    assert "stop-only" in work_note
+    assert "userpromptsubmit+stop" in work_note
+    assert "posttooluse+stop" in work_note
+    assert "lifecycle-composed policy" in work_note
+    assert "pretooluse later after host contract verification" in work_note
+    assert "overcontrol" in work_note
+    assert "repeated intervention loop" in work_note
+    assert "trace ambiguity" in work_note
+    assert "hidden-verifier leakage" in work_note
+    assert "root config mutation" in work_note
+    assert "runtime snapshot" in work_note
+    assert "simple-hook parity" in work_note
+    assert "silent perception contamination" in work_note
+    assert "stale posttooluse proof surfaces" in work_note
+    assert "alphaevolve-inspired" in work_note
+    assert "hard evaluator first" in work_note
+    assert "bounded candidate iteration later" in work_note
     assert "no behavior lift" in work_note
     assert "exactness value lift" in work_note
     assert "broad cortex lift" in work_note
     assert "codex app parity" in work_note
     assert "shipping promotion" in work_note
-    assert "feasibility evidence only" in work_note
-    assert "executive effectiveness evaluator gate 0" in work_note
-    assert "baseline/silent/active lifecycle policy candidates" in work_note
-    assert "contraction obligations" in work_note
+    assert "product host behavior change" in work_note
+    assert "model-visible text change" in work_note
+    assert "sre law change" in work_note
+    assert "alphaevolve mutation loop" in work_note
 
     next_train = status["next_product_train"]
     assert next_train["slug"] == NEXT_PRODUCT_TRAIN_SLUG
-    assert next_train["surface"] == "no-live evaluator architecture gate"
-    assert "cortex's actual product objective" in next_train[
+    assert next_train["surface"] == "no-live lab/proof evaluator build"
+    assert "automatic paired evaluator" in next_train["executive_benefit"].lower()
+    assert "no-cortex" in next_train["executive_benefit"].lower()
+    assert "mandatory simple-hook challenger" in next_train[
         "executive_benefit"
     ].lower()
-    assert "hard paired evaluator" in next_train["executive_benefit"].lower()
-    assert "lifecycle executive effectiveness" in next_train[
-        "executive_benefit"
-    ].lower()
-    assert "posttooluse-only value path" in next_train["executive_benefit"].lower()
-    assert "task_standard_posttooluse_paired_value_live_20260508t120907z" in next_train[
+    assert "cortex executive effectiveness evaluator gate 0 passed" in next_train[
         "why_now"
     ].lower()
+    assert "no_cortex_baseline" in next_train["why_now"].lower()
+    assert "simple_hook_baseline" in next_train["why_now"].lower()
+    assert "cortex_silent_perception" in next_train["why_now"].lower()
+    assert "cortex_active_policy" in next_train["why_now"].lower()
     assert "failure_no_value" in next_train["why_now"].lower()
-    assert "0/5 mismatch pairs" in next_train["why_now"].lower()
-    assert "4/5" in next_train["why_now"].lower()
-    assert "improved proof visibility but not measured effectiveness" in next_train[
-        "why_now"
-    ].lower()
-    assert "substantial lab/docs/tests machinery" in next_train["why_now"].lower()
-    assert "broader evaluator" in next_train["why_now"].lower()
-    assert "lifecycle policies" in next_train["why_now"].lower()
+    assert "same-shape live probe" in next_train["why_now"].lower()
     primary_metric = next_train["primary_metric"].lower()
-    assert "hard cortex effectiveness score" in primary_metric
-    assert "baseline/silent/active lifecycle policy candidates" in primary_metric
-    assert "negative posttooluse paired result" in primary_metric
-    assert "silent success as no cortex value" in primary_metric
-    assert "contraction rule" in primary_metric
-    assert "stale posttooluse proof paths" in primary_metric
+    assert "dedicated evaluator module" in primary_metric
+    assert "episode table" in primary_metric
+    assert "evaluator_design.json" in primary_metric
+    assert "episode_table.jsonl" in primary_metric
+    assert "summary.json" in primary_metric
+    assert "leaderboard.json" in primary_metric
+    assert "failure_no_value" in primary_metric
+    assert "simple-hook parity" in primary_metric
+    assert "silent perception success" in primary_metric
+    assert "contraction candidates" in primary_metric
     guardrail = next_train["guardrail"].lower()
     assert "no live codex run" in guardrail
     assert "no product host behavior change" in guardrail
     assert "no posttooluse text or policy tuning" in guardrail
-    assert "no same-shape posttooluse live rerun" in guardrail
+    assert "no alphaevolve mutation loop yet" in guardrail
     assert "no product host behavior change" in next_train["guardrail"].lower()
     assert "do not change signed userpromptsubmit text" in next_train[
         "guardrail"
     ].lower()
     kill_rule = next_train["kill_rule"].lower()
-    assert "renames the posttooluse value probe" in kill_rule
-    assert "same-shape rerun" in kill_rule
-    assert "baseline/silent controls" in kill_rule
-    assert "multiple lifecycle policy candidates" in kill_rule
-    assert "silent also succeeds" in kill_rule
-    assert "overcontrol/root/runtime/hidden-boundary dominance" in kill_rule
-    assert "stale posttooluse proof surfaces" in kill_rule
+    assert "omits the simple-hook baseline" in kill_rule
+    assert "simple or silent succeeds equally" in kill_rule
+    assert "7k-line posttooluse harness" in kill_rule
+    assert "general episode table" in kill_rule
+    assert "known posttooluse negative evidence" in kill_rule
+    assert "dominance gates" in kill_rule
+    assert "starts a live run" in kill_rule
+    assert "alphaevolve-style candidate mutation" in kill_rule
 
 
 def _find_repo_files(filename: str) -> list[str]:
@@ -1391,6 +1410,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_codex_app_cli_task_standard_stop_gating_live_run.md",
         "cortex_codex_app_cli_value_ablation_audit.md",
         "cortex_effectiveness_strategy_reset.md",
+        "cortex_executive_effectiveness_evaluator_gate0.md",
         "cortex_openai_operator_debt_control_enactment.md",
         "cortex_openai_operator_output_quality_fixture_refresh.md",
         "cortex_openai_operator_silent_control_live_probe.md",
@@ -3844,6 +3864,82 @@ def test_cortex_effectiveness_strategy_reset_regroups_after_negative_value() -> 
     _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
+def test_cortex_executive_effectiveness_evaluator_gate0_defines_program() -> None:
+    text = _read(CORTEX_EXECUTIVE_EFFECTIVENESS_EVALUATOR_GATE0_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    assert "Surface: no-live evaluator architecture gate" in text
+    assert (
+        "Verdict: `pass_cortex_executive_effectiveness_evaluator_gate0`."
+        in text
+    )
+    for phrase in (
+        "AlphaEvolve",
+        "hard evaluator",
+        "program database",
+        "measurable objectives",
+        "`lab/cortex_effectiveness_evaluator.py --gate0`",
+        "`evaluator_design.json`",
+        "`gate0_report.json`",
+        "`summary.json`",
+        "Cortex earns value only when an active lifecycle policy improves",
+        "`no_cortex_baseline`",
+        "`simple_hook_baseline`",
+        "`cortex_silent_perception`",
+        "`cortex_active_policy`",
+        "under about 500 LOC",
+        "independent of `cortex/core`, `cortex/sre`, and `cortex/aux`",
+        "Silent perception is a negative control",
+        "Simple-hook parity blocks Cortex value",
+        "exactness/evidence recovery",
+        "truthful closure",
+        "blocker surfacing",
+        "continuity after interruption",
+        "clean verified-work controls",
+        "Stop-only",
+        "UserPromptSubmit plus Stop",
+        "PostToolUse plus Stop",
+        "lifecycle-composed policy",
+        "PreToolUse later only after host contract verification",
+        "overcontrol",
+        "repeated intervention loop",
+        "trace ambiguity",
+        "hidden-verifier leakage",
+        "root config mutation",
+        "runtime snapshot loaded",
+        "simple baseline parity",
+        "silent perception contamination",
+        "stale PostToolUse proof",
+        "`lab/codex_app_cli_hook_native_behavior_comparison.py`",
+        "`cortex-executive-effectiveness-evaluator-build`",
+        "`episode_table.jsonl`",
+        "`leaderboard.json`",
+    ):
+        assert phrase in text
+
+    for forbidden in (
+        "No behavior lift",
+        "No exactness value lift",
+        "No broad Cortex lift",
+        "No Codex App parity",
+        "No shipping promotion",
+        "No live Codex run",
+        "No AlphaEvolve-style mutation loop",
+    ):
+        assert forbidden in text
+
+    assert (
+        "recon/cortex_executive_effectiveness_evaluator_gate0.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_executive_effectiveness_evaluator_gate0.md"
+        in status["active_docs"]
+    )
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
+
+
 def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
     cortex_doc = _read(CORTEX_DOC_PATH)
     sre_doc = _read(CORTEX_V2_SRE_PATH)
@@ -4254,7 +4350,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     ].lower()
     assert (
         status["next_product_train"]["surface"]
-        == "no-live evaluator architecture gate"
+        == "no-live lab/proof evaluator build"
     )
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
     assert "brain-capability-observation-and-inference" in deferred_lines
@@ -4340,12 +4436,12 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`cortex-effectiveness-strategy-reset`" in text
+    assert "`cortex-executive-effectiveness-evaluator-gate0`" in text
     assert (
         "- Next product train after the current focus: "
-        "`cortex-executive-effectiveness-evaluator-gate0`"
+        "`cortex-executive-effectiveness-evaluator-build`"
     ) in text
-    assert "- Train: `cortex-executive-effectiveness-evaluator-gate0`" in text
+    assert "- Train: `cortex-executive-effectiveness-evaluator-build`" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()

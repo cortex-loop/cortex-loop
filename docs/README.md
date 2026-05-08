@@ -279,6 +279,10 @@ Active docs:
 - [Cortex Effectiveness Strategy Reset](recon/cortex_effectiveness_strategy_reset.md) —
   no-live regroup that freezes the PostToolUse-only value path and queues a
   Cortex-level effectiveness evaluator Gate 0
+- [Cortex Executive Effectiveness Evaluator Gate 0](recon/cortex_executive_effectiveness_evaluator_gate0.md) —
+  no-live design gate defining the hard objective, four evaluator arms,
+  mandatory simple-hook challenger, dominance gates, and contraction
+  obligations before any more actuator work
 - [Cortex Semantic Contraction Audit](recon/cortex_semantic_contraction_audit.md) —
   internal audit evidence for high-confidence deletion/consolidation
   candidates; no runtime contraction or product behavior change is claimed
