@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-retained-active-policy-spine-gate0`
-### Next Product Train
 - Slug: `cortex-retained-active-policy-spine-live-gate1`
-- Surface: `no-live retained-spine evaluator dry-run gate`
-- Why now: The retained-spine Gate 0 seam `pass_cortex_retained_active_policy_spine_gate0` named the smallest retained active-policy spine and kept PostToolUse-specific proof surfaces role-demoted. The next step is a no-live evaluator Gate 1 that compares the retained spine against `no_cortex_baseline`, `simple_hook_baseline`, and `cortex_silent_perception` without running live or changing product behavior.
+### Next Product Train
+- Slug: `cortex-retained-active-policy-spine-live-run`
+- Surface: `approval-gated retained-spine evaluator live matrix`
+- Why now: The retained-spine Live Gate 1 no-live seam `pass_cortex_retained_active_policy_spine_live_gate1` produced a 60-row dry-run matrix, kept PostToolUse proof surfaces role-demoted, preserved the v1/v2 negative artifacts, and registered the exact future live command/env pair. The next step is the approval-gated live run, not search or policy tuning.
 
 ### Research Lines Under Evaluation
 

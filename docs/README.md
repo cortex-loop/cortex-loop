@@ -330,6 +330,9 @@ Active docs:
   no-live retained-spine proof gate naming the smallest UserPromptSubmit/Stop/
   task-standard spine still worth testing before any search or candidate
   evolution
+- [Cortex Retained Active-Policy Spine Live Gate 1](recon/cortex_retained_active_policy_spine_live_gate1.md) —
+  no-live retained-spine evaluator dry-run gate scheduling the retained spine
+  against no-Cortex, simple-hook, and silent controls before any live run
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation
