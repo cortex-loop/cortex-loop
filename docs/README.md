@@ -314,6 +314,10 @@ Active docs:
 - [Cortex Effectiveness V2 Live-Matrix Gate 1](recon/cortex_effectiveness_v2_live_matrix_gate1.md) —
   no-live dry-run planner wiring the v2 registry into a 60-row four-arm future
   live matrix while preserving the v1 negative verdict and no-value boundaries
+- [Cortex Effectiveness V2 Live-Matrix Run](recon/cortex_effectiveness_v2_live_matrix_run.md) —
+  approval-gated 60-row v2 four-arm evaluator run producing
+  `failure_no_value`: active Cortex tied no-Cortex, the simple-hook baseline,
+  and silent Cortex on every v2 family, with no boundary dominance
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation
