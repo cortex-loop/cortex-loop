@@ -337,8 +337,8 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_PATH = (
     / "cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun.md"
 )
 
-CURRENT_WORK_SLUG = "cortex-retained-spine-live-matrix-materialization-remediation"
-NEXT_PRODUCT_TRAIN_SLUG = "cortex-retained-spine-measurement-stack-remediation"
+CURRENT_WORK_SLUG = "cortex-retained-spine-measurement-stack-remediation"
+NEXT_PRODUCT_TRAIN_SLUG = "cortex-retained-spine-clean-control-stability-gate0"
 CONTEXT_LOOP_TRACE_REMEDIATION_RECON_PATH = (
     REPO_ROOT
     / "docs"
@@ -494,6 +494,12 @@ CORTEX_RETAINED_SPINE_LIVE_MATRIX_MATERIALIZATION_REMEDIATION_PATH = (
     / "recon"
     / "cortex_retained_spine_live_matrix_materialization_remediation.md"
 )
+CORTEX_RETAINED_SPINE_MEASUREMENT_STACK_REMEDIATION_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_retained_spine_measurement_stack_remediation.md"
+)
 
 CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_AFTER_SHARED_TOOL_EVIDENCE_PATH = (
     REPO_ROOT
@@ -607,65 +613,62 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
 ) -> None:
     assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     work_note = status["work_today"]["note"].lower()
-    assert "no-live retained-spine materialization remediation" in work_note
+    assert "no-live retained-spine measurement-stack remediation" in work_note
     assert "run_20260509t192719z" in work_note
-    assert "model_io_path=none_lab_proof_only" in work_note
-    assert "product_spine=[]" in work_note
-    assert "simple_hook_baseline" in work_note
-    assert "lab_simple_hook_prompt_context" in work_note
-    assert "support_model_io_path" in work_note
-    assert "cortex_active_policy" in work_note
-    assert "codex_hooks_userpromptsubmit_stop_hookspecificoutput_or_block_stdout" in work_note
-    assert "userpromptsubmit_stop_taskstandard_spine" in work_note
-    assert "posttooluse task-standard context disabled and role-demoted" in work_note
-    assert "--retained-spine-materialization-remediation-gate0 --require-pass" in work_note
-    assert "materialization_repair_report.json" in work_note
-    assert "corrected_replay_report.json" in work_note
+    assert "--retained-spine-measurement-stack-remediation-gate0 --require-pass" in work_note
+    assert "measurement_diagnosis.json" in work_note
+    assert "silent_contamination_diagnosis.json" in work_note
+    assert "episode_discriminability.json" in work_note
     assert "gate0_report.json" in work_note
     assert "summary.json" in work_note
     assert "registered verdict `fail`" in work_note
     assert "mission_contract_error" in work_note
-    assert "raw mission errors before repair were 15" in work_note
-    assert "corrected mission errors after repair are 0" in work_note
-    assert "corrected replay preserved 60 rows" in work_note
-    assert "all four arms" in work_note
-    assert "all five v2 task families" in work_note
-    assert "all three repeats" in work_note
-    assert "root config unchanged" in work_note
-    assert "no runtime snapshot" in work_note
-    assert "no hidden-verifier leakage" in work_note
-    assert "no posttooluse reactivation" in work_note
-    assert "corrected replay verdict is `failure_silent_perception_contamination`" in work_note
+    assert "raw mission-contract errors remain 15" in work_note
+    assert "corrected mission-contract errors remain 0" in work_note
+    assert "corrected replay verdict remains `failure_silent_perception_contamination`" in work_note
     assert "silent_perception_beat_no_cortex" in work_note
-    assert "materialization repair only" in work_note
+    assert "clean_verified_work_control_v2" in work_note
+    assert "no-cortex 1" in work_note
+    assert "simple-hook 3" in work_note
+    assert "silent cortex 3" in work_note
+    assert "active cortex 3" in work_note
+    assert "`silent_contamination`" in work_note
+    assert "exactness_evidence_recovery_v2" in work_note
+    assert "active_underperformance" in work_note
+    assert "no retained-spine family wins" in work_note
+    assert "no model-visible cortex output" in work_note
+    assert "no support model-i/o path" in work_note
+    assert "model_io_path=none_lab_proof_only" in work_note
+    assert "next train is `cortex-retained-spine-clean-control-stability-gate0`" in work_note
+    assert "measurement diagnosis only" in work_note
     assert "retained-spine value" in work_note
     assert "cortex value" in work_note
     assert "live-rerun permission" in work_note
+    assert "posttooluse reactivation" in work_note
     assert "alphaevolve candidate-evolution permission" in work_note
-    assert "next train is `cortex-retained-spine-measurement-stack-remediation`" in work_note
 
     next_train = status["next_product_train"]
     assert next_train["slug"] == NEXT_PRODUCT_TRAIN_SLUG
-    assert next_train["surface"] == "no-live retained-spine measurement-stack remediation"
-    assert "corrected retained-spine replay" in next_train["executive_benefit"].lower()
-    assert "run_20260509t192719z" in next_train["executive_benefit"].lower()
+    assert next_train["surface"] == "no-live retained-spine clean-control stability gate"
+    assert "clean verified-work control" in next_train["executive_benefit"].lower()
+    assert "clean_verified_work_control_v2" in next_train["executive_benefit"].lower()
+    assert "no-cortex under-reported closure evidence" in next_train[
+        "executive_benefit"
+    ].lower()
     assert "failure_silent_perception_contamination" in work_note
-    assert "program database" in next_train["executive_benefit"].lower()
-    assert "candidate generation" in next_train["executive_benefit"].lower()
-    assert "alphaevolve automation loop" in next_train["executive_benefit"].lower()
-    assert "materialization remediation" in next_train["why_now"].lower()
-    assert "simple_hook_baseline" in next_train["why_now"].lower()
-    assert "lab/support model i/o" in next_train["why_now"].lower()
-    assert "corrected mission errors from 15 to 0" in next_train["why_now"].lower()
+    assert "retained-spine measurement-stack remediation passed" in next_train[
+        "why_now"
+    ].lower()
     assert "failure_silent_perception_contamination" in next_train["why_now"].lower()
     assert "silent_perception_beat_no_cortex" in next_train["why_now"].lower()
-    assert "fail` / `mission_contract_error" in next_train["why_now"].lower()
+    assert "active_underperformance" in next_train["why_now"].lower()
+    assert "zero retained-spine family wins" in next_train["why_now"].lower()
+    assert "no silent model-visible/support i/o leak" in next_train["why_now"].lower()
     primary_metric = next_train["primary_metric"].lower()
-    assert "no-live diagnosis" in primary_metric
-    assert "corrected retained-spine replay" in primary_metric
-    assert "run_20260509t192719z" in primary_metric
-    assert "silent-perception contamination" in primary_metric
-    assert "without scoring/fixture/product-policy changes" in primary_metric
+    assert "no-live clean-control stability proof" in primary_metric
+    assert "clean_verified_work_control_v2" in primary_metric
+    assert "no-cortex closure/evidence-reporting instability" in primary_metric
+    assert "silent-arm leakage" in primary_metric
     guardrail = next_train["guardrail"].lower()
     assert "no live codex run" in guardrail
     assert "no product behavior change" in guardrail
@@ -679,16 +682,17 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
     assert "active policy" in guardrail
     assert "posttooluse reactivation" in guardrail
     assert "alphaevolve candidate policy" in guardrail
-    assert "do not reinterpret silent contamination as retained-spine value" in guardrail
+    assert "do not reinterpret the isolated clean-control silent contamination" in guardrail
     kill_rule = next_train["kill_rule"].lower()
-    assert "reruns live" in kill_rule
+    assert "reruns the retained-spine live matrix" in kill_rule
     assert "changes scoring or fixtures to favor cortex" in kill_rule
     assert "mutates product policy" in kill_rule
-    assert "reactivates posttooluse as earned active policy" in kill_rule
+    assert "reactivates posttooluse" in kill_rule
     assert "failure_silent_perception_contamination" in kill_rule
     assert "cortex value" in kill_rule
     assert "retained-spine no-value parity" in kill_rule
     assert "raw `run_20260509t192719z` failure" in kill_rule
+    assert "corrected replay diagnosis" in kill_rule
     assert "runtime snapshot" in kill_rule
     assert "root config" in kill_rule
     assert "queues candidate evolution" in kill_rule
@@ -1529,6 +1533,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_retained_active_policy_spine_live_gate1.md",
         "cortex_retained_active_policy_spine_live_run.md",
         "cortex_retained_spine_live_matrix_materialization_remediation.md",
+        "cortex_retained_spine_measurement_stack_remediation.md",
         "cortex_semantic_contraction_audit.md",
         "cortex_simple_hook_baseline_challenger.md",
         "cortex_task_standard_executive_doctrine_math_refinement.md",
@@ -5050,6 +5055,71 @@ def test_cortex_retained_spine_materialization_remediation_records_corrected_rep
     _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
+def test_cortex_retained_spine_measurement_stack_remediation_records_diagnosis() -> None:
+    text = _read(CORTEX_RETAINED_SPINE_MEASUREMENT_STACK_REMEDIATION_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    for phrase in (
+        "Surface: lab/proof evaluator remediation",
+        "`run_20260509T192719Z`",
+        "raw verdict: `fail`",
+        "raw failure reason: `mission_contract_error`",
+        "corrected replay verdict: `failure_silent_perception_contamination`",
+        "corrected replay failure reason: `silent_perception_beat_no_cortex`",
+        "--retained-spine-measurement-stack-remediation-gate0 --require-pass",
+        "`measurement_diagnosis.json`",
+        "`silent_contamination_diagnosis.json`",
+        "`episode_discriminability.json`",
+        "`gate0_report.json`",
+        "`summary.json`",
+        "`pass_cortex_retained_spine_measurement_stack_remediation_gate0`",
+        "`clean_verified_work_control_v2` repeat 1 is `silent_contamination`",
+        "`exactness_evidence_recovery_v2` repeat 2 is `active_underperformance`",
+        "no retained-spine family wins are present",
+        "`clean_verified_work_control`: `control_instability`",
+        "`exactness_evidence_recovery`: `retained_spine_underperformance`",
+        "`model_io_path=none_lab_proof_only`",
+        "`product_spine=[]`",
+        "`cortex-retained-spine-clean-control-stability-gate0`",
+    ):
+        assert phrase in text
+
+    for forbidden in (
+        "No Cortex value",
+        "No retained-spine value",
+        "No retained-spine no-value parity interpretation",
+        "No behavior lift",
+        "No exactness value lift",
+        "No broad Cortex lift",
+        "No Codex App parity",
+        "No shipping promotion",
+        "No product progress",
+        "No live rerun permission",
+        "No PostToolUse reactivation",
+        "No AlphaEvolve candidate-evolution permission",
+    ):
+        assert forbidden in text
+
+    assert "recon/cortex_retained_spine_measurement_stack_remediation.md" in docs_index
+    assert (
+        "docs/recon/cortex_retained_spine_measurement_stack_remediation.md"
+        in status["active_docs"]
+    )
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
+    assert (
+        status["next_product_train"]["surface"]
+        == "no-live retained-spine clean-control stability gate"
+    )
+    assert "clean-control readout" in status["next_product_train"][
+        "executive_benefit"
+    ].lower()
+    assert "no live codex run" in status["next_product_train"]["guardrail"].lower()
+    assert "candidate evolution" in status["next_product_train"]["kill_rule"].lower()
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
+
+
 def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
     cortex_doc = _read(CORTEX_DOC_PATH)
     sre_doc = _read(CORTEX_V2_SRE_PATH)
@@ -5460,7 +5530,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     ].lower()
     assert (
         status["next_product_train"]["surface"]
-        == "no-live retained-spine measurement-stack remediation"
+        == "no-live retained-spine clean-control stability gate"
     )
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
     assert "brain-capability-observation-and-inference" in deferred_lines
@@ -5546,24 +5616,28 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`cortex-retained-spine-live-matrix-materialization-remediation`" in text
+    assert "cortex_retained_spine_live_matrix_materialization_remediation.md" in text
     assert "`cortex-retained-spine-measurement-stack-remediation`" in text
+    assert "`cortex-retained-spine-clean-control-stability-gate0`" in text
     assert "run_20260509T192719Z" in text
     assert "mission_contract_error" in text
     assert "silent_perception_beat_no_cortex" in text
-    assert "lab_simple_hook_prompt_context" in text
+    assert "model_io_path=none_lab_proof_only" in text
     assert "userpromptsubmit_stop_taskstandard_spine" in text
     assert "failure_silent_perception_contamination" in text
-    assert "materialization_repair_report.json" in text
-    assert "corrected_replay_report.json" in text
+    assert "measurement_diagnosis.json" in text
+    assert "silent_contamination_diagnosis.json" in text
+    assert "episode_discriminability.json" in text
+    assert "clean_verified_work_control_v2" in text
+    assert "active_underperformance" in text
     assert "PostToolUse reactivation" in text
     assert (
         "- Next product train after the current focus: "
-        "`cortex-retained-spine-measurement-stack-remediation`"
+        "`cortex-retained-spine-clean-control-stability-gate0`"
     ) in text
-    assert "- Train: `cortex-retained-spine-measurement-stack-remediation`" in text
-    assert "no-live retained-spine measurement-stack remediation" in text.lower()
-    assert "no-live diagnosis" in text.lower()
+    assert "- Train: `cortex-retained-spine-clean-control-stability-gate0`" in text
+    assert "no-live retained-spine clean-control stability gate" in text.lower()
+    assert "no-live clean-control stability proof" in text.lower()
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()

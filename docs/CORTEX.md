@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-retained-spine-live-matrix-materialization-remediation`
-### Next Product Train
 - Slug: `cortex-retained-spine-measurement-stack-remediation`
-- Surface: `no-live retained-spine measurement-stack remediation`
-- Why now: The materialization remediation proved `simple_hook_baseline` is lab/support model I/O with no product spine requirement and corrected mission errors from 15 to 0, but the corrected replay verdict is `failure_silent_perception_contamination` with `silent_perception_beat_no_cortex`. The raw live artifact remains `fail` / `mission_contract_error`; value interpretation remains blocked until the silent-contamination measurement issue is diagnosed no-live.
+### Next Product Train
+- Slug: `cortex-retained-spine-clean-control-stability-gate0`
+- Surface: `no-live retained-spine clean-control stability gate`
+- Why now: The retained-spine measurement-stack remediation passed and preserved raw `fail` / `mission_contract_error`, corrected replay `failure_silent_perception_contamination` / `silent_perception_beat_no_cortex`, clean-control repeat 1 `silent_contamination`, exactness repeat 2 `active_underperformance`, and zero retained-spine family wins. The diagnosis found no silent model-visible/support I/O leak, so the immediate blocker is clean-control measurement stability rather than policy tuning or candidate evolution.
 
 ### Research Lines Under Evaluation
 

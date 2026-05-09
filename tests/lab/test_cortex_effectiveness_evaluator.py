@@ -45,6 +45,7 @@ from lab.cortex_effectiveness_evaluator import (
     run_cortex_retained_active_policy_spine_live_gate1,
     run_cortex_retained_active_policy_spine_live_matrix,
     run_cortex_retained_spine_live_matrix_materialization_remediation_gate0,
+    run_cortex_retained_spine_measurement_stack_remediation_gate0,
     run_cortex_simple_hook_baseline_gate0,
 )
 from lab.cortex_simple_hook_baseline import (
@@ -1375,6 +1376,89 @@ def test_retained_spine_materialization_remediation_gate0_fails_when_artifact_mi
     assert "summary.json" in report["missing_artifacts"]
 
 
+def test_retained_spine_measurement_stack_remediation_gate0_diagnoses_replay(
+    tmp_path: Path,
+) -> None:
+    report = run_cortex_retained_spine_measurement_stack_remediation_gate0(
+        output_root=tmp_path,
+    )
+    diagnosis = json.loads((tmp_path / "measurement_diagnosis.json").read_text())
+    silent = json.loads((tmp_path / "silent_contamination_diagnosis.json").read_text())
+    discriminability = json.loads(
+        (tmp_path / "episode_discriminability.json").read_text()
+    )
+
+    assert report["passed"] is True
+    assert report["verdict"] == (
+        "pass_cortex_retained_spine_measurement_stack_remediation_gate0"
+    )
+    assert report["live_trials_ran"] is False
+    assert report["historical_run_id"] == "run_20260509T192719Z"
+    assert report["raw_registered_verdict_preserved"] == "fail"
+    assert report["raw_failure_reason_preserved"] == "mission_contract_error"
+    assert report["corrected_replay_verdict_preserved"] == (
+        "failure_silent_perception_contamination"
+    )
+    assert report["corrected_replay_failure_reason_preserved"] == (
+        "silent_perception_beat_no_cortex"
+    )
+    assert report["clean_control_repeat1_classification"] == "silent_contamination"
+    assert report["exactness_repeat2_classification"] == "active_underperformance"
+    assert report["retained_spine_value_claim_allowed"] is False
+    assert report["retained_spine_no_value_parity_interpretation_allowed"] is False
+    assert report["next_train_if_recorded"] == (
+        "cortex-retained-spine-clean-control-stability-gate0"
+    )
+    assert diagnosis["raw_mission_contract_error_count"] == 15
+    assert diagnosis["corrected_mission_contract_error_count"] == 0
+    assert diagnosis["diagnosis_checks"]["no_retained_spine_family_wins"] is True
+    assert silent["isolated_clean_control_repeat1"] is True
+    assert silent["silent_arm_model_io_isolated"] is True
+    assert silent["silent_arm_leak_checks"][
+        "silent_rows_have_no_model_visible_output"
+    ] is True
+    assert discriminability["family_discriminability"][
+        "clean_verified_work_control"
+    ]["classification"] == "control_instability"
+    assert discriminability["family_discriminability"][
+        "exactness_evidence_recovery"
+    ]["classification"] == "retained_spine_underperformance"
+
+
+def test_retained_spine_measurement_stack_remediation_gate0_fails_when_missing(
+    tmp_path: Path,
+) -> None:
+    report = run_cortex_retained_spine_measurement_stack_remediation_gate0(
+        output_root=tmp_path / "out",
+        historical_run_root=tmp_path / "missing",
+    )
+
+    assert report["passed"] is False
+    assert report["failure_reason"] == "missing_historical_artifacts"
+    assert "summary.json" in report["missing_historical_artifacts"]
+
+
+def test_retained_spine_measurement_stack_remediation_cli_passes(
+    tmp_path: Path,
+) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--retained-spine-measurement-stack-remediation-gate0",
+            "--require-pass",
+            "--output-root",
+            str(tmp_path / "retained_spine_measurement_stack_remediation"),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "pass_cortex_retained_spine_measurement_stack_remediation_gate0" in result.stdout
+
+
 def test_retained_spine_live_gate1_cli_passes_and_live_matrix_cli_refuses(
     tmp_path: Path,
 ) -> None:
@@ -1479,6 +1563,7 @@ def test_gate0_source_keeps_alphaevolve_loop_deferred() -> None:
     assert "--retained-active-policy-spine-gate0" in source
     assert "--retained-spine-live-gate1" in source
     assert "--retained-spine-live-matrix" in source
+    assert "--retained-spine-measurement-stack-remediation-gate0" in source
     assert "alphaevolve_loop_later" in source
     assert "program_database_fields" in source
     assert "candidate_representation" in source

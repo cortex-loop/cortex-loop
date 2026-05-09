@@ -252,6 +252,30 @@ def test_classify_next_work_allows_retained_spine_materialization_remediation() 
     )
 
 
+def test_classify_next_work_allows_retained_spine_measurement_stack_remediation() -> None:
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-retained-spine-measurement-stack-remediation",
+            surface="no-live retained-spine measurement-stack remediation",
+            guardrail="No live Codex run in this seam.",
+            primary_metric=(
+                "Diagnose corrected retained-spine replay silent contamination "
+                "without policy or scoring changes."
+            ),
+            extra={"registered_live_commands": []},
+        ),
+        _git(),
+    )
+
+    assert decision.status == "ready"
+    assert decision.live_codex_allowed is False
+    assert decision.safe_to_auto_merge is True
+    assert (
+        "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-measurement-stack-remediation-gate0 --require-pass"
+        in decision.allowed_commands
+    )
+
+
 def test_classify_next_work_allows_registered_v2_live_but_never_auto_merges() -> None:
     decision = loop.classify_next_work(
         _status(
@@ -293,8 +317,9 @@ def test_fresh_chat_work_packet_forces_repo_grounding_and_anti_reinvention() -> 
     assert packet.do_not_use_prior_chat_context is True
     assert packet.blocked_is_success is True
     assert packet.model_io_path == loop.LAB_PROOF_MODEL_IO_PATH
-    assert packet.current_binding_evidence["artifact"] == "run_20260508T221352Z"
+    assert packet.current_binding_evidence["artifact"] == "run_20260509T192719Z"
     assert packet.current_binding_evidence["verdict"] == "failure_silent_perception_contamination"
+    assert "zero family wins" in packet.current_binding_evidence["interpretation"]
     assert "internal/truth/cortex_status.json" in packet.required_boot_reads
     assert "lab/cortex_effectiveness_evaluator.py" in packet.required_code_owner_reads
     assert any("failure_silent_perception_contamination" in command for command in packet.anti_reinvention_searches)

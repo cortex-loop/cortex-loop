@@ -31,6 +31,7 @@ EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS = {
     "cortex-retained-active-policy-spine-live-gate1",
     "cortex-retained-active-policy-spine-live-run",
     "cortex-retained-spine-live-matrix-materialization-remediation",
+    "cortex-retained-spine-measurement-stack-remediation",
     "cortex-simple-hook-baseline-challenger",
     "cortex-automation-product-boundary-contract",
 }
@@ -55,6 +56,7 @@ EVALUATOR_AUTHORIZED_EXACT_SLUGS = {
     "cortex-retained-active-policy-spine-live-gate1",
     "cortex-retained-active-policy-spine-live-run",
     "cortex-retained-spine-live-matrix-materialization-remediation",
+    "cortex-retained-spine-measurement-stack-remediation",
 }
 ALLOWED_LIVE_SLUG_PARTS = (
     "evaluator",
@@ -203,6 +205,15 @@ CODE_OWNER_READS_BY_SLUG = {
         "tests/lab/test_cortex_effectiveness_evaluator.py",
         "tests/internal/test_docs_boundary.py",
     ),
+    "cortex-retained-spine-measurement-stack-remediation": (
+        "lab/cortex_effectiveness_evaluator.py",
+        ".cortex/live_validation/cortex_retained_active_policy_spine_live_matrix/run_20260509T192719Z/summary.json",
+        ".cortex/live_validation/cortex_retained_active_policy_spine_live_matrix/run_20260509T192719Z/episode_table.jsonl",
+        ".cortex/live_validation/cortex_retained_spine_live_matrix_materialization_remediation_gate0/corrected_replay_report.json",
+        "docs/recon/cortex_retained_spine_live_matrix_materialization_remediation.md",
+        "tests/lab/test_cortex_effectiveness_evaluator.py",
+        "tests/internal/test_docs_boundary.py",
+    ),
 }
 ANTI_REINVENTION_SEARCHES_BY_SLUG = {
     "cortex-effectiveness-measurement-stack-rebuild": (
@@ -234,6 +245,10 @@ ANTI_REINVENTION_SEARCHES_BY_SLUG = {
         "rg -n \"retained_spine_materialization|mission_contract_error|lab_simple_hook_prompt_context|product-facing model_io_path\" lab tests docs/recon internal",
         "rg -n \"run_20260509T192719Z|failure_silent_perception_contamination|simple_hook_baseline|userpromptsubmit_stop_taskstandard_spine\" .cortex/live_validation lab tests docs/recon internal",
     ),
+    "cortex-retained-spine-measurement-stack-remediation": (
+        "rg -n \"retained_spine_measurement|silent_perception_beat_no_cortex|active_underperformance|control_instability\" lab tests docs/recon internal",
+        "rg -n \"run_20260509T192719Z|clean_verified_work_control_v2|exactness_evidence_recovery_v2|failure_silent_perception_contamination\" .cortex/live_validation lab tests docs/recon internal",
+    ),
 }
 DEFAULT_ANTI_REINVENTION_SEARCHES = (
     "rg -n \"EvaluatorEpisodeRow|evaluate_cortex_effectiveness_rows|simple_hook_baseline|cortex_silent_perception|active_cortex\" lab tests internal",
@@ -247,17 +262,19 @@ ORIENTATION_CHECKLIST = (
     "state which existing owner module will be extended and why no new task-specific harness is needed",
 )
 CURRENT_BINDING_EVIDENCE = {
-    "artifact": "run_20260508T221352Z",
-    "artifact_root": ".cortex/live_validation/cortex_effectiveness_evaluator_live_matrix/run_20260508T221352Z/",
+    "artifact": "run_20260509T192719Z",
+    "artifact_root": ".cortex/live_validation/cortex_retained_active_policy_spine_live_matrix/run_20260509T192719Z/",
     "verdict": "failure_silent_perception_contamination",
     "interpretation": (
-        "Active Cortex did not beat the simple-hook baseline on any family; "
-        "the only discriminating continuity row improved in silent and active arms together."
+        "Materialization replay corrected the simple-hook support metadata "
+        "but preserved silent-contamination: clean_verified_work_control_v2 "
+        "repeat 1 let silent Cortex beat no-Cortex, while exactness repeat 2 "
+        "showed retained-spine active underperformance and zero family wins."
     ),
-    "next_train": "cortex-effectiveness-measurement-stack-rebuild",
+    "next_train": "cortex-retained-spine-clean-control-stability-gate0",
     "forbidden_inference": (
         "Do not treat this as behavior lift, exactness value lift, product progress, "
-        "shipping promotion, or permission for candidate evolution."
+        "shipping promotion, no-value parity, or permission for candidate evolution."
     ),
 }
 FRESH_CHAT_STOP_RULES = (
@@ -827,6 +844,16 @@ def _allowed_commands_for_slug(slug: str | None, git_state: GitState) -> tuple[s
         return (
             "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
             "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-materialization-remediation-gate0 --require-pass",
+            "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
+            "python3 -m pytest tests/internal/test_docs_boundary.py -q",
+            "python3 internal/truth/generate_status.py --check",
+            "python3 internal/truth/generate_cortex_doc.py --check",
+            "git diff --check",
+        )
+    if slug == "cortex-retained-spine-measurement-stack-remediation":
+        return (
+            "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
+            "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-measurement-stack-remediation-gate0 --require-pass",
             "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
             "python3 -m pytest tests/internal/test_docs_boundary.py -q",
             "python3 internal/truth/generate_status.py --check",
