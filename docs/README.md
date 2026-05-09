@@ -322,6 +322,10 @@ Active docs:
   no-live contraction decision from the v2 `failure_no_value` result,
   retaining the smaller UserPromptSubmit/Stop/task-standard spine while
   queueing PostToolUse-specific proof-surface role-demotion
+- [Cortex PostToolUse Proof-Surface Role-Demotion](recon/cortex_posttooluse_proof_surface_role_demotion.md) —
+  no-live archive/role-demotion decision moving the PostToolUse-specific Gate
+  0/live proof train to historical support while the general four-arm
+  evaluator owns value comparison
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation
