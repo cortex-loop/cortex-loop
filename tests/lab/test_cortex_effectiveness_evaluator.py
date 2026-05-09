@@ -18,6 +18,7 @@ from lab.cortex_effectiveness_evaluator import (
     LIVE_MATRIX_REPEAT_COUNT,
     MISSION_OBJECTIVE_REQUIRED_FIELDS,
     SCORE_FIELDS,
+    SIMPLE_HOOK_SUPPORT_MODEL_IO_PATH,
     SIMPLE_HOOK_LOC_LIMIT,
     SIMPLE_HOOK_SOURCE_PATH,
     TASK_FAMILIES,
@@ -43,6 +44,7 @@ from lab.cortex_effectiveness_evaluator import (
     run_cortex_retained_active_policy_spine_gate0,
     run_cortex_retained_active_policy_spine_live_gate1,
     run_cortex_retained_active_policy_spine_live_matrix,
+    run_cortex_retained_spine_live_matrix_materialization_remediation_gate0,
     run_cortex_simple_hook_baseline_gate0,
 )
 from lab.cortex_simple_hook_baseline import (
@@ -1183,6 +1185,7 @@ def test_retained_spine_live_gate1_plan_keeps_pair_seeds_matched() -> None:
 
 def test_retained_spine_executable_live_matrix_plan_materializes_without_posttooluse() -> None:
     plan = build_retained_spine_executable_live_matrix_plan()
+    plan_rows = [evaluator._episode_row_from_json(row) for row in plan["rows"]]
 
     assert plan["matrix_id"] == "cortex_retained_active_policy_spine_live_matrix"
     assert plan["executable"] is True
@@ -1203,6 +1206,35 @@ def test_retained_spine_executable_live_matrix_plan_materializes_without_posttoo
     assert all(
         row["arm_settings"]["enable_posttooluse_task_standard_context"] is False
         for row in plan["rows"]
+    )
+    assert evaluator.validate_episode_rows_mission_contract(plan_rows) == ()
+    assert {
+        row["mission_objective"]["model_io_path"]
+        for row in plan["rows"]
+        if row["arm"] in {
+            "no_cortex_baseline",
+            "simple_hook_baseline",
+            "cortex_silent_perception",
+        }
+    } == {LAB_PROOF_MODEL_IO_PATH}
+    assert all(
+        row["mission_objective"]["product_spine"] == []
+        for row in plan["rows"]
+        if row["arm"] in {
+            "no_cortex_baseline",
+            "simple_hook_baseline",
+            "cortex_silent_perception",
+        }
+    )
+    assert {
+        row["support_model_io_path"]
+        for row in plan["rows"]
+        if row["arm"] == "simple_hook_baseline"
+    } == {SIMPLE_HOOK_SUPPORT_MODEL_IO_PATH}
+    assert all(
+        row["metrics"]["support_model_io_path"] == SIMPLE_HOOK_SUPPORT_MODEL_IO_PATH
+        for row in plan["rows"]
+        if row["arm"] == "simple_hook_baseline"
     )
     assert {
         row["mission_objective"]["model_io_path"]
@@ -1298,6 +1330,51 @@ def test_retained_spine_live_matrix_resume_skips_completed_fake_rows(
     assert second["skipped_existing_rows"] == first["row_count"]
 
 
+def test_retained_spine_materialization_remediation_gate0_replays_historical_artifact(
+    tmp_path: Path,
+) -> None:
+    report = run_cortex_retained_spine_live_matrix_materialization_remediation_gate0(
+        output_root=tmp_path,
+    )
+    repair = json.loads((tmp_path / "materialization_repair_report.json").read_text())
+    replay = json.loads((tmp_path / "corrected_replay_report.json").read_text())
+
+    assert report["passed"] is True
+    assert report["verdict"] == (
+        "pass_cortex_retained_spine_live_matrix_materialization_remediation_gate0"
+    )
+    assert report["live_trials_ran"] is False
+    assert report["historical_run_id"] == "run_20260509T192719Z"
+    assert report["raw_registered_verdict_preserved"] == "fail"
+    assert report["raw_failure_reason_preserved"] == "mission_contract_error"
+    assert report["corrected_replay_verdict"] == (
+        "failure_silent_perception_contamination"
+    )
+    assert report["next_train_if_recorded"] == (
+        "cortex-retained-spine-measurement-stack-remediation"
+    )
+    assert report["mission_contract_errors_after"] == []
+    assert repair["checks"]["simple_hook_mission_is_lab_only"] is True
+    assert repair["checks"]["simple_hook_support_metadata_preserved"] is True
+    assert repair["checks"]["active_product_spine_preserved"] is True
+    assert replay["boundary_checks"]["posttooluse_disabled"] is True
+    assert replay["boundary_checks"]["root_config_unchanged"] is True
+    assert replay["boundary_checks"]["runtime_snapshot_absent"] is True
+
+
+def test_retained_spine_materialization_remediation_gate0_fails_when_artifact_missing(
+    tmp_path: Path,
+) -> None:
+    report = run_cortex_retained_spine_live_matrix_materialization_remediation_gate0(
+        output_root=tmp_path / "out",
+        historical_run_root=tmp_path / "missing",
+    )
+
+    assert report["passed"] is False
+    assert report["failure_reason"] == "missing_historical_artifact"
+    assert "summary.json" in report["missing_artifacts"]
+
+
 def test_retained_spine_live_gate1_cli_passes_and_live_matrix_cli_refuses(
     tmp_path: Path,
 ) -> None:
@@ -1333,6 +1410,25 @@ def test_retained_spine_live_gate1_cli_passes_and_live_matrix_cli_refuses(
     assert "pass_cortex_retained_active_policy_spine_live_gate1" in gate.stdout
     assert (gate_root / "live_plan.json").exists()
     assert "not_run_approval_required" in refusal.stdout
+
+
+def test_retained_spine_materialization_remediation_cli_passes(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--retained-spine-materialization-remediation-gate0",
+            "--require-pass",
+            "--output-root",
+            str(tmp_path / "retained_spine_materialization_remediation"),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "pass_cortex_retained_spine_live_matrix_materialization_remediation_gate0" in result.stdout
 
 
 def test_live_gate1_cli_passes_and_live_matrix_cli_refuses(tmp_path: Path) -> None:

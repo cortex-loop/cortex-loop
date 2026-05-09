@@ -228,6 +228,30 @@ def test_classify_next_work_allows_registered_retained_spine_live_but_never_auto
     )
 
 
+def test_classify_next_work_allows_retained_spine_materialization_remediation() -> None:
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-retained-spine-live-matrix-materialization-remediation",
+            surface="no-live retained-spine evaluator materialization remediation",
+            guardrail="No live Codex run in this seam.",
+            primary_metric=(
+                "Replay run_20260509T192719Z after correcting simple-hook "
+                "support model I/O metadata."
+            ),
+            extra={"registered_live_commands": []},
+        ),
+        _git(),
+    )
+
+    assert decision.status == "ready"
+    assert decision.live_codex_allowed is False
+    assert decision.safe_to_auto_merge is True
+    assert (
+        "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-materialization-remediation-gate0 --require-pass"
+        in decision.allowed_commands
+    )
+
+
 def test_classify_next_work_allows_registered_v2_live_but_never_auto_merges() -> None:
     decision = loop.classify_next_work(
         _status(

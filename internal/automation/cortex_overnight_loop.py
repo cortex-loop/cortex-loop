@@ -30,6 +30,7 @@ EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS = {
     "cortex-retained-active-policy-spine-gate0",
     "cortex-retained-active-policy-spine-live-gate1",
     "cortex-retained-active-policy-spine-live-run",
+    "cortex-retained-spine-live-matrix-materialization-remediation",
     "cortex-simple-hook-baseline-challenger",
     "cortex-automation-product-boundary-contract",
 }
@@ -53,6 +54,7 @@ EVALUATOR_AUTHORIZED_EXACT_SLUGS = {
     "cortex-retained-active-policy-spine-gate0",
     "cortex-retained-active-policy-spine-live-gate1",
     "cortex-retained-active-policy-spine-live-run",
+    "cortex-retained-spine-live-matrix-materialization-remediation",
 }
 ALLOWED_LIVE_SLUG_PARTS = (
     "evaluator",
@@ -193,6 +195,14 @@ CODE_OWNER_READS_BY_SLUG = {
         "tests/lab/test_cortex_effectiveness_evaluator.py",
         "tests/internal/test_docs_boundary.py",
     ),
+    "cortex-retained-spine-live-matrix-materialization-remediation": (
+        "lab/cortex_effectiveness_evaluator.py",
+        ".cortex/live_validation/cortex_retained_active_policy_spine_live_matrix/run_20260509T192719Z/summary.json",
+        ".cortex/live_validation/cortex_retained_active_policy_spine_live_matrix/run_20260509T192719Z/episode_table.jsonl",
+        "docs/recon/cortex_retained_active_policy_spine_live_run.md",
+        "tests/lab/test_cortex_effectiveness_evaluator.py",
+        "tests/internal/test_docs_boundary.py",
+    ),
 }
 ANTI_REINVENTION_SEARCHES_BY_SLUG = {
     "cortex-effectiveness-measurement-stack-rebuild": (
@@ -219,6 +229,10 @@ ANTI_REINVENTION_SEARCHES_BY_SLUG = {
     "cortex-retained-active-policy-spine-live-run": (
         "rg -n \"run_cortex_retained_active_policy_spine_live_matrix|build_retained_spine_live_gate1_plan|retained_spine_live_matrix\" lab tests internal docs/recon",
         "rg -n \"userpromptsubmit_stop_taskstandard_spine|role_demoted_non_current_support_history|simple_hook_baseline|cortex_silent_perception\" docs/recon lab tests internal",
+    ),
+    "cortex-retained-spine-live-matrix-materialization-remediation": (
+        "rg -n \"retained_spine_materialization|mission_contract_error|lab_simple_hook_prompt_context|product-facing model_io_path\" lab tests docs/recon internal",
+        "rg -n \"run_20260509T192719Z|failure_silent_perception_contamination|simple_hook_baseline|userpromptsubmit_stop_taskstandard_spine\" .cortex/live_validation lab tests docs/recon internal",
     ),
 }
 DEFAULT_ANTI_REINVENTION_SEARCHES = (
@@ -804,6 +818,16 @@ def _allowed_commands_for_slug(slug: str | None, git_state: GitState) -> tuple[s
             "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-gate1 --require-pass",
             "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-matrix",
             "CORTEX_CODEX_APP_CLI_RETAINED_SPINE_LIVE_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-matrix",
+            "python3 -m pytest tests/internal/test_docs_boundary.py -q",
+            "python3 internal/truth/generate_status.py --check",
+            "python3 internal/truth/generate_cortex_doc.py --check",
+            "git diff --check",
+        )
+    if slug == "cortex-retained-spine-live-matrix-materialization-remediation":
+        return (
+            "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
+            "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-materialization-remediation-gate0 --require-pass",
+            "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
             "python3 -m pytest tests/internal/test_docs_boundary.py -q",
             "python3 internal/truth/generate_status.py --check",
             "python3 internal/truth/generate_cortex_doc.py --check",
