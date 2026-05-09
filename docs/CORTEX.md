@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-effectiveness-v2-case-registry-gate0`
-### Next Product Train
 - Slug: `cortex-effectiveness-v2-live-matrix-gate1`
-- Surface: `no-live lab/proof evaluator v2 live-matrix interface`
-- Why now: The v2 case-registry Gate 0 passed with `v2_case_registry.json`, `gate0_report.json`, and `summary.json`, preserving `run_20260508T221352Z` as `failure_silent_perception_contamination` and registering five immutable `*_v2` case specs. The registry is not yet connected to the live-matrix planning interface; that no-live wiring must happen before any v2 live run, candidate generator, program database promotion, or Cortex value claim.
+### Next Product Train
+- Slug: `cortex-effectiveness-v2-live-matrix-run`
+- Surface: `approval-gated live evaluator v2 matrix run`
+- Why now: The no-live v2 live-matrix Gate 1 passed with `.cortex/live_validation/cortex_effectiveness_v2_live_matrix_gate1/evaluator_design.json`, `v2_case_registry.json`, `live_plan.json`, `episode_table.jsonl`, `summary.json`, `leaderboard.json`, and `failure_analysis.json`. It consumed the v2 registry, preserved `run_20260508T221352Z` as `failure_silent_perception_contamination`, scheduled 60 dry-run rows across four arms, five v2 families, and three repeats, registered deterministic row IDs and matched workspace seeds, and kept simple-hook parity, silent success, and dominance gates as no-value. The next missing evidence is the approval-gated v2 live matrix itself.
 
 ### Research Lines Under Evaluation
 
