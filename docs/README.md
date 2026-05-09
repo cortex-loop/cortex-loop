@@ -337,6 +337,10 @@ Active docs:
   approval-gated retained-spine live matrix producing `fail` /
   `mission_contract_error` because the simple-hook support arm was
   materialized as product-facing without a product spine
+- [Cortex Retained-Spine Live-Matrix Materialization Remediation](recon/cortex_retained_spine_live_matrix_materialization_remediation.md) —
+  no-live repair and corrected replay of `run_20260509T192719Z`, preserving
+  the raw `fail` result while reclassifying simple-hook context as lab support
+  metadata and exposing `failure_silent_perception_contamination`
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation

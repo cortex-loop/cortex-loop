@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-retained-active-policy-spine-live-run`
-### Next Product Train
 - Slug: `cortex-retained-spine-live-matrix-materialization-remediation`
-- Surface: `no-live retained-spine evaluator materialization remediation`
-- Why now: The approval-gated retained-spine live run completed 60 rows but returned `fail` with `mission_contract_error`: all 15 `simple_hook_baseline` rows used `lab_simple_hook_prompt_context` and were rejected as product-facing model I/O without a product spine. The run preserved root config, avoided runtime snapshots, avoided hidden-verifier leakage, kept PostToolUse disabled, and recorded no overcontrol, but the result is not interpretable until the evaluator materialization contract is repaired no-live.
+### Next Product Train
+- Slug: `cortex-retained-spine-measurement-stack-remediation`
+- Surface: `no-live retained-spine measurement-stack remediation`
+- Why now: The materialization remediation proved `simple_hook_baseline` is lab/support model I/O with no product spine requirement and corrected mission errors from 15 to 0, but the corrected replay verdict is `failure_silent_perception_contamination` with `silent_perception_beat_no_cortex`. The raw live artifact remains `fail` / `mission_contract_error`; value interpretation remains blocked until the silent-contamination measurement issue is diagnosed no-live.
 
 ### Research Lines Under Evaluation
 

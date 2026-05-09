@@ -337,8 +337,8 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_PATH = (
     / "cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun.md"
 )
 
-CURRENT_WORK_SLUG = "cortex-retained-active-policy-spine-live-run"
-NEXT_PRODUCT_TRAIN_SLUG = "cortex-retained-spine-live-matrix-materialization-remediation"
+CURRENT_WORK_SLUG = "cortex-retained-spine-live-matrix-materialization-remediation"
+NEXT_PRODUCT_TRAIN_SLUG = "cortex-retained-spine-measurement-stack-remediation"
 CONTEXT_LOOP_TRACE_REMEDIATION_RECON_PATH = (
     REPO_ROOT
     / "docs"
@@ -488,6 +488,12 @@ CORTEX_RETAINED_ACTIVE_POLICY_SPINE_LIVE_RUN_PATH = (
     / "recon"
     / "cortex_retained_active_policy_spine_live_run.md"
 )
+CORTEX_RETAINED_SPINE_LIVE_MATRIX_MATERIALIZATION_REMEDIATION_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_retained_spine_live_matrix_materialization_remediation.md"
+)
 
 CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_AFTER_SHARED_TOOL_EVIDENCE_PATH = (
     REPO_ROOT
@@ -601,83 +607,69 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
 ) -> None:
     assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     work_note = status["work_today"]["note"].lower()
-    assert "approval-gated retained-spine live run" in work_note
-    assert "cortex_codex_app_cli_retained_spine_live_approved=approved" in work_note
-    assert "--retained-spine-live-matrix" in work_note
+    assert "no-live retained-spine materialization remediation" in work_note
     assert "run_20260509t192719z" in work_note
-    assert "`60` live rows" in work_note
-    assert "`4` arms" in work_note
-    assert "`5` v2 task families" in work_note
-    assert "`3` repeats" in work_note
-    assert "userpromptsubmit_stop_taskstandard_spine" in work_note
-    assert "no_cortex_baseline" in work_note
+    assert "model_io_path=none_lab_proof_only" in work_note
+    assert "product_spine=[]" in work_note
     assert "simple_hook_baseline" in work_note
-    assert "cortex_silent_perception" in work_note
-    assert "cortex_active_policy" in work_note
-    assert "registered verdict is `fail`" in work_note
-    assert "mission_contract_error" in work_note
-    assert "15 `simple_hook_baseline` rows" in work_note
     assert "lab_simple_hook_prompt_context" in work_note
-    assert "product-facing model i/o requiring a product spine" in work_note
-    assert "all arms/families/repeats were present" in work_note
-    assert "root config stayed unchanged" in work_note
-    assert "no runtime snapshot loaded" in work_note
+    assert "support_model_io_path" in work_note
+    assert "cortex_active_policy" in work_note
+    assert "codex_hooks_userpromptsubmit_stop_hookspecificoutput_or_block_stdout" in work_note
+    assert "userpromptsubmit_stop_taskstandard_spine" in work_note
+    assert "posttooluse task-standard context disabled and role-demoted" in work_note
+    assert "--retained-spine-materialization-remediation-gate0 --require-pass" in work_note
+    assert "materialization_repair_report.json" in work_note
+    assert "corrected_replay_report.json" in work_note
+    assert "gate0_report.json" in work_note
+    assert "summary.json" in work_note
+    assert "registered verdict `fail`" in work_note
+    assert "mission_contract_error" in work_note
+    assert "raw mission errors before repair were 15" in work_note
+    assert "corrected mission errors after repair are 0" in work_note
+    assert "corrected replay preserved 60 rows" in work_note
+    assert "all four arms" in work_note
+    assert "all five v2 task families" in work_note
+    assert "all three repeats" in work_note
+    assert "root config unchanged" in work_note
+    assert "no runtime snapshot" in work_note
     assert "no hidden-verifier leakage" in work_note
-    assert "no clean-control overcontrol" in work_note
-    assert "posttooluse task-standard context stayed disabled and role-demoted" in work_note
-    assert "evaluator materialization underfit" in work_note
-    assert "does not interpret retained-spine value" in work_note
-    assert "no-value parity" in work_note
-    assert "run_20260508t221352z" in work_note
-    assert "failure_silent_perception_contamination" in work_note
-    assert "run_20260509t112542z" in work_note
-    assert "failure_no_value" in work_note
-    assert "cortex value" in work_note
-    assert "behavior lift" in work_note
-    assert "exactness value lift" in work_note
-    assert "broad cortex lift" in work_note
-    assert "codex app parity" in work_note
-    assert "shipping promotion" in work_note
-    assert "product progress" in work_note
+    assert "no posttooluse reactivation" in work_note
+    assert "corrected replay verdict is `failure_silent_perception_contamination`" in work_note
+    assert "silent_perception_beat_no_cortex" in work_note
+    assert "materialization repair only" in work_note
     assert "retained-spine value" in work_note
+    assert "cortex value" in work_note
+    assert "live-rerun permission" in work_note
     assert "alphaevolve candidate-evolution permission" in work_note
-    assert "next train is `cortex-retained-spine-live-matrix-materialization-remediation`" in work_note
+    assert "next train is `cortex-retained-spine-measurement-stack-remediation`" in work_note
 
     next_train = status["next_product_train"]
     assert next_train["slug"] == NEXT_PRODUCT_TRAIN_SLUG
-    assert next_train["surface"] == "no-live retained-spine evaluator materialization remediation"
-    assert "repair the retained-spine evaluator materialization bug" in next_train[
-        "executive_benefit"
-    ].lower()
-    assert "run_20260509t192719z" in next_train[
-        "executive_benefit"
-    ].lower()
-    assert "lab simple-hook prompt context" in next_train[
-        "executive_benefit"
-    ].lower()
-    assert "product-facing model i/o" in next_train["executive_benefit"].lower()
+    assert next_train["surface"] == "no-live retained-spine measurement-stack remediation"
+    assert "corrected retained-spine replay" in next_train["executive_benefit"].lower()
+    assert "run_20260509t192719z" in next_train["executive_benefit"].lower()
+    assert "failure_silent_perception_contamination" in work_note
     assert "program database" in next_train["executive_benefit"].lower()
     assert "candidate generation" in next_train["executive_benefit"].lower()
     assert "alphaevolve automation loop" in next_train["executive_benefit"].lower()
-    assert "completed 60 rows" in next_train["why_now"].lower()
-    assert "mission_contract_error" in next_train["why_now"].lower()
-    assert "15 `simple_hook_baseline` rows" in next_train["why_now"].lower()
-    assert "lab_simple_hook_prompt_context" in next_train["why_now"].lower()
-    assert "root config" in next_train["why_now"].lower()
-    assert "posttooluse disabled" in next_train["why_now"].lower()
+    assert "materialization remediation" in next_train["why_now"].lower()
+    assert "simple_hook_baseline" in next_train["why_now"].lower()
+    assert "lab/support model i/o" in next_train["why_now"].lower()
+    assert "corrected mission errors from 15 to 0" in next_train["why_now"].lower()
+    assert "failure_silent_perception_contamination" in next_train["why_now"].lower()
+    assert "silent_perception_beat_no_cortex" in next_train["why_now"].lower()
+    assert "fail` / `mission_contract_error" in next_train["why_now"].lower()
     primary_metric = next_train["primary_metric"].lower()
-    assert "no-live repair" in primary_metric
-    assert "simple_hook_baseline" in primary_metric
-    assert "lab/support model i/o" in primary_metric
-    assert "product spine" in primary_metric
-    assert "60 rows" in primary_metric
+    assert "no-live diagnosis" in primary_metric
+    assert "corrected retained-spine replay" in primary_metric
     assert "run_20260509t192719z" in primary_metric
-    assert "userpromptsubmit_stop_taskstandard_spine" in primary_metric
-    assert "posttooluse-free" in primary_metric
+    assert "silent-perception contamination" in primary_metric
     assert "without scoring/fixture/product-policy changes" in primary_metric
     guardrail = next_train["guardrail"].lower()
     assert "no live codex run" in guardrail
-    assert "do not change product behavior" in guardrail
+    assert "no product behavior change" in guardrail
+    assert "no product code deletion" in guardrail
     assert "product host behavior" in guardrail
     assert "model-visible cortex text" in guardrail
     assert "evaluator scoring or fixtures" in guardrail
@@ -687,20 +679,18 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
     assert "active policy" in guardrail
     assert "posttooluse reactivation" in guardrail
     assert "alphaevolve candidate policy" in guardrail
-    assert "run_20260509t192719z" in guardrail
-    assert "do not reinterpret it as cortex value" in guardrail
+    assert "do not reinterpret silent contamination as retained-spine value" in guardrail
     kill_rule = next_train["kill_rule"].lower()
-    assert "reruns live before no-live materialization repair" in kill_rule
-    assert "mission-contract failure" in kill_rule
-    assert "retained-spine value" in kill_rule
-    assert "no-value parity" in kill_rule
+    assert "reruns live" in kill_rule
     assert "changes scoring or fixtures to favor cortex" in kill_rule
     assert "mutates product policy" in kill_rule
-    assert "adds a product spine to the lab simple-hook support arm" in kill_rule
     assert "reactivates posttooluse as earned active policy" in kill_rule
+    assert "failure_silent_perception_contamination" in kill_rule
+    assert "cortex value" in kill_rule
+    assert "retained-spine no-value parity" in kill_rule
+    assert "raw `run_20260509t192719z` failure" in kill_rule
     assert "runtime snapshot" in kill_rule
     assert "root config" in kill_rule
-    assert "run_20260509t192719z" in kill_rule
     assert "queues candidate evolution" in kill_rule
     assert status["next_product_train"]["registered_live_commands"] == []
 
@@ -1538,6 +1528,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_retained_active_policy_spine_gate0.md",
         "cortex_retained_active_policy_spine_live_gate1.md",
         "cortex_retained_active_policy_spine_live_run.md",
+        "cortex_retained_spine_live_matrix_materialization_remediation.md",
         "cortex_semantic_contraction_audit.md",
         "cortex_simple_hook_baseline_challenger.md",
         "cortex_task_standard_executive_doctrine_math_refinement.md",
@@ -4994,11 +4985,69 @@ def test_cortex_retained_active_policy_spine_live_run_records_materialization_fa
         "docs/recon/cortex_retained_active_policy_spine_live_run.md"
         in status["active_docs"]
     )
-    assert status["work_today"]["slug"] == "cortex-retained-active-policy-spine-live-run"
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     assert (
         status["next_product_train"]["slug"]
-        == "cortex-retained-spine-live-matrix-materialization-remediation"
+        == NEXT_PRODUCT_TRAIN_SLUG
     )
+
+
+def test_cortex_retained_spine_materialization_remediation_records_corrected_replay() -> None:
+    text = _read(CORTEX_RETAINED_SPINE_LIVE_MATRIX_MATERIALIZATION_REMEDIATION_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    for phrase in (
+        "Surface: lab/proof evaluator remediation",
+        "`run_20260509T192719Z`",
+        "verdict: `fail`",
+        "failure reason: `mission_contract_error`",
+        "15 `simple_hook_baseline` rows",
+        "`product-facing model_io_path requires product_spine`",
+        "`model_io_path=none_lab_proof_only`",
+        "`product_spine=[]`",
+        "`support_model_io_path=lab_simple_hook_prompt_context`",
+        "`codex_hooks_UserPromptSubmit_Stop_hookSpecificOutput_or_block_stdout`",
+        "`userpromptsubmit_stop_taskstandard_spine`",
+        "--retained-spine-materialization-remediation-gate0 --require-pass",
+        "`materialization_repair_report.json`",
+        "`corrected_replay_report.json`",
+        "`gate0_report.json`",
+        "`summary.json`",
+        "`pass_cortex_retained_spine_live_matrix_materialization_remediation_gate0`",
+        "raw mission errors before repair: 15",
+        "corrected mission errors after repair: 0",
+        "row count: 60",
+        "PostToolUse task-standard context remains disabled and role-demoted",
+        "Corrected replay verdict:\n`failure_silent_perception_contamination`",
+        "Corrected replay failure reason:\n`silent_perception_beat_no_cortex`",
+        "`cortex-retained-spine-measurement-stack-remediation`",
+    ):
+        assert phrase in text
+
+    for forbidden in (
+        "No Cortex value",
+        "No retained-spine value",
+        "No behavior lift",
+        "No exactness value lift",
+        "No broad Cortex lift",
+        "No Codex App parity",
+        "No shipping promotion",
+        "No product progress",
+        "No PostToolUse reactivation",
+        "No AlphaEvolve candidate-evolution permission",
+    ):
+        assert forbidden in text
+
+    assert (
+        "recon/cortex_retained_spine_live_matrix_materialization_remediation.md"
+        in docs_index
+    )
+    assert (
+        "docs/recon/cortex_retained_spine_live_matrix_materialization_remediation.md"
+        in status["active_docs"]
+    )
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
 def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
@@ -5411,7 +5460,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     ].lower()
     assert (
         status["next_product_train"]["surface"]
-        == "no-live retained-spine evaluator materialization remediation"
+        == "no-live retained-spine measurement-stack remediation"
     )
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
     assert "brain-capability-observation-and-inference" in deferred_lines
@@ -5497,27 +5546,24 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`cortex-retained-active-policy-spine-live-run`" in text
     assert "`cortex-retained-spine-live-matrix-materialization-remediation`" in text
-    assert "run_20260509T112542Z" in text
-    assert "failure_no_value" in text
+    assert "`cortex-retained-spine-measurement-stack-remediation`" in text
     assert "run_20260509T192719Z" in text
     assert "mission_contract_error" in text
+    assert "silent_perception_beat_no_cortex" in text
     assert "lab_simple_hook_prompt_context" in text
     assert "userpromptsubmit_stop_taskstandard_spine" in text
-    assert "run_20260508T221352Z" in text
     assert "failure_silent_perception_contamination" in text
-    assert "60` live rows" in text
-    assert "live_plan.json" in text
-    assert "episode_table.jsonl" in text
-    assert "PostToolUse task-standard context stayed disabled and role-demoted" in text
+    assert "materialization_repair_report.json" in text
+    assert "corrected_replay_report.json" in text
+    assert "PostToolUse reactivation" in text
     assert (
         "- Next product train after the current focus: "
-        "`cortex-retained-spine-live-matrix-materialization-remediation`"
+        "`cortex-retained-spine-measurement-stack-remediation`"
     ) in text
-    assert "- Train: `cortex-retained-spine-live-matrix-materialization-remediation`" in text
-    assert "no-live retained-spine evaluator materialization remediation" in text.lower()
-    assert "no-live repair" in text.lower()
+    assert "- Train: `cortex-retained-spine-measurement-stack-remediation`" in text
+    assert "no-live retained-spine measurement-stack remediation" in text.lower()
+    assert "no-live diagnosis" in text.lower()
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
