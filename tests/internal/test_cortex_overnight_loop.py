@@ -101,7 +101,7 @@ def test_classify_next_work_allows_measurement_stack_rebuild_with_strict_packet(
             surface="no-live lab/proof evaluator measurement-stack remediation",
             guardrail=(
                 "No live Codex run. Do not change product behavior, scoring to favor Cortex, "
-                "or hidden-verifier boundaries."
+                "hidden-verifier boundaries, or positive value claims."
             ),
             primary_metric=(
                 "Preserve failure_silent_perception_contamination and rebuild measurement "
