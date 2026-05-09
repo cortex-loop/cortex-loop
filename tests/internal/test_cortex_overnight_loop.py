@@ -192,6 +192,42 @@ def test_classify_next_work_allows_retained_spine_live_gate1_no_live() -> None:
     )
 
 
+def test_classify_next_work_allows_registered_retained_spine_live_but_never_auto_merges() -> None:
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-retained-active-policy-spine-live-run",
+            surface="approval-gated retained-spine evaluator live matrix",
+            guardrail=(
+                "Live Codex is allowed only through the exact registered "
+                "retained-spine evaluator command/env pair."
+            ),
+            primary_metric=(
+                "Run the retained-spine live evaluator matrix after no-spend "
+                "preflight."
+            ),
+            extra={
+                "registered_live_commands": [
+                    {
+                        "command": "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-matrix",
+                        "env": {
+                            "CORTEX_CODEX_APP_CLI_RETAINED_SPINE_LIVE_APPROVED": "approved"
+                        },
+                    }
+                ]
+            },
+        ),
+        _git(),
+    )
+
+    assert decision.status == "ready"
+    assert decision.live_codex_allowed is True
+    assert decision.safe_to_auto_merge is False
+    assert (
+        "CORTEX_CODEX_APP_CLI_RETAINED_SPINE_LIVE_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-matrix"
+        in decision.allowed_commands
+    )
+
+
 def test_classify_next_work_allows_registered_v2_live_but_never_auto_merges() -> None:
     decision = loop.classify_next_work(
         _status(
@@ -292,6 +328,38 @@ def test_v2_live_matrix_run_packet_forces_gate1_and_runner_grounding() -> None:
         for command in packet.anti_reinvention_searches
     )
     assert any("--v2-live-matrix" in command for command in packet.allowed_commands)
+
+
+def test_retained_spine_live_run_packet_forces_gate1_and_runner_grounding() -> None:
+    status = _status(
+        slug="cortex-retained-active-policy-spine-live-run",
+        surface="approval-gated retained-spine evaluator live matrix",
+        extra={
+            "registered_live_commands": [
+                {
+                    "command": "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-matrix",
+                    "env": {
+                        "CORTEX_CODEX_APP_CLI_RETAINED_SPINE_LIVE_APPROVED": "approved"
+                    },
+                }
+            ]
+        },
+    )
+    decision = loop.classify_next_work(status, _git())
+    packet = loop.build_work_packet(status, _git(), decision)
+
+    assert (
+        ".cortex/live_validation/cortex_retained_active_policy_spine_live_gate1/live_plan.json"
+        in packet.required_code_owner_reads
+    )
+    assert any(
+        "run_cortex_retained_active_policy_spine_live_matrix" in command
+        for command in packet.anti_reinvention_searches
+    )
+    assert any(
+        "--retained-spine-live-matrix" in command
+        for command in packet.allowed_commands
+    )
 
 
 def test_classify_next_work_refuses_dirty_main_but_allows_managed_resume() -> None:

@@ -23,6 +23,7 @@ from lab.cortex_effectiveness_evaluator import (
     TASK_FAMILIES,
     RETAINED_SPINE_LIVE_APPROVAL_ENV,
     EvaluatorEpisodeRow,
+    build_retained_spine_executable_live_matrix_plan,
     build_retained_spine_live_gate1_plan,
     build_v2_executable_live_matrix_plan,
     build_v2_live_matrix_plan,
@@ -90,6 +91,21 @@ def _fake_live_matrix_row(
             "runtime_snapshot_loaded": False,
         }
     )
+    objective_factory = (
+        evaluator._retained_spine_mission_objective_for_row
+        if policy_candidate == "userpromptsubmit_stop_taskstandard_spine"
+        else evaluator._live_matrix_mission_objective_for_row
+    )
+    expected_verdict = (
+        "retained_spine_live_matrix_scored"
+        if policy_candidate == "userpromptsubmit_stop_taskstandard_spine"
+        else "live_matrix_scored"
+    )
+    source = (
+        "retained_spine_live_matrix_fake"
+        if policy_candidate == "userpromptsubmit_stop_taskstandard_spine"
+        else "live_matrix_fake"
+    )
     return EvaluatorEpisodeRow(
         task_family=task_family,
         case_id=str(plan_row["case_id"]),
@@ -97,11 +113,11 @@ def _fake_live_matrix_row(
         arm=arm,
         policy_candidate=policy_candidate,
         metrics=metrics,
-        source="live_matrix_fake",
+        source=source,
         episode_id=str(plan_row["episode_id"]),
-        expected_verdict="live_matrix_scored",
+        expected_verdict=expected_verdict,
         notes=f"trial_root={trial_root}",
-        mission_objective=evaluator._live_matrix_mission_objective_for_row(
+        mission_objective=objective_factory(
             arm=arm,
             task_family=task_family,
             policy_candidate=policy_candidate,
@@ -1165,23 +1181,121 @@ def test_retained_spine_live_gate1_plan_keeps_pair_seeds_matched() -> None:
     )
 
 
-def test_retained_spine_live_matrix_refusal_placeholder(tmp_path: Path) -> None:
+def test_retained_spine_executable_live_matrix_plan_materializes_without_posttooluse() -> None:
+    plan = build_retained_spine_executable_live_matrix_plan()
+
+    assert plan["matrix_id"] == "cortex_retained_active_policy_spine_live_matrix"
+    assert plan["executable"] is True
+    assert plan["materialization_errors"] == []
+    assert plan["row_count"] == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT
+    assert plan["approval"][
+        "future_live_command_registered_not_implemented_here"
+    ] is False
+    assert all(row["prompt"] for row in plan["rows"])
+    assert all(row["prompt_hash"] for row in plan["rows"])
+    assert all(
+        row["case_materialization_status"]
+        == "materialized_retained_spine_live_runner"
+        for row in plan["rows"]
+    )
+    assert all(row["workspace_setup"] for row in plan["rows"])
+    assert all(row["verifier"] for row in plan["rows"])
+    assert all(
+        row["arm_settings"]["enable_posttooluse_task_standard_context"] is False
+        for row in plan["rows"]
+    )
+    assert {
+        row["mission_objective"]["model_io_path"]
+        for row in plan["rows"]
+        if row["arm"] == "cortex_active_policy"
+    } == {"codex_hooks_UserPromptSubmit_Stop_hookSpecificOutput_or_block_stdout"}
+    assert all(
+        "posttooluse" not in " ".join(
+            row["mission_objective"]["product_spine"]
+        ).lower()
+        for row in plan["rows"]
+        if row["arm"] == "cortex_active_policy"
+    )
+
+
+def test_retained_spine_live_matrix_refuses_without_approval_and_runs_fake_matrix(
+    tmp_path: Path,
+) -> None:
     refused = run_cortex_retained_active_policy_spine_live_matrix(
         output_root=tmp_path / "refused",
         approval_env={},
     )
-    approved_placeholder = run_cortex_retained_active_policy_spine_live_matrix(
-        output_root=tmp_path / "approved_placeholder",
+    approved = run_cortex_retained_active_policy_spine_live_matrix(
+        output_root=tmp_path / "approved",
         approval_env={RETAINED_SPINE_LIVE_APPROVAL_ENV: "approved"},
+        run_id="run_retained_fake",
+        row_runner=_fake_live_matrix_row,
     )
+    run_root = tmp_path / "approved" / "run_retained_fake"
+    rows = [
+        json.loads(line)
+        for line in (run_root / "episode_table.jsonl").read_text().splitlines()
+    ]
+    live_plan = json.loads((run_root / "live_plan.json").read_text())
 
     assert refused["verdict"] == "not_run_approval_required"
     assert refused["approval_env"] == RETAINED_SPINE_LIVE_APPROVAL_ENV
     assert refused["live_trials_ran"] is False
-    assert approved_placeholder["verdict"] == (
-        "not_run_retained_spine_live_runner_not_implemented"
+    assert approved["verdict"] == "pass_scoped_cortex_value"
+    assert approved["live_trials_ran"] is True
+    assert approved["run_id"] == "run_retained_fake"
+    assert approved["row_count"] == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT
+    assert approved["completed_new_rows"] == approved["row_count"]
+    assert approved["skipped_existing_rows"] == 0
+    assert approved["retained_spine_id"] == "userpromptsubmit_stop_taskstandard_spine"
+    assert approved["posttooluse_reactivated_as_earned_policy"] is False
+    assert approved["positive_value_requires_user_review"] is True
+    assert approved["next_train_if_recorded"] == (
+        "cortex-retained-active-policy-value-architecture-decision"
     )
-    assert approved_placeholder["live_trials_ran"] is False
+    assert len(rows) == approved["row_count"]
+    assert live_plan["executable"] is True
+    assert live_plan["row_count"] == approved["row_count"]
+    assert all(row["case_id"].endswith("_v2") for row in rows)
+    assert all(
+        row["policy_candidate"] == "userpromptsubmit_stop_taskstandard_spine"
+        for row in rows
+        if row["arm"] == "cortex_active_policy"
+    )
+    assert all(
+        row["metrics"].get("subject_config_contains_posttooluse_context_flag")
+        is not True
+        for row in rows
+    )
+    assert (run_root / "retained_spine_contract.json").exists()
+    assert (run_root / "v2_case_registry.json").exists()
+    assert (run_root / "leaderboard.json").exists()
+    assert (run_root / "failure_analysis.json").exists()
+
+
+def test_retained_spine_live_matrix_resume_skips_completed_fake_rows(
+    tmp_path: Path,
+) -> None:
+    first = run_cortex_retained_active_policy_spine_live_matrix(
+        output_root=tmp_path,
+        approval_env={RETAINED_SPINE_LIVE_APPROVAL_ENV: "approved"},
+        run_id="run_retained_resume",
+        row_runner=_fake_live_matrix_row,
+    )
+
+    def forbidden_runner(**_: object) -> EvaluatorEpisodeRow:
+        raise AssertionError("completed retained-spine rows should be reused")
+
+    second = run_cortex_retained_active_policy_spine_live_matrix(
+        output_root=tmp_path,
+        approval_env={RETAINED_SPINE_LIVE_APPROVAL_ENV: "approved"},
+        run_id="run_retained_resume",
+        row_runner=forbidden_runner,
+    )
+
+    assert first["row_count"] == second["row_count"]
+    assert second["completed_new_rows"] == 0
+    assert second["skipped_existing_rows"] == first["row_count"]
 
 
 def test_retained_spine_live_gate1_cli_passes_and_live_matrix_cli_refuses(
