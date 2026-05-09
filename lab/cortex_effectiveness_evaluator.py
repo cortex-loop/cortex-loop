@@ -78,6 +78,9 @@ DEFAULT_RETAINED_SPINE_MEASUREMENT_STACK_REMEDIATION_OUTPUT_ROOT = Path(
     ".cortex/live_validation/"
     "cortex_retained_spine_measurement_stack_remediation_gate0"
 )
+DEFAULT_RETAINED_SPINE_CLEAN_CONTROL_STABILITY_OUTPUT_ROOT = Path(
+    ".cortex/live_validation/cortex_retained_spine_clean_control_stability_gate0"
+)
 HISTORICAL_EFFECTIVENESS_LIVE_MATRIX_RUN_ROOT = (
     DEFAULT_LIVE_MATRIX_OUTPUT_ROOT / "run_20260508T221352Z"
 )
@@ -100,6 +103,16 @@ RETAINED_SPINE_REPLAY_REQUIRED_ARTIFACTS: tuple[str, ...] = (
     "failure_analysis.json",
     "live_plan.json",
     "episode_table.jsonl",
+)
+RETAINED_SPINE_MATERIALIZATION_REMEDIATION_ARTIFACTS: tuple[str, ...] = (
+    "corrected_replay_report.json",
+    "summary.json",
+)
+RETAINED_SPINE_MEASUREMENT_STACK_REMEDIATION_ARTIFACTS: tuple[str, ...] = (
+    "measurement_diagnosis.json",
+    "silent_contamination_diagnosis.json",
+    "episode_discriminability.json",
+    "summary.json",
 )
 EVALUATOR_LIVE_APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED"
 EVALUATOR_LIVE_APPROVAL_VALUE = "approved"
@@ -6186,6 +6199,457 @@ def run_cortex_retained_spine_measurement_stack_remediation_gate0(
     return report
 
 
+def _load_json_artifacts(
+    root: Path,
+    names: Sequence[str],
+) -> tuple[dict[str, Any], list[str]]:
+    missing = [name for name in names if not (root / name).exists()]
+    if missing:
+        return {}, missing
+    return {
+        name: json.loads((root / name).read_text(encoding="utf-8"))
+        for name in names
+    }, []
+
+
+def _artifact_path_exists(value: Any) -> bool:
+    if not isinstance(value, str) or not value:
+        return False
+    path = Path(value)
+    if path.is_absolute():
+        return path.exists()
+    return (REPO_ROOT / path).exists()
+
+
+def _artifact_path(value: Any) -> Path | None:
+    if not isinstance(value, str) or not value:
+        return None
+    path = Path(value)
+    return path if path.is_absolute() else REPO_ROOT / path
+
+
+def _clean_control_capture_depth(rows: Sequence[EvaluatorEpisodeRow]) -> str:
+    required = ("stdout", "stderr", "v2_verifier_stdout", "v2_verifier_stderr")
+    found = 0
+    total = len(rows) * len(required)
+    for row in rows:
+        artifacts = row.metrics.get("artifacts")
+        if not isinstance(artifacts, Mapping):
+            continue
+        for name in required:
+            found += int(_artifact_path_exists(artifacts.get(name)))
+    if found == total and total > 0:
+        return "stdout_stderr_and_verifier_artifacts"
+    if found == 0:
+        return "metrics_only"
+    return "partial_artifacts"
+
+
+def _read_stdout_diagnostics(row: EvaluatorEpisodeRow) -> dict[str, Any]:
+    artifacts = row.metrics.get("artifacts")
+    stdout_path = None
+    if isinstance(artifacts, Mapping):
+        stdout_path = _artifact_path(artifacts.get("stdout"))
+    if stdout_path is None or not stdout_path.exists():
+        return {
+            "stdout_available": False,
+            "final_agent_message_excerpt": "",
+            "commands": [],
+        }
+
+    commands: list[dict[str, Any]] = []
+    agent_messages: list[str] = []
+    for line in stdout_path.read_text(encoding="utf-8", errors="replace").splitlines():
+        if not line.strip():
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        item = payload.get("item") if isinstance(payload, Mapping) else None
+        if not isinstance(item, Mapping):
+            continue
+        if item.get("type") == "command_execution":
+            commands.append(
+                {
+                    "command": str(item.get("command") or ""),
+                    "exit_code": item.get("exit_code"),
+                    "status": item.get("status"),
+                    "output_excerpt": str(item.get("aggregated_output") or "")[:500],
+                }
+            )
+        elif item.get("type") == "agent_message":
+            agent_messages.append(str(item.get("text") or ""))
+    final_message = agent_messages[-1] if agent_messages else ""
+    return {
+        "stdout_available": True,
+        "final_agent_message_excerpt": final_message[:1000],
+        "commands": commands,
+        "reported_python_missing": "command not found: python" in final_message,
+        "reported_python3_success": "python3" in final_message
+        and "2 passed" in final_message,
+    }
+
+
+def _metric_exit_code_zero(metrics: Mapping[str, Any], key: str) -> bool:
+    value = metrics.get(key)
+    if value is None:
+        return False
+    try:
+        return int(value) == 0
+    except (TypeError, ValueError):
+        return False
+
+
+def _clean_control_next_train_for_classification(
+    *,
+    classification: str,
+    capture_depth: str,
+    silent_isolation_clean: bool,
+) -> str:
+    if not silent_isolation_clean:
+        return "cortex-retained-spine-silent-arm-isolation-remediation"
+    if capture_depth == "metrics_only":
+        return "cortex-retained-spine-clean-control-capture-remediation"
+    if classification == "no_cortex_closure_readout_instability":
+        return "cortex-retained-spine-clean-control-replication-gate1"
+    return "cortex-retained-spine-measurement-stack-remediation-v2"
+
+
+def _build_retained_spine_clean_control_stability(
+    *,
+    historical_run_root: Path,
+    payloads: Mapping[str, Any],
+    materialization_payloads: Mapping[str, Any],
+    measurement_payloads: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
+    summary = payloads["summary.json"]
+    live_plan = payloads["live_plan.json"]
+    raw_rows = [
+        _episode_row_from_json(payload)
+        for payload in payloads["episode_table.jsonl"]
+        if isinstance(payload, Mapping)
+    ]
+    corrected_rows = [
+        _correct_retained_spine_materialization_row(row) for row in raw_rows
+    ]
+    corrected_decision = _live_matrix_decision(
+        corrected_rows,
+        root_config_changed=not bool(summary.get("root_config_unchanged")),
+    )
+    boundary_checks = _retained_spine_replay_boundary_checks(
+        corrected_rows,
+        summary,
+        live_plan,
+    )
+    leak_checks = _retained_spine_silent_arm_leak_checks(corrected_rows)
+    clean_rows = [
+        row
+        for row in corrected_rows
+        if row.case_id == "clean_verified_work_control_v2"
+        and row.repeat_index == 1
+    ]
+    clean_rows_by_arm = {row.arm: row for row in clean_rows}
+    no_cortex = clean_rows_by_arm.get("no_cortex_baseline")
+    comparison_arms = (
+        "simple_hook_baseline",
+        "cortex_silent_perception",
+        "cortex_active_policy",
+    )
+    comparison_rows = [
+        clean_rows_by_arm[arm]
+        for arm in comparison_arms
+        if arm in clean_rows_by_arm
+    ]
+    capture_depth = _clean_control_capture_depth(clean_rows)
+    no_cortex_diagnostics = (
+        _read_stdout_diagnostics(no_cortex) if no_cortex is not None else {}
+    )
+
+    no_cortex_under_reported = bool(
+        no_cortex
+        and no_cortex.metrics.get("task_success") is True
+        and _metric_exit_code_zero(no_cortex.metrics, "v2_verifier_exit_code")
+        and no_cortex.metrics.get("truthful_closure") is False
+        and no_cortex.metrics.get("evidence_recovery") is False
+    )
+    comparison_arms_reported = len(comparison_rows) == len(comparison_arms) and all(
+        row.metrics.get("task_success") is True
+        and row.metrics.get("truthful_closure") is True
+        and row.metrics.get("evidence_recovery") is True
+        and _metric_exit_code_zero(row.metrics, "v2_verifier_exit_code")
+        for row in comparison_rows
+    )
+    silent_isolation_clean = all(leak_checks.values())
+    if not silent_isolation_clean:
+        classification = "silent_arm_leakage"
+    elif capture_depth == "metrics_only":
+        classification = "capture_underfit"
+    elif no_cortex_under_reported and comparison_arms_reported:
+        classification = "no_cortex_closure_readout_instability"
+    else:
+        classification = "broader_measurement_failure"
+
+    materialization_summary = materialization_payloads["summary.json"]
+    corrected_replay_report = materialization_payloads["corrected_replay_report.json"]
+    measurement_summary = measurement_payloads["summary.json"]
+    measurement_diagnosis = measurement_payloads["measurement_diagnosis.json"]
+    silent_diagnosis = measurement_payloads["silent_contamination_diagnosis.json"]
+    preservation_checks = {
+        "raw_registered_failure_preserved": summary.get("verdict") == "fail",
+        "raw_failure_reason_preserved": summary.get("failure_reason")
+        == "mission_contract_error",
+        "corrected_replay_verdict_preserved": corrected_decision.get("verdict")
+        == "failure_silent_perception_contamination",
+        "corrected_replay_failure_reason_preserved": corrected_decision.get(
+            "failure_reason"
+        )
+        == "silent_perception_beat_no_cortex",
+        "materialization_gate_replay_preserved": corrected_replay_report.get(
+            "corrected_replay_verdict"
+        )
+        == "failure_silent_perception_contamination",
+        "measurement_gate_replay_preserved": measurement_summary.get(
+            "corrected_replay_verdict_preserved"
+        )
+        == "failure_silent_perception_contamination",
+        "measurement_gate_next_train_preserved": measurement_summary.get(
+            "next_train_if_recorded"
+        )
+        == "cortex-retained-spine-clean-control-stability-gate0",
+        "row_count_60": len(corrected_rows)
+        == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT,
+        "boundary_checks_preserved": all(boundary_checks.values()),
+        "clean_control_repeat1_all_arms_present": set(clean_rows_by_arm) == set(ARMS),
+        "prior_isolated_clean_control_repeat1_preserved": bool(
+            silent_diagnosis.get("isolated_clean_control_repeat1")
+        ),
+    }
+    arm_outcomes = {
+        arm: {
+            "task_success": bool(row.metrics.get("task_success")),
+            "truthful_closure": bool(row.metrics.get("truthful_closure")),
+            "evidence_recovery": bool(row.metrics.get("evidence_recovery")),
+            "v2_verifier_exit_code": row.metrics.get("v2_verifier_exit_code"),
+            "model_visible_cortex_output_count": row.metrics.get(
+                "model_visible_cortex_output_count"
+            ),
+            "arm_model_io_path": row.metrics.get("arm_model_io_path"),
+            "support_model_io_path": row.metrics.get("support_model_io_path"),
+        }
+        for arm, row in sorted(clean_rows_by_arm.items())
+    }
+    next_train = _clean_control_next_train_for_classification(
+        classification=classification,
+        capture_depth=capture_depth,
+        silent_isolation_clean=silent_isolation_clean,
+    )
+    clean_control_stability_report = {
+        "historical_run_id": historical_run_root.name,
+        "historical_run_root": str(historical_run_root),
+        "classification": classification,
+        "capture_depth": capture_depth,
+        "next_train": next_train,
+        "arm_outcomes": arm_outcomes,
+        "no_cortex_under_reported_closure_evidence": no_cortex_under_reported,
+        "comparison_arms_reported_closure_evidence": comparison_arms_reported,
+        "no_cortex_stdout_diagnostics": no_cortex_diagnostics,
+        "clean_control_repeat1_scores": {
+            arm: sum(
+                int(bool(clean_rows_by_arm[arm].metrics.get(field)))
+                for field in SCORE_FIELDS
+            )
+            for arm in sorted(clean_rows_by_arm)
+        },
+        "preservation_checks": preservation_checks,
+        "boundary_checks": boundary_checks,
+        "prior_measurement_gate_summary": {
+            "verdict": measurement_summary.get("verdict"),
+            "next_train_if_recorded": measurement_summary.get(
+                "next_train_if_recorded"
+            ),
+            "clean_control_repeat1_classification": measurement_summary.get(
+                "clean_control_repeat1_classification"
+            ),
+        },
+        "prior_materialization_gate_summary": {
+            "verdict": materialization_summary.get("verdict"),
+            "corrected_replay_verdict": materialization_summary.get(
+                "corrected_replay_verdict"
+            ),
+        },
+        "prior_measurement_diagnosis_checks": measurement_diagnosis.get(
+            "diagnosis_checks",
+        ),
+    }
+    no_cortex_readout_diagnosis = {
+        "historical_run_id": historical_run_root.name,
+        "case_id": "clean_verified_work_control_v2",
+        "repeat_index": 1,
+        "classification": classification,
+        "no_cortex_under_reported_closure_evidence": no_cortex_under_reported,
+        "comparison_arms_reported_closure_evidence": comparison_arms_reported,
+        "capture_depth": capture_depth,
+        "arm_outcomes": arm_outcomes,
+        "no_cortex_stdout_diagnostics": no_cortex_diagnostics,
+        "interpretation": (
+            "The no-Cortex clean-control row passed the verifier but failed "
+            "the model-output closure/evidence readout; comparison arms "
+            "reported the evidence. This is not retained-spine value and not "
+            "clean no-value parity."
+        ),
+    }
+    arm_isolation_report = {
+        "historical_run_id": historical_run_root.name,
+        "silent_arm_model_io_isolated": silent_isolation_clean,
+        "silent_arm_leak_checks": leak_checks,
+        "posttooluse_disabled": boundary_checks["posttooluse_disabled"],
+        "active_rows_retained_spine_only": boundary_checks[
+            "active_rows_retained_spine_only"
+        ],
+        "root_config_unchanged": boundary_checks["root_config_unchanged"],
+        "runtime_snapshot_absent": boundary_checks["runtime_snapshot_absent"],
+        "hidden_verifier_not_leaked": boundary_checks["hidden_verifier_not_leaked"],
+    }
+    selection = {
+        "next_train": next_train,
+        "classification": classification,
+        "capture_depth": capture_depth,
+        "preservation_checks": preservation_checks,
+        "silent_isolation_clean": silent_isolation_clean,
+    }
+    return (
+        clean_control_stability_report,
+        no_cortex_readout_diagnosis,
+        arm_isolation_report,
+        selection,
+    )
+
+
+def run_cortex_retained_spine_clean_control_stability_gate0(
+    output_root: Path | str = DEFAULT_RETAINED_SPINE_CLEAN_CONTROL_STABILITY_OUTPUT_ROOT,
+    *,
+    historical_run_root: Path | str = HISTORICAL_RETAINED_SPINE_LIVE_MATRIX_RUN_ROOT,
+    materialization_gate_root: Path | str = DEFAULT_RETAINED_SPINE_MATERIALIZATION_REMEDIATION_OUTPUT_ROOT,
+    measurement_gate_root: Path | str = DEFAULT_RETAINED_SPINE_MEASUREMENT_STACK_REMEDIATION_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    """Diagnose the retained-spine clean-control readout instability."""
+
+    root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
+    historical_root = Path(historical_run_root)
+    payloads, missing_historical = _load_retained_spine_replay_artifacts(
+        historical_root,
+    )
+    materialization_payloads, missing_materialization = _load_json_artifacts(
+        Path(materialization_gate_root),
+        RETAINED_SPINE_MATERIALIZATION_REMEDIATION_ARTIFACTS,
+    )
+    measurement_payloads, missing_measurement = _load_json_artifacts(
+        Path(measurement_gate_root),
+        RETAINED_SPINE_MEASUREMENT_STACK_REMEDIATION_ARTIFACTS,
+    )
+    missing = {
+        "historical_run": missing_historical,
+        "materialization_gate": missing_materialization,
+        "measurement_gate": missing_measurement,
+    }
+    if any(missing.values()):
+        report = {
+            "passed": False,
+            "verdict": "failure_cortex_retained_spine_clean_control_stability_gate0",
+            "failure_reason": "missing_required_artifacts",
+            "missing_artifacts": missing,
+            "historical_run_root": str(historical_root),
+            "live_trials_ran": False,
+            "model_io_path": LAB_PROOF_MODEL_IO_PATH,
+            "behavior_lift_claim_allowed": False,
+            "exactness_value_lift_claim_allowed": False,
+            "broad_cortex_lift_claim_allowed": False,
+            "codex_app_parity_claim_allowed": False,
+            "shipping_promotion_claim_allowed": False,
+            "product_progress_claim_allowed": False,
+            "alphaevolve_candidate_evolution_allowed": False,
+            "retained_spine_value_claim_allowed": False,
+            "retained_spine_no_value_parity_interpretation_allowed": False,
+            "next_train_if_fail": "cortex-retained-spine-measurement-stack-remediation-v2",
+        }
+        _write_json(root / "gate0_report.json", report)
+        _write_json(root / "summary.json", report)
+        return report
+
+    (
+        clean_control_stability_report,
+        no_cortex_readout_diagnosis,
+        arm_isolation_report,
+        selection,
+    ) = _build_retained_spine_clean_control_stability(
+        historical_run_root=historical_root,
+        payloads=payloads,
+        materialization_payloads=materialization_payloads,
+        measurement_payloads=measurement_payloads,
+    )
+    preservation_checks = selection["preservation_checks"]
+    next_train = str(selection["next_train"])
+    classification = str(selection["classification"])
+    passed = all(preservation_checks.values()) and next_train != (
+        "cortex-retained-spine-measurement-stack-remediation-v2"
+    )
+    report = {
+        "passed": passed,
+        "verdict": (
+            "pass_cortex_retained_spine_clean_control_stability_gate0"
+            if passed
+            else "failure_cortex_retained_spine_clean_control_stability_gate0"
+        ),
+        "failure_reason": None if passed else "clean_control_stability_failed",
+        "live_trials_ran": False,
+        "historical_run_id": historical_root.name,
+        "historical_run_root": str(historical_root),
+        "classification": classification,
+        "capture_depth": selection["capture_depth"],
+        "raw_registered_verdict_preserved": payloads["summary.json"].get("verdict"),
+        "raw_failure_reason_preserved": payloads["summary.json"].get(
+            "failure_reason"
+        ),
+        "corrected_replay_verdict_preserved": (
+            clean_control_stability_report["prior_materialization_gate_summary"][
+                "corrected_replay_verdict"
+            ]
+        ),
+        "clean_control_repeat1_classification": classification,
+        "silent_arm_model_io_isolated": selection["silent_isolation_clean"],
+        "next_train_if_recorded": next_train,
+        "model_io_path": LAB_PROOF_MODEL_IO_PATH,
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": False,
+        "broad_cortex_lift_claim_allowed": False,
+        "codex_app_parity_claim_allowed": False,
+        "shipping_promotion_claim_allowed": False,
+        "product_progress_claim_allowed": False,
+        "alphaevolve_candidate_evolution_allowed": False,
+        "retained_spine_value_claim_allowed": False,
+        "retained_spine_no_value_parity_interpretation_allowed": False,
+        "artifact_paths": {
+            "clean_control_stability_report": "clean_control_stability_report.json",
+            "no_cortex_readout_diagnosis": "no_cortex_readout_diagnosis.json",
+            "arm_isolation_report": "arm_isolation_report.json",
+            "gate0_report": "gate0_report.json",
+            "summary": "summary.json",
+        },
+        "checks": preservation_checks,
+    }
+    _write_json(
+        root / "clean_control_stability_report.json",
+        clean_control_stability_report,
+    )
+    _write_json(root / "no_cortex_readout_diagnosis.json", no_cortex_readout_diagnosis)
+    _write_json(root / "arm_isolation_report.json", arm_isolation_report)
+    _write_json(root / "gate0_report.json", report)
+    _write_json(root / "summary.json", report)
+    return report
+
+
 def run_cortex_effectiveness_evaluator_gate0(
     output_root: Path | str = DEFAULT_OUTPUT_ROOT,
 ) -> dict[str, Any]:
@@ -6370,6 +6834,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="diagnose retained-spine silent contamination without live trials",
     )
     parser.add_argument(
+        "--retained-spine-clean-control-stability-gate0",
+        action="store_true",
+        help="diagnose retained-spine clean-control readout stability without live trials",
+    )
+    parser.add_argument(
         "--output-root",
         type=Path,
         default=None,
@@ -6398,6 +6867,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.retained_spine_live_matrix,
             args.retained_spine_materialization_remediation_gate0,
             args.retained_spine_measurement_stack_remediation_gate0,
+            args.retained_spine_clean_control_stability_gate0,
         )
     )
     if selected_modes != 1:
@@ -6409,7 +6879,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             "--retained-active-policy-spine-gate0, "
             "--retained-spine-live-gate1, --retained-spine-live-matrix, "
             "--retained-spine-materialization-remediation-gate0, or "
-            "--retained-spine-measurement-stack-remediation-gate0"
+            "--retained-spine-measurement-stack-remediation-gate0, or "
+            "--retained-spine-clean-control-stability-gate0"
         )
 
     output_root = args.output_root
@@ -6440,6 +6911,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_root = (
                 DEFAULT_RETAINED_SPINE_MEASUREMENT_STACK_REMEDIATION_OUTPUT_ROOT
             )
+        elif args.retained_spine_clean_control_stability_gate0:
+            output_root = DEFAULT_RETAINED_SPINE_CLEAN_CONTROL_STABILITY_OUTPUT_ROOT
         elif args.live_matrix:
             output_root = DEFAULT_LIVE_MATRIX_OUTPUT_ROOT
         else:
@@ -6475,6 +6948,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         report = run_cortex_retained_spine_measurement_stack_remediation_gate0(
             output_root,
         )
+    elif args.retained_spine_clean_control_stability_gate0:
+        report = run_cortex_retained_spine_clean_control_stability_gate0(output_root)
     else:
         report = run_cortex_effectiveness_evaluator_live_matrix(output_root)
 

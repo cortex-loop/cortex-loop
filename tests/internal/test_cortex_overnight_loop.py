@@ -276,6 +276,30 @@ def test_classify_next_work_allows_retained_spine_measurement_stack_remediation(
     )
 
 
+def test_classify_next_work_allows_retained_spine_clean_control_stability_gate0() -> None:
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-retained-spine-clean-control-stability-gate0",
+            surface="no-live retained-spine clean-control stability gate",
+            guardrail="No live Codex run in this seam.",
+            primary_metric=(
+                "Diagnose clean-control repeat 1 no-Cortex closure readout "
+                "instability without policy or scoring changes."
+            ),
+            extra={"registered_live_commands": []},
+        ),
+        _git(),
+    )
+
+    assert decision.status == "ready"
+    assert decision.live_codex_allowed is False
+    assert decision.safe_to_auto_merge is True
+    assert (
+        "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-clean-control-stability-gate0 --require-pass"
+        in decision.allowed_commands
+    )
+
+
 def test_classify_next_work_allows_registered_v2_live_but_never_auto_merges() -> None:
     decision = loop.classify_next_work(
         _status(
