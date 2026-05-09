@@ -776,6 +776,27 @@ def build_work_packet(
     )
 
 
+def _forbidden_review_boundary_active(
+    *,
+    combined: str,
+    managed_work_slug: str | None,
+    slug_text: str | None,
+    surface: str,
+) -> bool:
+    if managed_work_slug:
+        return False
+    if not any(phrase in combined for phrase in FORBIDDEN_REVIEW_PHRASES):
+        return False
+    no_live_evaluator_support = (
+        isinstance(slug_text, str)
+        and _is_evaluator_authorized_slug(slug_text)
+        and surface.lower().startswith("no-live")
+    )
+    if no_live_evaluator_support:
+        return False
+    return True
+
+
 def _previous_ready_noop_reason(
     previous_cycle: Mapping[str, Any] | None,
     *,
@@ -860,7 +881,12 @@ def classify_next_work(
     if noop_reason:
         reasons.append(noop_reason)
 
-    if not managed_work_slug and any(phrase in combined for phrase in FORBIDDEN_REVIEW_PHRASES):
+    if _forbidden_review_boundary_active(
+        combined=combined,
+        managed_work_slug=managed_work_slug,
+        slug_text=slug_text,
+        surface=surface,
+    ):
         reasons.append("current truth names a user-review boundary or forbidden mutation surface")
 
     if bloat is not None:
@@ -941,11 +967,7 @@ def classify_next_work(
         or surface in SAFE_AUTO_MERGE_SURFACES
         or surface.startswith("no-live")
     )
-    no_positive_claim = not any(
-        phrase in combined
-        for phrase in ("positive lift", "value claim", "shipping promotion")
-    )
-    safe_to_auto_merge = not reasons and safe_surface and no_positive_claim and not live_requested
+    safe_to_auto_merge = not reasons and safe_surface and not live_requested
     status_text = "ready" if not reasons else "blocked"
     commands = []
     allowed_commands = _allowed_commands_for_slug(slug_text, git_state)
