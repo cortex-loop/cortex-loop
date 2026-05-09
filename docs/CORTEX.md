@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-active-policy-contraction-decision`
-### Next Product Train
 - Slug: `cortex-posttooluse-proof-surface-role-demotion`
-- Surface: `no-live archive and role-demotion`
-- Why now: The contraction decision `decision_contract_posttooluse_proof_surfaces` from `docs/recon/cortex_active_policy_contraction_decision.md` retained the smaller UserPromptSubmit + Stop + TaskStandardSpine spine as value-unearned product/evidence law, while classifying PostToolUse task-standard context as redesign-only and the PostToolUse-specific Gate 0/live proof train as archive/role-demotion material. The v2 artifact `run_20260509T112542Z` had all arms tied, active family_wins zero, and no boundary dominance; the PostToolUse paired-value artifact had already ended no-value. The next move is contraction of obsolete proof surfaces, not product code deletion, policy tuning, live rerun, or candidate evolution.
+### Next Product Train
+- Slug: `cortex-retained-active-policy-spine-gate0`
+- Surface: `no-live retained-spine proof gate`
+- Why now: The role-demotion seam `decision_role_demote_posttooluse_specific_proof_train` moved the PostToolUse-specific Gate 0/live train to non-current historical support and left product behavior untouched. The next step is to prove what the retained UserPromptSubmit + Stop + TaskStandardSpine spine still owns before any redesign, live rerun, product deletion, or AlphaEvolve candidate evolution.
 
 ### Research Lines Under Evaluation
 
