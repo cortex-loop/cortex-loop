@@ -303,6 +303,10 @@ Active docs:
   `failure_silent_perception_contamination`: active Cortex did not beat the
   simple-hook baseline, and the only discriminating continuity repeat was
   matched by silent Cortex
+- [Cortex Effectiveness Measurement-Stack Rebuild Gate 0](recon/cortex_effectiveness_measurement_stack_rebuild_gate0.md) —
+  no-live diagnosis of the first four-arm evaluator matrix, preserving
+  `failure_silent_perception_contamination`, naming baseline-parity and
+  silent-contamination causes, and queueing the v2 case registry
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation

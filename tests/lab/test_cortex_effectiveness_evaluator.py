@@ -26,6 +26,7 @@ from lab.cortex_effectiveness_evaluator import (
     gate0_synthetic_scenarios,
     mission_contract_errors,
     mission_objective_for_row,
+    run_cortex_effectiveness_measurement_stack_rebuild_gate0,
     run_cortex_effectiveness_evaluator_build,
     run_cortex_effectiveness_evaluator_gate0,
     run_cortex_effectiveness_evaluator_live_gate1,
@@ -502,6 +503,120 @@ def test_live_matrix_boundary_and_no_value_verdicts_dominate(tmp_path: Path) -> 
     assert boundary["verdict"] == "failure_boundary_dominance"
 
 
+def test_measurement_stack_rebuild_gate0_preserves_negative_matrix_diagnosis(
+    tmp_path: Path,
+) -> None:
+    report = run_cortex_effectiveness_measurement_stack_rebuild_gate0(
+        output_root=tmp_path,
+    )
+    diagnosis = json.loads((tmp_path / "measurement_diagnosis.json").read_text())
+    discriminability = json.loads((tmp_path / "case_discriminability.json").read_text())
+
+    assert report["passed"] is True
+    assert (
+        report["verdict"]
+        == "pass_cortex_effectiveness_measurement_stack_rebuild_gate0"
+    )
+    assert report["historical_run_id"] == "run_20260508T221352Z"
+    assert report["registered_verdict"] == "failure_silent_perception_contamination"
+    assert report["preserved_verdict"] == "failure_silent_perception_contamination"
+    assert report["live_trials_ran"] is False
+    assert report["model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["exactness_value_lift_claim_allowed"] is False
+    assert report["broad_cortex_lift_claim_allowed"] is False
+    assert report["codex_app_parity_claim_allowed"] is False
+    assert report["shipping_promotion_claim_allowed"] is False
+    assert report["alphaevolve_mutation_loop_allowed"] is False
+    assert report["next_train_if_pass"] == "cortex-effectiveness-v2-case-registry-gate0"
+    assert set(diagnosis["loaded_artifacts"]) == {
+        "summary.json",
+        "leaderboard.json",
+        "failure_analysis.json",
+        "episode_table.jsonl",
+    }
+    assert diagnosis["historical_episode_table_row_count"] == 60
+    assert diagnosis["claim_boundaries"]["candidate_evolution_allowed"] is False
+    baseline_families = {
+        row["task_family"] for row in diagnosis["baseline_parity_episodes"]
+    }
+    assert {
+        "exactness_evidence_recovery",
+        "truthful_closure",
+        "blocker_surfacing",
+        "clean_verified_work_control",
+    }.issubset(baseline_families)
+    assert any(
+        row["task_family"] == "continuity_after_interruption"
+        and row["repeat_index"] == 1
+        for row in diagnosis["silent_contamination_episodes"]
+    )
+    family = discriminability["family_discriminability"]
+    assert family["exactness_evidence_recovery"]["classification"] == "too_easy"
+    assert family["truthful_closure"]["classification"] == "too_easy"
+    assert family["blocker_surfacing"]["classification"] == "too_easy"
+    assert family["clean_verified_work_control"]["classification"] == "control_valid"
+    assert (
+        family["continuity_after_interruption"]["classification"]
+        == "silent_contaminated"
+    )
+    assert (
+        discriminability["v2_measurement_design_proposal"][
+            "no_current_v1_live_case_retroactively_rescored"
+        ]
+        is True
+    )
+    assert (tmp_path / "measurement_diagnosis.json").exists()
+    assert (tmp_path / "case_discriminability.json").exists()
+    assert (tmp_path / "gate0_report.json").exists()
+    assert (tmp_path / "summary.json").exists()
+
+
+def test_measurement_stack_rebuild_gate0_fails_missing_historical_artifacts(
+    tmp_path: Path,
+) -> None:
+    report = run_cortex_effectiveness_measurement_stack_rebuild_gate0(
+        output_root=tmp_path / "out",
+        historical_run_root=tmp_path / "missing_run",
+    )
+
+    assert report["passed"] is False
+    assert (
+        report["verdict"]
+        == "failure_cortex_effectiveness_measurement_stack_rebuild_gate0"
+    )
+    assert report["failure_reason"] == "missing_historical_artifacts"
+    assert set(report["missing_historical_artifacts"]) == {
+        "summary.json",
+        "leaderboard.json",
+        "failure_analysis.json",
+        "episode_table.jsonl",
+    }
+
+
+def test_measurement_stack_rebuild_gate0_cli_passes(tmp_path: Path) -> None:
+    output_root = tmp_path / "measurement_stack"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--measurement-stack-rebuild-gate0",
+            "--require-pass",
+            "--output-root",
+            str(output_root),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "pass_cortex_effectiveness_measurement_stack_rebuild_gate0" in result.stdout
+    assert (output_root / "measurement_diagnosis.json").exists()
+    assert (output_root / "case_discriminability.json").exists()
+    assert (output_root / "summary.json").exists()
+
+
 def test_simple_hook_baseline_module_is_small_independent_and_runnable() -> None:
     source = SIMPLE_HOOK_SOURCE_PATH.read_text(encoding="utf-8")
     loc = sum(
@@ -619,6 +734,7 @@ def test_gate0_source_keeps_alphaevolve_loop_deferred() -> None:
     assert "--live-gate1" in source
     assert "--live-matrix" in source
     assert "--simple-hook-baseline-gate0" in source
+    assert "--measurement-stack-rebuild-gate0" in source
     assert "alphaevolve_loop_later" in source
     assert "program_database_fields" in source
     assert "candidate_representation" in source

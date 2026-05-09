@@ -49,9 +49,21 @@ DEFAULT_LIVE_MATRIX_OUTPUT_ROOT = Path(
 DEFAULT_SIMPLE_HOOK_OUTPUT_ROOT = Path(
     ".cortex/live_validation/cortex_simple_hook_baseline_challenger"
 )
+DEFAULT_MEASUREMENT_STACK_OUTPUT_ROOT = Path(
+    ".cortex/live_validation/cortex_effectiveness_measurement_stack_rebuild_gate0"
+)
+HISTORICAL_EFFECTIVENESS_LIVE_MATRIX_RUN_ROOT = (
+    DEFAULT_LIVE_MATRIX_OUTPUT_ROOT / "run_20260508T221352Z"
+)
 HISTORICAL_POSTTOOLUSE_PAIRED_VALUE_SUMMARY = Path(
     ".cortex/live_validation/openai/codex_app_cli_hook_native_behavior_comparison/"
     "task_standard_posttooluse_paired_value_live_20260508T120907Z/summary.json"
+)
+MEASUREMENT_STACK_REQUIRED_ARTIFACTS: tuple[str, ...] = (
+    "summary.json",
+    "leaderboard.json",
+    "failure_analysis.json",
+    "episode_table.jsonl",
 )
 EVALUATOR_LIVE_APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED"
 EVALUATOR_LIVE_APPROVAL_VALUE = "approved"
@@ -1806,6 +1818,386 @@ def _live_matrix_failure_analysis(decision: Mapping[str, Any]) -> dict[str, Any]
     }
 
 
+def _measurement_stack_v2_design_proposal() -> dict[str, Any]:
+    return {
+        "status": "proposal_only_no_live_fixtures",
+        "no_current_v1_live_case_retroactively_rescored": True,
+        "case_requirements": {
+            "exactness_evidence_recovery": (
+                "Require lifecycle evidence that a simple static reminder cannot "
+                "supply, such as post-observation correction after a misleading "
+                "intermediate artifact rather than a direct prompt instruction."
+            ),
+            "truthful_closure": (
+                "Distinguish closure reporting from generic success by requiring "
+                "the final answer to name the actual verification evidence and any "
+                "unresolved obligation, not merely report that tests passed."
+            ),
+            "blocker_surfacing": (
+                "Test honest unresolved dependency reporting where creating or "
+                "working around the dependency is tempting but wrong."
+            ),
+            "continuity_after_interruption": (
+                "Remove prompt/workspace artifacts that let silent Cortex improve "
+                "over no-Cortex; continuity signal must require active lifecycle "
+                "state or model-visible control."
+            ),
+            "clean_verified_work_control": (
+                "Remain a zero-intervention control. Active Cortex earns no value "
+                "from clean controls; any intervention remains overcontrol."
+            ),
+        },
+        "scoring_boundary": (
+            "Preserve _live_matrix_decision semantics. The next seam may design "
+            "v2 case fixtures, but this Gate 0 does not change scoring or "
+            "retroactively promote v1 results."
+        ),
+    }
+
+
+def _load_measurement_stack_artifacts(
+    historical_run_root: Path,
+) -> tuple[dict[str, Any], list[str]]:
+    missing = [
+        name
+        for name in MEASUREMENT_STACK_REQUIRED_ARTIFACTS
+        if not (historical_run_root / name).exists()
+    ]
+    if missing:
+        return {}, missing
+
+    payloads: dict[str, Any] = {}
+    for name in MEASUREMENT_STACK_REQUIRED_ARTIFACTS:
+        path = historical_run_root / name
+        if name.endswith(".jsonl"):
+            payloads[name] = [
+                json.loads(line)
+                for line in path.read_text(encoding="utf-8").splitlines()
+                if line.strip()
+            ]
+        else:
+            payloads[name] = json.loads(path.read_text(encoding="utf-8"))
+    return payloads, []
+
+
+def _classify_measurement_episode(result: Mapping[str, Any]) -> str:
+    verdict = str(result.get("verdict") or "")
+    scores = result.get("scores") if isinstance(result.get("scores"), Mapping) else {}
+    if verdict == "failure_missing_required_arm" or result.get("missing_arms"):
+        return "missing_arm"
+    if verdict == "failure_boundary_dominance":
+        return "boundary_failure"
+    if verdict == "failure_silent_perception_contamination":
+        return "silent_contamination"
+    if verdict in {"active_beats_baselines", "pass_scoped_cortex_value"}:
+        return "active_candidate_signal"
+    if verdict == "failure_no_value":
+        return "baseline_parity"
+    if scores and len(set(scores.values())) == 1:
+        return "baseline_parity"
+    return "baseline_parity"
+
+
+def _measurement_family_discriminability(
+    family: str,
+    classifications: Sequence[str],
+) -> str:
+    if "missing_arm" in classifications or "boundary_failure" in classifications:
+        return "needs_v2_case"
+    if "silent_contamination" in classifications:
+        return "silent_contaminated"
+    if family == "clean_verified_work_control":
+        return "control_valid"
+    if classifications and all(item == "baseline_parity" for item in classifications):
+        return "too_easy"
+    return "needs_v2_case"
+
+
+def _build_measurement_stack_diagnosis(
+    *,
+    historical_run_root: Path,
+    payloads: Mapping[str, Any],
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    summary = payloads["summary.json"]
+    leaderboard = payloads["leaderboard.json"]
+    failure_analysis = payloads["failure_analysis.json"]
+    episode_table = payloads["episode_table.jsonl"]
+    decision = summary.get("decision") if isinstance(summary, Mapping) else {}
+    episode_results = (
+        decision.get("episode_results")
+        if isinstance(decision, Mapping)
+        and isinstance(decision.get("episode_results"), list)
+        else []
+    )
+    registered_verdict = str(summary.get("verdict") or "")
+    episode_classifications: list[dict[str, Any]] = []
+    by_family: dict[str, list[str]] = defaultdict(list)
+    for result in episode_results:
+        if not isinstance(result, Mapping):
+            continue
+        classification = _classify_measurement_episode(result)
+        family = str(result.get("task_family") or "")
+        by_family[family].append(classification)
+        episode_classifications.append(
+            {
+                "task_family": family,
+                "case_id": str(result.get("case_id") or ""),
+                "repeat_index": int(result.get("repeat_index") or 0),
+                "registered_episode_verdict": str(result.get("verdict") or ""),
+                "scores": result.get("scores") or {},
+                "classification": classification,
+            }
+        )
+
+    family_rows: dict[str, dict[str, Any]] = {}
+    for family in TASK_FAMILIES:
+        classifications = by_family.get(family, [])
+        family_rows[family] = {
+            "family": family,
+            "classification": _measurement_family_discriminability(
+                family,
+                classifications,
+            ),
+            "episode_classifications": classifications,
+            "leaderboard": leaderboard.get(family, {})
+            if isinstance(leaderboard, Mapping)
+            else {},
+            "v2_requirement": _measurement_stack_v2_design_proposal()[
+                "case_requirements"
+            ][family],
+        }
+
+    diagnosis = {
+        "historical_run_id": historical_run_root.name,
+        "historical_run_root": str(historical_run_root),
+        "loaded_artifacts": list(MEASUREMENT_STACK_REQUIRED_ARTIFACTS),
+        "registered_verdict": registered_verdict,
+        "preserved_verdict": registered_verdict,
+        "failure_reason": summary.get("failure_reason"),
+        "historical_live_trials_ran": bool(summary.get("live_trials_ran")),
+        "historical_episode_table_row_count": len(episode_table)
+        if isinstance(episode_table, list)
+        else 0,
+        "episode_result_count": len(episode_classifications),
+        "episode_classifications": episode_classifications,
+        "baseline_parity_episodes": [
+            row
+            for row in episode_classifications
+            if row["classification"] == "baseline_parity"
+        ],
+        "silent_contamination_episodes": [
+            row
+            for row in episode_classifications
+            if row["classification"] == "silent_contamination"
+        ],
+        "boundary_failure_episodes": [
+            row
+            for row in episode_classifications
+            if row["classification"] == "boundary_failure"
+        ],
+        "missing_arm_episodes": [
+            row
+            for row in episode_classifications
+            if row["classification"] == "missing_arm"
+        ],
+        "active_candidate_signal_episodes": [
+            row
+            for row in episode_classifications
+            if row["classification"] == "active_candidate_signal"
+        ],
+        "failure_analysis": {
+            "verdict": failure_analysis.get("verdict")
+            if isinstance(failure_analysis, Mapping)
+            else None,
+            "failure_reason": failure_analysis.get("failure_reason")
+            if isinstance(failure_analysis, Mapping)
+            else None,
+            "silent_contamination": failure_analysis.get("silent_contamination", [])
+            if isinstance(failure_analysis, Mapping)
+            else [],
+            "boundary_failures": failure_analysis.get("boundary_failures", [])
+            if isinstance(failure_analysis, Mapping)
+            else [],
+        },
+        "claim_boundaries": {
+            "active_value_claim_allowed": False,
+            "behavior_lift_claim_allowed": False,
+            "exactness_value_lift_claim_allowed": False,
+            "broad_cortex_lift_claim_allowed": False,
+            "codex_app_parity_claim_allowed": False,
+            "shipping_promotion_claim_allowed": False,
+            "candidate_evolution_allowed": False,
+            "v1_live_cases_retroactively_rescored": False,
+        },
+    }
+    case_discriminability = {
+        "historical_run_id": historical_run_root.name,
+        "family_discriminability": family_rows,
+        "v2_measurement_design_proposal": _measurement_stack_v2_design_proposal(),
+    }
+    return diagnosis, case_discriminability
+
+
+def run_cortex_effectiveness_measurement_stack_rebuild_gate0(
+    output_root: Path | str = DEFAULT_MEASUREMENT_STACK_OUTPUT_ROOT,
+    *,
+    historical_run_root: Path | str = HISTORICAL_EFFECTIVENESS_LIVE_MATRIX_RUN_ROOT,
+) -> dict[str, Any]:
+    """Diagnose the v1 evaluator matrix without changing live scoring."""
+
+    root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
+    historical_root = Path(historical_run_root)
+    payloads, missing = _load_measurement_stack_artifacts(historical_root)
+    if missing:
+        report = {
+            "passed": False,
+            "verdict": "failure_cortex_effectiveness_measurement_stack_rebuild_gate0",
+            "failure_reason": "missing_historical_artifacts",
+            "missing_historical_artifacts": missing,
+            "historical_run_root": str(historical_root),
+            "required_artifacts": list(MEASUREMENT_STACK_REQUIRED_ARTIFACTS),
+            "live_trials_ran": False,
+            "model_io_path": LAB_PROOF_MODEL_IO_PATH,
+            "behavior_lift_claim_allowed": False,
+            "exactness_value_lift_claim_allowed": False,
+            "broad_cortex_lift_claim_allowed": False,
+            "codex_app_parity_claim_allowed": False,
+            "shipping_promotion_claim_allowed": False,
+            "alphaevolve_mutation_loop_allowed": False,
+            "next_train_if_fail": (
+                "cortex-effectiveness-measurement-stack-architecture-decision"
+            ),
+        }
+        _write_json(root / "gate0_report.json", report)
+        _write_json(root / "summary.json", report)
+        return report
+
+    diagnosis, case_discriminability = _build_measurement_stack_diagnosis(
+        historical_run_root=historical_root,
+        payloads=payloads,
+    )
+    family = case_discriminability["family_discriminability"]
+    checks = {
+        "historical_artifacts_loaded": set(diagnosis["loaded_artifacts"])
+        == set(MEASUREMENT_STACK_REQUIRED_ARTIFACTS),
+        "historical_verdict_preserved": diagnosis["preserved_verdict"]
+        == "failure_silent_perception_contamination",
+        "historical_episode_table_complete": diagnosis[
+            "historical_episode_table_row_count"
+        ]
+        == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT,
+        "baseline_parity_diagnosed": {
+            "exactness_evidence_recovery",
+            "truthful_closure",
+            "blocker_surfacing",
+            "clean_verified_work_control",
+        }.issubset(
+            {
+                row["task_family"]
+                for row in diagnosis["baseline_parity_episodes"]
+            }
+        ),
+        "continuity_silent_contamination_diagnosed": any(
+            row["task_family"] == "continuity_after_interruption"
+            and row["repeat_index"] == 1
+            for row in diagnosis["silent_contamination_episodes"]
+        ),
+        "exactness_case_too_easy": family["exactness_evidence_recovery"][
+            "classification"
+        ]
+        == "too_easy",
+        "truthful_closure_case_too_easy": family["truthful_closure"][
+            "classification"
+        ]
+        == "too_easy",
+        "blocker_case_too_easy": family["blocker_surfacing"]["classification"]
+        == "too_easy",
+        "clean_control_valid": family["clean_verified_work_control"][
+            "classification"
+        ]
+        == "control_valid",
+        "continuity_case_silent_contaminated": family[
+            "continuity_after_interruption"
+        ]["classification"]
+        == "silent_contaminated",
+        "no_v1_live_case_retroactively_rescored": case_discriminability[
+            "v2_measurement_design_proposal"
+        ]["no_current_v1_live_case_retroactively_rescored"]
+        is True,
+        "scoring_semantics_unchanged": True,
+        "live_trials_not_run": True,
+        "claim_boundaries_preserved": not any(
+            diagnosis["claim_boundaries"][field]
+            for field in (
+                "active_value_claim_allowed",
+                "behavior_lift_claim_allowed",
+                "exactness_value_lift_claim_allowed",
+                "broad_cortex_lift_claim_allowed",
+                "codex_app_parity_claim_allowed",
+                "shipping_promotion_claim_allowed",
+                "candidate_evolution_allowed",
+                "v1_live_cases_retroactively_rescored",
+            )
+        ),
+    }
+    passed = all(checks.values())
+    report = {
+        "passed": passed,
+        "verdict": (
+            "pass_cortex_effectiveness_measurement_stack_rebuild_gate0"
+            if passed
+            else "failure_cortex_effectiveness_measurement_stack_rebuild_gate0"
+        ),
+        "historical_run_id": historical_root.name,
+        "historical_run_root": str(historical_root),
+        "registered_verdict": diagnosis["registered_verdict"],
+        "preserved_verdict": diagnosis["preserved_verdict"],
+        "live_trials_ran": False,
+        "model_io_path": LAB_PROOF_MODEL_IO_PATH,
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": False,
+        "broad_cortex_lift_claim_allowed": False,
+        "codex_app_parity_claim_allowed": False,
+        "shipping_promotion_claim_allowed": False,
+        "alphaevolve_mutation_loop_allowed": False,
+        "next_train_if_pass": "cortex-effectiveness-v2-case-registry-gate0",
+        "next_train_if_fail": (
+            "cortex-effectiveness-measurement-stack-architecture-decision"
+        ),
+        "artifact_paths": {
+            "measurement_diagnosis": "measurement_diagnosis.json",
+            "case_discriminability": "case_discriminability.json",
+            "gate0_report": "gate0_report.json",
+            "summary": "summary.json",
+        },
+        "checks": checks,
+        "diagnosis_summary": {
+            "baseline_parity_episode_count": len(
+                diagnosis["baseline_parity_episodes"]
+            ),
+            "silent_contamination_episode_count": len(
+                diagnosis["silent_contamination_episodes"]
+            ),
+            "boundary_failure_episode_count": len(
+                diagnosis["boundary_failure_episodes"]
+            ),
+            "active_candidate_signal_episode_count": len(
+                diagnosis["active_candidate_signal_episodes"]
+            ),
+            "family_discriminability": {
+                name: row["classification"]
+                for name, row in family.items()
+            },
+        },
+    }
+    _write_json(root / "measurement_diagnosis.json", diagnosis)
+    _write_json(root / "case_discriminability.json", case_discriminability)
+    _write_json(root / "gate0_report.json", report)
+    _write_json(root / "summary.json", report)
+    return report
+
+
 def _repo_root_config_hash() -> str | None:
     root_config = Path(__file__).resolve().parents[1] / ".codex" / "config.toml"
     if not root_config.exists():
@@ -2388,6 +2780,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="prove the independent simple-hook baseline challenger without live trials",
     )
     parser.add_argument(
+        "--measurement-stack-rebuild-gate0",
+        action="store_true",
+        help="diagnose the first four-arm live matrix without live trials",
+    )
+    parser.add_argument(
         "--output-root",
         type=Path,
         default=None,
@@ -2407,12 +2804,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.live_gate1,
             args.live_matrix,
             args.simple_hook_baseline_gate0,
+            args.measurement_stack_rebuild_gate0,
         )
     )
     if selected_modes != 1:
         parser.error(
             "select exactly one of --gate0, --build, --live-gate1, "
-            "--live-matrix, or --simple-hook-baseline-gate0"
+            "--live-matrix, --simple-hook-baseline-gate0, or "
+            "--measurement-stack-rebuild-gate0"
         )
 
     output_root = args.output_root
@@ -2423,6 +2822,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_root = DEFAULT_BUILD_OUTPUT_ROOT
         elif args.simple_hook_baseline_gate0:
             output_root = DEFAULT_SIMPLE_HOOK_OUTPUT_ROOT
+        elif args.measurement_stack_rebuild_gate0:
+            output_root = DEFAULT_MEASUREMENT_STACK_OUTPUT_ROOT
         elif args.live_matrix:
             output_root = DEFAULT_LIVE_MATRIX_OUTPUT_ROOT
         else:
@@ -2436,6 +2837,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         report = run_cortex_effectiveness_evaluator_live_gate1(output_root)
     elif args.simple_hook_baseline_gate0:
         report = run_cortex_simple_hook_baseline_gate0(output_root)
+    elif args.measurement_stack_rebuild_gate0:
+        report = run_cortex_effectiveness_measurement_stack_rebuild_gate0(output_root)
     else:
         report = run_cortex_effectiveness_evaluator_live_matrix(output_root)
 

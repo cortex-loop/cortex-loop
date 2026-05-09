@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-executive-effectiveness-evaluator-live-matrix-run`
-### Next Product Train
 - Slug: `cortex-effectiveness-measurement-stack-rebuild`
-- Surface: `no-live lab/proof evaluator measurement-stack remediation`
-- Why now: Live artifact `run_20260508T221352Z` produced 60 rows across no-Cortex, simple-hook, silent Cortex, and active Cortex. Active Cortex did not beat the simple-hook baseline on any family; exactness, truthful closure, blocker surfacing, and clean verified-work controls were all baseline parity, and continuity repeat 1 improved equally in silent and active arms. The current matrix can run, but it cannot yet isolate active lifecycle-policy value.
+### Next Product Train
+- Slug: `cortex-effectiveness-v2-case-registry-gate0`
+- Surface: `no-live lab/proof evaluator v2 case-registry design`
+- Why now: The measurement-stack Gate 0 preserved `failure_silent_perception_contamination` for `run_20260508T221352Z` and diagnosed the v1 matrix as under-discriminating: exactness/evidence recovery, truthful closure, blocker surfacing, and clean controls were baseline parity, while continuity repeat 1 was silent-contaminated. The next move is to design sharper v2 cases before any live rerun, candidate generator, program database promotion, or value claim.
 
 ### Research Lines Under Evaluation
 
