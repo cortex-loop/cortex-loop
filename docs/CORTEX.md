@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-effectiveness-v2-live-matrix-run`
-### Next Product Train
 - Slug: `cortex-active-policy-contraction-decision`
-- Surface: `no-live architecture and contraction decision`
-- Why now: The approval-gated v2 live matrix `run_20260509T112542Z` completed 60 rows across no-Cortex, simple-hook, silent Cortex, and active Cortex. Verdict: `failure_no_value`; all arms tied on every v2 family, active Cortex had zero family wins, root config stayed unchanged, no runtime snapshot loaded, no hidden-verifier leakage or overcontrol was recorded, and `run_20260508T221352Z` remains preserved as earlier negative v1 evidence. The registered verdict handling queues contraction decision rather than policy tuning, measurement claim, live rerun, or AlphaEvolve candidate evolution.
+### Next Product Train
+- Slug: `cortex-posttooluse-proof-surface-role-demotion`
+- Surface: `no-live archive and role-demotion`
+- Why now: The contraction decision `decision_contract_posttooluse_proof_surfaces` from `docs/recon/cortex_active_policy_contraction_decision.md` retained the smaller UserPromptSubmit + Stop + TaskStandardSpine spine as value-unearned product/evidence law, while classifying PostToolUse task-standard context as redesign-only and the PostToolUse-specific Gate 0/live proof train as archive/role-demotion material. The v2 artifact `run_20260509T112542Z` had all arms tied, active family_wins zero, and no boundary dominance; the PostToolUse paired-value artifact had already ended no-value. The next move is contraction of obsolete proof surfaces, not product code deletion, policy tuning, live rerun, or candidate evolution.
 
 ### Research Lines Under Evaluation
 

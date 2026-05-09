@@ -318,6 +318,10 @@ Active docs:
   approval-gated 60-row v2 four-arm evaluator run producing
   `failure_no_value`: active Cortex tied no-Cortex, the simple-hook baseline,
   and silent Cortex on every v2 family, with no boundary dominance
+- [Cortex Active Policy Contraction Decision](recon/cortex_active_policy_contraction_decision.md) —
+  no-live contraction decision from the v2 `failure_no_value` result,
+  retaining the smaller UserPromptSubmit/Stop/task-standard spine while
+  queueing PostToolUse-specific proof-surface role-demotion
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation

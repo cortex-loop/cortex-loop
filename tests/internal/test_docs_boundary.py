@@ -337,8 +337,8 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_PATH = (
     / "cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun.md"
 )
 
-CURRENT_WORK_SLUG = "cortex-effectiveness-v2-live-matrix-run"
-NEXT_PRODUCT_TRAIN_SLUG = "cortex-active-policy-contraction-decision"
+CURRENT_WORK_SLUG = "cortex-active-policy-contraction-decision"
+NEXT_PRODUCT_TRAIN_SLUG = "cortex-posttooluse-proof-surface-role-demotion"
 CONTEXT_LOOP_TRACE_REMEDIATION_RECON_PATH = (
     REPO_ROOT
     / "docs"
@@ -458,6 +458,12 @@ CORTEX_EFFECTIVENESS_V2_LIVE_MATRIX_RUN_PATH = (
     / "recon"
     / "cortex_effectiveness_v2_live_matrix_run.md"
 )
+CORTEX_ACTIVE_POLICY_CONTRACTION_DECISION_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_active_policy_contraction_decision.md"
+)
 
 CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_AFTER_SHARED_TOOL_EVIDENCE_PATH = (
     REPO_ROOT
@@ -571,34 +577,36 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
 ) -> None:
     assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     work_note = status["work_today"]["note"].lower()
-    assert "approval-gated cortex effectiveness v2 live matrix" in work_note
+    assert "no-live contraction decision" in work_note
+    assert "decision_contract_posttooluse_proof_surfaces" in work_note
     assert "run_20260509t112542z" in work_note
-    assert ".cortex/live_validation/cortex_effectiveness_v2_live_matrix/" in work_note
-    assert "`failure_no_value`" in work_note
+    assert "failure_no_value" in work_note
     assert "`60 live rows`" in work_note
-    assert "no_cortex_baseline" in work_note
-    assert "simple_hook_baseline" in work_note
-    assert "cortex_silent_perception" in work_note
-    assert "cortex_active_policy" in work_note
-    assert "all four arms tied on every row" in work_note
-    assert "family_wins` was zero" in work_note
-    assert "active_did_not_beat_simple_hook_on_any_family" in work_note
+    assert "all four arms tied on every v2 family" in work_note
+    assert "family_wins=0" in work_note
     assert "root config stayed unchanged" in work_note
     assert "no runtime snapshot loaded" in work_note
     assert "no hidden-verifier leakage" in work_note
     assert "clean-control overcontrol" in work_note
-    assert "zero model-visible cortex output" in work_note
     assert "run_20260508t221352z" in work_note
     assert "failure_silent_perception_contamination" in work_note
-    assert "no v1 artifact was retroactively rescored" in work_note
-    assert "exactness_evidence_recovery_v2" in work_note
-    assert "truthful_closure_v2" in work_note
-    assert "blocker_surfacing_v2" in work_note
-    assert "continuity_after_interruption_v2" in work_note
-    assert "clean_verified_work_control_v2" in work_note
-    assert "cortex_codex_app_cli_evaluator_live_approved=approved" in work_note
-    assert "--v2-live-matrix" in work_note
-    assert "negative evaluator evidence only" in work_note
+    assert "without rescoring" in work_note
+    assert "userpromptsubmit task-standard formation" in work_note
+    assert "stop closure/continuation" in work_note
+    assert "taskstandardspine" in work_note
+    assert "sre tool-evidence classification" in work_note
+    assert "value-unearned product/evidence law" in work_note
+    assert "posttooluse task-standard context is classified as redesign-only" in work_note
+    assert "posttooluse-specific gate 0/live proof train" in work_note
+    assert "archive/role-demotion material" in work_note
+    assert "does not run live" in work_note
+    assert "delete product code" in work_note
+    assert "product host behavior" in work_note
+    assert "model-visible cortex text" in work_note
+    assert "evaluator scoring" in work_note
+    assert "hidden-verifier boundaries" in work_note
+    assert "active product policy" in work_note
+    assert "candidate policy" in work_note
     assert "does not earn cortex value" in work_note
     assert "behavior lift" in work_note
     assert "exactness value lift" in work_note
@@ -607,37 +615,38 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
     assert "shipping promotion" in work_note
     assert "product progress" in work_note
     assert "alphaevolve candidate-evolution permission" in work_note
-    assert "no product host behavior" in work_note
-    assert "model-visible cortex text" in work_note
-    assert "evaluator scoring" in work_note
-    assert "hidden verifier boundary" in work_note
-    assert "candidate policy" in work_note
-    assert "next train is `cortex-active-policy-contraction-decision`" in work_note
+    assert "next train is `cortex-posttooluse-proof-surface-role-demotion`" in work_note
 
     next_train = status["next_product_train"]
     assert next_train["slug"] == NEXT_PRODUCT_TRAIN_SLUG
-    assert next_train["surface"] == "no-live architecture and contraction decision"
-    assert "active cortex policy machinery" in next_train[
+    assert next_train["surface"] == "no-live archive and role-demotion"
+    assert "role-demoting or archiving posttooluse-specific proof surfaces" in next_train[
         "executive_benefit"
     ].lower()
-    assert "retained, contracted, archived, role-demoted, or redesigned" in next_train["executive_benefit"].lower()
+    assert "general four-arm evaluator owns value comparison" in next_train["executive_benefit"].lower()
+    assert "failure_no_value" in next_train["executive_benefit"].lower()
+    assert "decision_contract_posttooluse_proof_surfaces" in next_train["why_now"].lower()
+    assert "cortex_active_policy_contraction_decision.md" in next_train["why_now"].lower()
+    assert "userpromptsubmit + stop + taskstandardspine" in next_train["why_now"].lower()
+    assert "posttooluse task-standard context as redesign-only" in next_train["why_now"].lower()
+    assert "posttooluse-specific gate 0/live proof train" in next_train["why_now"].lower()
+    assert "archive/role-demotion material" in next_train["why_now"].lower()
     assert "run_20260509t112542z" in next_train["why_now"].lower()
-    assert "failure_no_value" in next_train["why_now"].lower()
     assert "all arms tied" in next_train["why_now"].lower()
-    assert "zero family wins" in next_train["why_now"].lower()
-    assert "no runtime snapshot loaded" in next_train["why_now"].lower()
-    assert "no hidden-verifier leakage" in next_train["why_now"].lower()
-    assert "run_20260508t221352z" in next_train["why_now"].lower()
-    assert "contraction decision" in next_train["why_now"].lower()
+    assert "active family_wins zero" in next_train["why_now"].lower()
+    assert "product code deletion" in next_train["why_now"].lower()
+    assert "policy tuning" in next_train["why_now"].lower()
+    assert "live rerun" in next_train["why_now"].lower()
+    assert "candidate evolution" in next_train["why_now"].lower()
     primary_metric = next_train["primary_metric"].lower()
-    assert "contraction decision map" in primary_metric
-    assert "run_20260509t112542z" in primary_metric
-    assert "owner surfaces" in primary_metric
-    assert "retain/delete/archive/role-demote/consolidate" in primary_metric
-    assert "behavior-preservation proof" in primary_metric
+    assert "role-demotion/archive map" in primary_metric
+    assert "posttooluse-specific gate 0 modes" in primary_metric
+    assert "general evaluator replay" in primary_metric
+    assert "product files are explicitly untouched" in primary_metric
     guardrail = next_train["guardrail"].lower()
     assert "no live codex run" in guardrail
     assert "no product code deletion" in guardrail
+    assert "no product behavior change" in guardrail
     assert "product host behavior" in guardrail
     assert "model-visible cortex text" in guardrail
     assert "evaluator scoring" in guardrail
@@ -645,18 +654,20 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
     assert "hidden-verifier boundaries" in guardrail
     assert "root hook" in guardrail
     assert "sre law" in guardrail
+    assert "active product policy" in guardrail
     assert "alphaevolve candidate policy" in guardrail
     assert "do not claim cortex value" in guardrail
     assert "behavior lift" in guardrail
     assert "shipping promotion" in guardrail
-    assert "do not treat one no-value matrix as permission to delete product law blindly" in guardrail
+    assert "do not remove or hide historical negative evidence" in guardrail
     kill_rule = next_train["kill_rule"].lower()
-    assert "credits cortex value despite simple-hook/no-cortex parity" in kill_rule
-    assert "ignores the v2 `failure_no_value` artifact" in kill_rule
-    assert "deletion without owner/proof mapping" in kill_rule
-    assert "mutates product behavior or evaluator scoring" in kill_rule
-    assert "re-runs live" in kill_rule
-    assert "queues candidate evolution before contraction decision" in kill_rule
+    assert "deletes product code" in kill_rule
+    assert "rewrites evaluator scoring" in kill_rule
+    assert "removes historical evidence without a preserved replay/reference" in kill_rule
+    assert "treats role-demotion as product progress" in kill_rule
+    assert "live rerun" in kill_rule
+    assert "candidate evolution" in kill_rule
+    assert "changes posttooluse runtime behavior" in kill_rule
 
 
 def _find_repo_files(filename: str) -> list[str]:
@@ -1416,9 +1427,10 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "claude_code_desktop_lifecycle_spine_branch_disposition.md",
         "claude_code_desktop_pretooluse_probe.md",
         "claude_code_user_scope_plugin_managed_worktree_probe.md",
-        "claude_code_user_scope_plugin_pretooluse_probe.md",
-        "codex_app_hook_probe.md",
-        "cortex_automation_product_boundary_contract.md",
+            "claude_code_user_scope_plugin_pretooluse_probe.md",
+            "codex_app_hook_probe.md",
+            "cortex_active_policy_contraction_decision.md",
+            "cortex_automation_product_boundary_contract.md",
         "cortex_codex_app_cli_astro_three_arm_fixture_refresh.md",
         "cortex_codex_app_cli_communication_boundary_audit_and_hardening.md",
         "cortex_codex_app_cli_hook_contract_capture_boundary_remediation.md",
@@ -4613,6 +4625,75 @@ def test_cortex_effectiveness_v2_live_matrix_run_records_no_value_result() -> No
     _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
+def test_cortex_active_policy_contraction_decision_records_role_demotion() -> None:
+    text = _read(CORTEX_ACTIVE_POLICY_CONTRACTION_DECISION_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    for phrase in (
+        "Surface: no-live architecture / contraction decision",
+        "`decision_contract_posttooluse_proof_surfaces`",
+        "`run_20260509T112542Z`",
+        "`failure_no_value`",
+        "`60 live rows`",
+        "all four arms tied on every v2 family",
+        "`family_wins=0`",
+        "no dominance boundary failed",
+        "Root config stayed\nunchanged",
+        "no runtime snapshot loaded",
+        "no hidden-verifier leakage",
+        "trace\nambiguity",
+        "repeated intervention loop",
+        "clean-control overcontrol",
+        "`run_20260508T221352Z`",
+        "`failure_silent_perception_contamination`",
+        "no v1 artifact is retroactively\nrescored",
+        "UserPromptSubmit task-standard scaffold",
+        "PostToolUse task-standard context",
+        "Stop continuation / closure gate",
+        "`TaskStandardSpine` state law",
+        "SRE tool-evidence classifier",
+        "PostToolUse-specific Gate 0/live proof surfaces",
+        "v2 evaluator/simple-hook infrastructure",
+        "`retain`",
+        "`redesign`",
+        "`consolidate`",
+        "`archive` / `role-demote`",
+        "retained active-policy spine",
+        "PostToolUse task-standard context as earned active policy",
+        "`cortex-posttooluse-proof-surface-role-demotion`",
+    ):
+        assert phrase in text
+
+    for forbidden in (
+        "No live Codex run",
+        "No product code deletion",
+        "No product host behavior change",
+        "No model-visible Cortex text change",
+        "No evaluator scoring or fixture change",
+        "No hidden-verifier boundary change",
+        "No root hook change",
+        "No SRE law change",
+        "No AlphaEvolve candidate-policy mutation",
+        "No Cortex value",
+        "behavior lift",
+        "exactness value lift",
+        "broad Cortex lift",
+        "Codex App parity",
+        "shipping promotion",
+        "product progress",
+        "candidate-evolution\n  permission",
+    ):
+        assert forbidden in text
+
+    assert "recon/cortex_active_policy_contraction_decision.md" in docs_index
+    assert (
+        "docs/recon/cortex_active_policy_contraction_decision.md"
+        in status["active_docs"]
+    )
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
+
+
 def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
     cortex_doc = _read(CORTEX_DOC_PATH)
     sre_doc = _read(CORTEX_V2_SRE_PATH)
@@ -5018,12 +5099,12 @@ def test_status_registry_is_complete_and_stable() -> None:
     assert "no live codex run" in status["next_product_train"][
         "guardrail"
     ].lower()
-    assert "owner/proof mapping" in status["next_product_train"][
+    assert "historical negative evidence" in status["next_product_train"][
         "guardrail"
     ].lower()
     assert (
         status["next_product_train"]["surface"]
-        == "no-live architecture and contraction decision"
+        == "no-live archive and role-demotion"
     )
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
     assert "brain-capability-observation-and-inference" in deferred_lines
@@ -5109,31 +5190,26 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`cortex-effectiveness-v2-live-matrix-run`" in text
+    assert "`cortex-active-policy-contraction-decision`" in text
     assert "run_20260509T112542Z" in text
     assert "failure_no_value" in text
+    assert "decision_contract_posttooluse_proof_surfaces" in text
     assert "run_20260508T221352Z" in text
     assert "failure_silent_perception_contamination" in text
-    assert "v2_case_registry.json" in text
-    assert "live_plan.json" in text
-    assert "episode_table.jsonl" in text
-    assert "leaderboard.json" in text
-    assert "failure_analysis.json" in text
-    assert "exactness_evidence_recovery_v2" in text
-    assert "truthful_closure_v2" in text
-    assert "blocker_surfacing_v2" in text
-    assert "continuity_after_interruption_v2" in text
-    assert "clean_verified_work_control_v2" in text
     assert "60 live rows" in text
-    assert "Active Cortex did not beat no-Cortex" in text
+    assert "family_wins=0" in text
+    assert "UserPromptSubmit task-standard formation" in text
+    assert "Stop closure/continuation" in text
+    assert "TaskStandardSpine" in text
+    assert "PostToolUse-specific Gate 0/live proof train" in text
     assert (
         "- Next product train after the current focus: "
-        "`cortex-active-policy-contraction-decision`"
+        "`cortex-posttooluse-proof-surface-role-demotion`"
     ) in text
-    assert "- Train: `cortex-active-policy-contraction-decision`" in text
-    assert "no-live architecture and contraction decision" in text.lower()
-    assert "contraction decision map" in text.lower()
-    assert "owner/proof mapping" in text.lower()
+    assert "- Train: `cortex-posttooluse-proof-surface-role-demotion`" in text
+    assert "no-live archive and role-demotion" in text.lower()
+    assert "role-demotion/archive map" in text.lower()
+    assert "historical negative evidence" in text.lower()
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
