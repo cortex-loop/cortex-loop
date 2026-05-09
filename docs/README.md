@@ -341,6 +341,10 @@ Active docs:
   no-live repair and corrected replay of `run_20260509T192719Z`, preserving
   the raw `fail` result while reclassifying simple-hook context as lab support
   metadata and exposing `failure_silent_perception_contamination`
+- [Cortex Retained-Spine Measurement-Stack Remediation](recon/cortex_retained_spine_measurement_stack_remediation.md) —
+  no-live diagnosis of the corrected retained-spine replay, preserving raw
+  `fail` evidence while classifying clean-control silent contamination and
+  queueing clean-control stability proof before any rerun or policy search
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation
