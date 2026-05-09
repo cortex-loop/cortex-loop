@@ -307,6 +307,10 @@ Active docs:
   no-live diagnosis of the first four-arm evaluator matrix, preserving
   `failure_silent_perception_contamination`, naming baseline-parity and
   silent-contamination causes, and queueing the v2 case registry
+- [Cortex Effectiveness V2 Case Registry Gate 0](recon/cortex_effectiveness_v2_case_registry_gate0.md) —
+  no-live v2 evaluator case registry defining immutable specs for exactness,
+  truthful closure, blocker surfacing, continuity, and clean-control families
+  before any live rerun or candidate evolution
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation
