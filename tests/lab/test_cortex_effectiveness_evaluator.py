@@ -37,6 +37,7 @@ from lab.cortex_effectiveness_evaluator import (
     run_cortex_effectiveness_evaluator_gate0,
     run_cortex_effectiveness_evaluator_live_gate1,
     run_cortex_effectiveness_evaluator_live_matrix,
+    run_cortex_retained_active_policy_spine_gate0,
     run_cortex_simple_hook_baseline_gate0,
 )
 from lab.cortex_simple_hook_baseline import (
@@ -1034,6 +1035,65 @@ def test_simple_hook_baseline_cli_passes(tmp_path: Path) -> None:
     assert (output_root / "summary.json").exists()
 
 
+def test_retained_active_policy_spine_gate0_writes_contract(tmp_path: Path) -> None:
+    report = run_cortex_retained_active_policy_spine_gate0(output_root=tmp_path)
+    contract = json.loads((tmp_path / "retained_spine_contract.json").read_text())
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_cortex_retained_active_policy_spine_gate0"
+    assert report["model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+    assert report["live_trials_ran"] is False
+    assert report["retained_spine_id"] == "userpromptsubmit_stop_taskstandard_spine"
+    assert set(report["retained_component_ids"]) == {
+        "userpromptsubmit_task_standard_formation",
+        "stop_closure_continuation_gate",
+        "taskstandardspine_state_law",
+        "sre_tool_evidence_classifier",
+    }
+    assert report["checks"]["model_io_paths_named"] is True
+    assert report["checks"]["simple_hook_parity_blocks_value"] is True
+    assert report["checks"]["posttooluse_role_demoted"] is True
+    assert report["checks"]["candidate_evolution_not_allowed"] is True
+    assert report["posttooluse_reactivated_as_earned_policy"] is False
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["alphaevolve_candidate_evolution_allowed"] is False
+    assert report["next_train_if_pass"] == (
+        "cortex-retained-active-policy-spine-live-gate1"
+    )
+    assert contract["seam_model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+    assert contract["retained_policy_candidate_for_next_gate"][
+        "simple_hook_parity_blocks_value"
+    ] is True
+    assert contract["retained_policy_candidate_for_next_gate"][
+        "candidate_evolution_allowed"
+    ] is False
+    assert "PostToolUse task-standard context" in str(contract["excluded_surfaces"])
+    assert (tmp_path / "gate0_report.json").exists()
+    assert (tmp_path / "summary.json").exists()
+
+
+def test_retained_active_policy_spine_cli_passes(tmp_path: Path) -> None:
+    output_root = tmp_path / "retained_spine"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--retained-active-policy-spine-gate0",
+            "--require-pass",
+            "--output-root",
+            str(output_root),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "pass_cortex_retained_active_policy_spine_gate0" in result.stdout
+    assert (output_root / "retained_spine_contract.json").exists()
+    assert (output_root / "summary.json").exists()
+
+
 def test_live_gate1_cli_passes_and_live_matrix_cli_refuses(tmp_path: Path) -> None:
     gate_root = tmp_path / "live_gate1"
     gate = subprocess.run(
@@ -1079,6 +1139,7 @@ def test_gate0_source_keeps_alphaevolve_loop_deferred() -> None:
     assert "--measurement-stack-rebuild-gate0" in source
     assert "--v2-case-registry-gate0" in source
     assert "--v2-live-matrix-gate1" in source
+    assert "--retained-active-policy-spine-gate0" in source
     assert "alphaevolve_loop_later" in source
     assert "program_database_fields" in source
     assert "candidate_representation" in source

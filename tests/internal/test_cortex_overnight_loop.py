@@ -142,6 +142,29 @@ def test_classify_next_work_allows_v2_live_matrix_gate1_no_live() -> None:
     )
 
 
+def test_classify_next_work_allows_retained_active_policy_spine_gate0() -> None:
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-retained-active-policy-spine-gate0",
+            surface="no-live retained-spine proof gate",
+            guardrail="No live Codex run in this seam.",
+            primary_metric=(
+                "Produce a retained spine contract with model-I/O paths, "
+                "simple-hook parity constraints, and forbidden claims."
+            ),
+        ),
+        _git(),
+    )
+
+    assert decision.status == "ready"
+    assert decision.safe_to_auto_merge is True
+    assert decision.live_codex_allowed is False
+    assert (
+        "python3 lab/cortex_effectiveness_evaluator.py --retained-active-policy-spine-gate0 --require-pass"
+        in decision.allowed_commands
+    )
+
+
 def test_classify_next_work_allows_registered_v2_live_but_never_auto_merges() -> None:
     decision = loop.classify_next_work(
         _status(

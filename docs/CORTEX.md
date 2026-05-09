@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-posttooluse-proof-surface-role-demotion`
-### Next Product Train
 - Slug: `cortex-retained-active-policy-spine-gate0`
-- Surface: `no-live retained-spine proof gate`
-- Why now: The role-demotion seam `decision_role_demote_posttooluse_specific_proof_train` moved the PostToolUse-specific Gate 0/live train to non-current historical support and left product behavior untouched. The next step is to prove what the retained UserPromptSubmit + Stop + TaskStandardSpine spine still owns before any redesign, live rerun, product deletion, or AlphaEvolve candidate evolution.
+### Next Product Train
+- Slug: `cortex-retained-active-policy-spine-live-gate1`
+- Surface: `no-live retained-spine evaluator dry-run gate`
+- Why now: The retained-spine Gate 0 seam `pass_cortex_retained_active_policy_spine_gate0` named the smallest retained active-policy spine and kept PostToolUse-specific proof surfaces role-demoted. The next step is a no-live evaluator Gate 1 that compares the retained spine against `no_cortex_baseline`, `simple_hook_baseline`, and `cortex_silent_perception` without running live or changing product behavior.
 
 ### Research Lines Under Evaluation
 

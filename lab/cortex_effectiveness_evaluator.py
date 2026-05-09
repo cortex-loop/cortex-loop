@@ -61,6 +61,9 @@ DEFAULT_V2_LIVE_GATE1_OUTPUT_ROOT = Path(
 DEFAULT_V2_LIVE_MATRIX_OUTPUT_ROOT = Path(
     ".cortex/live_validation/cortex_effectiveness_v2_live_matrix"
 )
+DEFAULT_RETAINED_SPINE_OUTPUT_ROOT = Path(
+    ".cortex/live_validation/cortex_retained_active_policy_spine_gate0"
+)
 HISTORICAL_EFFECTIVENESS_LIVE_MATRIX_RUN_ROOT = (
     DEFAULT_LIVE_MATRIX_OUTPUT_ROOT / "run_20260508T221352Z"
 )
@@ -81,6 +84,9 @@ EVALUATOR_LIVE_MATRIX_COMMAND = (
 )
 EVALUATOR_V2_LIVE_MATRIX_COMMAND = (
     "python3 lab/cortex_effectiveness_evaluator.py --v2-live-matrix"
+)
+RETAINED_SPINE_LIVE_GATE1_COMMAND = (
+    "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-gate1"
 )
 LIVE_MATRIX_REPEAT_COUNT = 3
 SIMPLE_HOOK_LOC_LIMIT = 500
@@ -4276,6 +4282,317 @@ def run_cortex_effectiveness_v2_live_matrix(
     return report
 
 
+def retained_active_policy_spine_contract() -> dict[str, Any]:
+    """Return the no-live retained active-policy spine contract."""
+
+    retained_components: list[dict[str, Any]] = [
+        {
+            "component_id": "userpromptsubmit_task_standard_formation",
+            "retained_role": "prospective task-set formation",
+            "owner_modules": [
+                "cortex/hosts/openai/codex_app_cli_hook_coordinator.py",
+                "cortex/hosts/openai/codex_app_cli_hook_client.py",
+            ],
+            "model_io_path": "Codex UserPromptSubmit hookSpecificOutput.additionalContext",
+            "existing_proof_surfaces": [
+                "docs/recon/cortex_codex_app_cli_task_standard_live_capture_rerun.md",
+                "docs/recon/cortex_codex_app_cli_task_standard_stop_gating_live_run.md",
+                "tests/product/test_openai_codex_app_cli_hook_coordinator.py",
+                "tests/product/test_openai_codex_app_cli_hook_client.py",
+            ],
+            "value_status": "retained_but_value_unearned",
+            "simple_hook_parity_constraint": (
+                "task-set formation earns no Cortex value unless paired live "
+                "evidence beats simple_hook_baseline and no_cortex_baseline"
+            ),
+            "future_gate_requirement": (
+                "The retained-spine evaluator gate must compare this path "
+                "against no-Cortex, simple hook, and silent Cortex before search."
+            ),
+        },
+        {
+            "component_id": "stop_closure_continuation_gate",
+            "retained_role": "late truthful-closure and continuation gate",
+            "owner_modules": [
+                "cortex/hosts/openai/codex_app_cli_hook_coordinator.py",
+                "cortex/hosts/openai/codex_app_cli_hook_client.py",
+            ],
+            "model_io_path": "Codex Stop hookSpecificOutput or block stdout continuation",
+            "existing_proof_surfaces": [
+                "docs/recon/cortex_codex_app_cli_task_standard_stop_gating_live_run.md",
+                "docs/recon/cortex_codex_app_cli_task_standard_behavior_comparison_live_run.md",
+                "tests/product/test_openai_codex_app_cli_hook_coordinator.py",
+                "tests/product/test_openai_codex_app_cli_hook_client.py",
+            ],
+            "value_status": "retained_but_value_unearned",
+            "simple_hook_parity_constraint": (
+                "Stop may remain a safety gate, but parity with simple hook "
+                "blocks value and candidate-evolution claims."
+            ),
+            "future_gate_requirement": (
+                "The retained-spine live matrix must show Stop improves truthful "
+                "closure or blocker surfacing without clean-control overcontrol."
+            ),
+        },
+        {
+            "component_id": "taskstandardspine_state_law",
+            "retained_role": "shared task-local standard and closure state law",
+            "owner_modules": ["cortex/sre/task_standard.py"],
+            "model_io_path": (
+                "none_direct_state_law_reaches_model_only_through_UserPromptSubmit_or_Stop"
+            ),
+            "existing_proof_surfaces": [
+                "docs/recon/cortex_codex_app_cli_task_standard_spine.md",
+                "docs/recon/cortex_task_standard_sre_correspondence_reconciliation.md",
+                "tests/product/test_sre_task_standard_spine.py",
+                "tests/product/test_openai_codex_app_cli_hook_coordinator.py",
+            ],
+            "value_status": "retained_state_law_not_active_value",
+            "simple_hook_parity_constraint": (
+                "State law may support product control, but silent/state-only "
+                "success is measurement contamination or no-value."
+            ),
+            "future_gate_requirement": (
+                "The evaluator must credit only model-I/O effects, not internal "
+                "state updates by themselves."
+            ),
+        },
+        {
+            "component_id": "sre_tool_evidence_classifier",
+            "retained_role": "shared tool-evidence observation and phase law",
+            "owner_modules": ["cortex/sre/tool_evidence.py"],
+            "model_io_path": (
+                "none_direct_classifier_reaches_model_only_through_host_policy_decisions"
+            ),
+            "existing_proof_surfaces": [
+                "docs/recon/cortex_codex_app_cli_posttooluse_shared_tool_evidence_classification.md",
+                "tests/product/test_sre_tool_evidence.py",
+                "tests/product/test_sre_task_standard_spine.py",
+                "tests/product/test_openai_codex_app_cli_hook_coordinator.py",
+            ],
+            "value_status": "retained_support_law_not_active_value",
+            "simple_hook_parity_constraint": (
+                "Classifier consistency is necessary proof hygiene, not value "
+                "unless a host decision changes model behavior and beats simple hook."
+            ),
+            "future_gate_requirement": (
+                "Future retained-spine rows must keep evidence classification "
+                "shared and avoid duplicated host-local predicates."
+            ),
+        },
+    ]
+    excluded_surfaces = [
+        {
+            "surface": "PostToolUse task-standard context",
+            "owner_modules": [
+                "cortex/hosts/openai/posttooluse_task_standard_actuator.py",
+                "lab/codex_app_cli_hook_native_behavior_comparison.py",
+            ],
+            "status": "role_demoted_non_current_support_history",
+            "reason": (
+                "The paired PostToolUse artifact "
+                "task_standard_posttooluse_paired_value_live_20260508T120907Z "
+                "ended failure_no_value, and run_20260509T112542Z produced "
+                "family_wins=0 for the composed active policy."
+            ),
+            "forbidden_action": (
+                "Do not reactivate PostToolUse task-standard context as current "
+                "strategy or earned active policy in this seam."
+            ),
+            "future_reentry_requirement": (
+                "A redesigned non-task-specific evaluator case must prove value "
+                "over simple hook without overcontrol."
+            ),
+        }
+    ]
+    return {
+        "contract_id": "cortex_retained_active_policy_spine_gate0",
+        "verdict": "pass_cortex_retained_active_policy_spine_gate0",
+        "live_trials_ran": False,
+        "seam_model_io_path": LAB_PROOF_MODEL_IO_PATH,
+        "retained_spine_id": "userpromptsubmit_stop_taskstandard_spine",
+        "retained_spine_components": retained_components,
+        "excluded_surfaces": excluded_surfaces,
+        "source_decisions": [
+            "docs/recon/cortex_active_policy_contraction_decision.md",
+            "docs/recon/cortex_posttooluse_proof_surface_role_demotion.md",
+            "run_20260509T112542Z failure_no_value",
+            "task_standard_posttooluse_paired_value_live_20260508T120907Z failure_no_value",
+        ],
+        "retained_policy_candidate_for_next_gate": {
+            "policy_candidate": "userpromptsubmit_stop_taskstandard_spine",
+            "arms_to_compare": list(ARMS),
+            "must_beat": ["simple_hook_baseline", "no_cortex_baseline"],
+            "negative_control": "cortex_silent_perception",
+            "simple_hook_parity_blocks_value": True,
+            "silent_success_blocks_value": True,
+            "candidate_evolution_allowed": False,
+        },
+        "claim_boundaries": {
+            "behavior_lift_claim_allowed": False,
+            "exactness_value_lift_claim_allowed": False,
+            "broad_cortex_lift_claim_allowed": False,
+            "codex_app_parity_claim_allowed": False,
+            "shipping_promotion_claim_allowed": False,
+            "product_progress_claim_allowed": False,
+            "alphaevolve_candidate_evolution_allowed": False,
+        },
+        "forbidden_moves": [
+            "live_codex_run",
+            "product_code_deletion",
+            "product_behavior_change",
+            "model_visible_cortex_text_change",
+            "evaluator_scoring_or_fixture_change",
+            "posttooluse_reactivation_as_earned_policy",
+            "alphaevolve_candidate_policy_mutation",
+            "value_or_shipping_claim",
+        ],
+        "next_train_if_pass": "cortex-retained-active-policy-spine-live-gate1",
+        "next_train_if_fail": "cortex-active-policy-contraction-rebuild-decision",
+    }
+
+
+def validate_retained_active_policy_spine_contract(
+    contract: Mapping[str, Any],
+) -> tuple[str, ...]:
+    errors: list[str] = []
+    components = contract.get("retained_spine_components")
+    if not isinstance(components, list) or not components:
+        return ("retained_spine_components missing",)
+    component_ids = {
+        "userpromptsubmit_task_standard_formation",
+        "stop_closure_continuation_gate",
+        "taskstandardspine_state_law",
+        "sre_tool_evidence_classifier",
+    }
+    observed_ids: set[str] = set()
+    for index, component in enumerate(components):
+        if not isinstance(component, Mapping):
+            errors.append(f"component[{index}] invalid")
+            continue
+        component_id = str(component.get("component_id") or "")
+        observed_ids.add(component_id)
+        for field in (
+            "retained_role",
+            "owner_modules",
+            "model_io_path",
+            "existing_proof_surfaces",
+            "value_status",
+            "simple_hook_parity_constraint",
+            "future_gate_requirement",
+        ):
+            value = component.get(field)
+            if value in (None, "", []):
+                errors.append(f"component[{index}].{field} missing")
+    if observed_ids != component_ids:
+        errors.append("retained component set mismatch")
+    if contract.get("live_trials_ran") is not False:
+        errors.append("live_trials_ran must be false")
+    if contract.get("seam_model_io_path") != LAB_PROOF_MODEL_IO_PATH:
+        errors.append("seam_model_io_path must be lab proof only")
+    excluded = contract.get("excluded_surfaces")
+    if not isinstance(excluded, list) or not any(
+        "posttooluse" in str(item).lower() for item in excluded
+    ):
+        errors.append("PostToolUse exclusion missing")
+    claim_boundaries = contract.get("claim_boundaries")
+    if not isinstance(claim_boundaries, Mapping):
+        errors.append("claim_boundaries missing")
+    elif any(bool(value) for value in claim_boundaries.values()):
+        errors.append("claim boundaries must all be false")
+    next_gate = contract.get("retained_policy_candidate_for_next_gate")
+    if not isinstance(next_gate, Mapping):
+        errors.append("retained_policy_candidate_for_next_gate missing")
+    else:
+        if next_gate.get("simple_hook_parity_blocks_value") is not True:
+            errors.append("simple_hook_parity_blocks_value missing")
+        if next_gate.get("candidate_evolution_allowed") is not False:
+            errors.append("candidate_evolution_allowed must be false")
+    if contract.get("next_train_if_pass") != (
+        "cortex-retained-active-policy-spine-live-gate1"
+    ):
+        errors.append("next_train_if_pass invalid")
+    return tuple(errors)
+
+
+def run_cortex_retained_active_policy_spine_gate0(
+    output_root: Path | str = DEFAULT_RETAINED_SPINE_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    """Write and validate the retained active-policy spine Gate 0 artifacts."""
+
+    root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
+    contract = retained_active_policy_spine_contract()
+    validation_errors = validate_retained_active_policy_spine_contract(contract)
+    components = contract["retained_spine_components"]
+    checks = {
+        "retained_spine_named": contract["retained_spine_id"]
+        == "userpromptsubmit_stop_taskstandard_spine",
+        "owner_modules_named": all(component["owner_modules"] for component in components),
+        "model_io_paths_named": all(component["model_io_path"] for component in components),
+        "proof_surfaces_named": all(
+            component["existing_proof_surfaces"] for component in components
+        ),
+        "value_remains_unearned": all(
+            "value" in str(component["value_status"]).lower()
+            for component in components
+        ),
+        "simple_hook_parity_blocks_value": contract[
+            "retained_policy_candidate_for_next_gate"
+        ]["simple_hook_parity_blocks_value"]
+        is True,
+        "posttooluse_role_demoted": any(
+            item["status"] == "role_demoted_non_current_support_history"
+            for item in contract["excluded_surfaces"]
+        ),
+        "candidate_evolution_not_allowed": contract[
+            "retained_policy_candidate_for_next_gate"
+        ]["candidate_evolution_allowed"]
+        is False,
+        "live_trials_not_run": contract["live_trials_ran"] is False,
+        "claim_boundaries_preserved": not any(
+            contract["claim_boundaries"].values()
+        ),
+        "validation_passed": not validation_errors,
+    }
+    passed = all(checks.values())
+    report = {
+        "passed": passed,
+        "verdict": (
+            "pass_cortex_retained_active_policy_spine_gate0"
+            if passed
+            else "failure_cortex_retained_active_policy_spine_gate0"
+        ),
+        "live_trials_ran": False,
+        "model_io_path": LAB_PROOF_MODEL_IO_PATH,
+        "retained_spine_id": contract["retained_spine_id"],
+        "retained_component_ids": [
+            component["component_id"] for component in components
+        ],
+        "posttooluse_reactivated_as_earned_policy": False,
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": False,
+        "broad_cortex_lift_claim_allowed": False,
+        "codex_app_parity_claim_allowed": False,
+        "shipping_promotion_claim_allowed": False,
+        "product_progress_claim_allowed": False,
+        "alphaevolve_candidate_evolution_allowed": False,
+        "next_train_if_pass": contract["next_train_if_pass"],
+        "next_train_if_fail": contract["next_train_if_fail"],
+        "artifact_paths": {
+            "retained_spine_contract": "retained_spine_contract.json",
+            "gate0_report": "gate0_report.json",
+            "summary": "summary.json",
+        },
+        "checks": checks,
+        "validation_errors": list(validation_errors),
+    }
+    _write_json(root / "retained_spine_contract.json", contract)
+    _write_json(root / "gate0_report.json", report)
+    _write_json(root / "summary.json", report)
+    return report
+
+
 def run_cortex_effectiveness_evaluator_gate0(
     output_root: Path | str = DEFAULT_OUTPUT_ROOT,
 ) -> dict[str, Any]:
@@ -4435,6 +4752,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="approval-gated executable v2 four-arm evaluator live matrix",
     )
     parser.add_argument(
+        "--retained-active-policy-spine-gate0",
+        action="store_true",
+        help="prove the retained active-policy spine contract without live trials",
+    )
+    parser.add_argument(
         "--output-root",
         type=Path,
         default=None,
@@ -4458,6 +4780,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.v2_case_registry_gate0,
             args.v2_live_matrix_gate1,
             args.v2_live_matrix,
+            args.retained_active_policy_spine_gate0,
         )
     )
     if selected_modes != 1:
@@ -4465,7 +4788,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             "select exactly one of --gate0, --build, --live-gate1, "
             "--live-matrix, --simple-hook-baseline-gate0, or "
             "--measurement-stack-rebuild-gate0, --v2-case-registry-gate0, "
-            "--v2-live-matrix-gate1, or --v2-live-matrix"
+            "--v2-live-matrix-gate1, --v2-live-matrix, or "
+            "--retained-active-policy-spine-gate0"
         )
 
     output_root = args.output_root
@@ -4484,6 +4808,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_root = DEFAULT_V2_LIVE_GATE1_OUTPUT_ROOT
         elif args.v2_live_matrix:
             output_root = DEFAULT_V2_LIVE_MATRIX_OUTPUT_ROOT
+        elif args.retained_active_policy_spine_gate0:
+            output_root = DEFAULT_RETAINED_SPINE_OUTPUT_ROOT
         elif args.live_matrix:
             output_root = DEFAULT_LIVE_MATRIX_OUTPUT_ROOT
         else:
@@ -4505,6 +4831,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         report = run_cortex_effectiveness_v2_live_matrix_gate1(output_root)
     elif args.v2_live_matrix:
         report = run_cortex_effectiveness_v2_live_matrix(output_root)
+    elif args.retained_active_policy_spine_gate0:
+        report = run_cortex_retained_active_policy_spine_gate0(output_root)
     else:
         report = run_cortex_effectiveness_evaluator_live_matrix(output_root)
 
