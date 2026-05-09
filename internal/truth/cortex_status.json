@@ -111,7 +111,8 @@
     "docs/recon/cortex_simple_hook_baseline_challenger.md",
     "docs/recon/cortex_executive_effectiveness_evaluator_live_matrix_run.md",
     "docs/recon/cortex_effectiveness_measurement_stack_rebuild_gate0.md",
-    "docs/recon/cortex_effectiveness_v2_case_registry_gate0.md"
+    "docs/recon/cortex_effectiveness_v2_case_registry_gate0.md",
+    "docs/recon/cortex_effectiveness_v2_live_matrix_gate1.md"
   ],
   "bio_to_code_matrix": [
     {
@@ -464,7 +465,8 @@
           "docs/recon/cortex_simple_hook_baseline_challenger.md",
           "docs/recon/cortex_executive_effectiveness_evaluator_live_matrix_run.md",
           "docs/recon/cortex_effectiveness_measurement_stack_rebuild_gate0.md",
-          "docs/recon/cortex_effectiveness_v2_case_registry_gate0.md"
+          "docs/recon/cortex_effectiveness_v2_case_registry_gate0.md",
+          "docs/recon/cortex_effectiveness_v2_live_matrix_gate1.md"
         ],
         "update_rule": "Add a recon when a proof or decision is earned; do not treat recon alone as shipping truth without status promotion."
       }
@@ -938,13 +940,21 @@
     ]
   },
   "next_product_train": {
-    "slug": "cortex-effectiveness-v2-live-matrix-gate1",
-    "surface": "no-live lab/proof evaluator v2 live-matrix interface",
-    "executive_benefit": "Wire the v2 evaluator case registry into a dry-run future four-arm matrix plan so the next approved live run can test active Cortex against no-Cortex, simple-hook, and silent controls on sharper cases.",
-    "why_now": "The v2 case-registry Gate 0 passed with `v2_case_registry.json`, `gate0_report.json`, and `summary.json`, preserving `run_20260508T221352Z` as `failure_silent_perception_contamination` and registering five immutable `*_v2` case specs. The registry is not yet connected to the live-matrix planning interface; that no-live wiring must happen before any v2 live run, candidate generator, program database promotion, or Cortex value claim.",
-    "primary_metric": "Produce a no-live v2 live-matrix dry-run plan that consumes the v2 registry, schedules all four arms across all five v2 families with deterministic row IDs and workspace isolation, writes `live_plan.json`, `episode_table.jsonl`, `summary.json`, `leaderboard.json`, and `failure_analysis.json`, refuses without the exact approval env, and preserves simple-hook parity, silent success, and dominance gates as no-value.",
-    "guardrail": "No live Codex run in this seam. Do not change product host behavior, product model-visible text, signed UserPromptSubmit text, PostToolUse text, Stop text, candidate policy, evaluator scoring, hidden-verifier boundaries, root hooks, SRE law, matcher threshold, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed-intervention, host-runtime extraction, or AlphaEvolve candidate mutation. Do not replace or rescore v1 artifacts; v2 cases may only be wired into a dry-run/future-live plan.",
-    "kill_rule": "Fail if Gate 1 runs live, changes scoring, omits a required arm or v2 family, weakens simple-hook/silent no-value rules or dominance gates, lacks approval refusal, mutates product behavior, rewrites v1 evidence, or queues candidate evolution/value claims before an approved v2 matrix has real comparative evidence.",
+    "slug": "cortex-effectiveness-v2-live-matrix-run",
+    "surface": "approval-gated live evaluator v2 matrix run",
+    "executive_benefit": "Run the v2 four-arm evaluator matrix so active Cortex can be compared against no-Cortex, the small simple-hook challenger, and silent Cortex on sharper v2 task families before any value claim or candidate evolution.",
+    "why_now": "The no-live v2 live-matrix Gate 1 passed with `.cortex/live_validation/cortex_effectiveness_v2_live_matrix_gate1/evaluator_design.json`, `v2_case_registry.json`, `live_plan.json`, `episode_table.jsonl`, `summary.json`, `leaderboard.json`, and `failure_analysis.json`. It consumed the v2 registry, preserved `run_20260508T221352Z` as `failure_silent_perception_contamination`, scheduled 60 dry-run rows across four arms, five v2 families, and three repeats, registered deterministic row IDs and matched workspace seeds, and kept simple-hook parity, silent success, and dominance gates as no-value. The next missing evidence is the approval-gated v2 live matrix itself.",
+    "primary_metric": "With exact current-turn approval, run `CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --v2-live-matrix` and produce 60 live rows plus `summary.json`, `episode_table.jsonl`, `leaderboard.json`, and `failure_analysis.json`; active Cortex earns scoped value only if it beats both no-Cortex and the simple hook on at least one v2 family with no dominance failure, no silent contamination, no simple-hook parity, no root/runtime mutation, and no hidden-verifier leakage.",
+    "guardrail": "Live is allowed only through the exact registered command/env pair and must not use `--require-pass`; negative verdicts are evidence. Do not change product host behavior, model-visible Cortex text, signed UserPromptSubmit text, PostToolUse text, Stop text, evaluator scoring, fixtures, hidden-verifier boundaries, root hooks, SRE law, matcher threshold, Sinkhorn/transport, candidate policy, PreToolUse denial, PermissionRequest policy, output-law, typed intervention, host runtime extraction, or AlphaEvolve candidate mutation in the live-run interpretation seam. Any positive value result stops for user review before merge.",
+    "kill_rule": "Fail or stop for architecture decision if the live run omits a required arm or v2 family, mutates root config or runtime snapshot boundaries, leaks hidden verifier data, credits simple-hook parity or silent perception success as Cortex value, weakens dominance gates, changes scoring/fixtures/product policy during interpretation, produces ambiguous/missing artifacts, or auto-merges a positive value claim.",
+    "registered_live_commands": [
+      {
+        "command": "python3 lab/cortex_effectiveness_evaluator.py --v2-live-matrix",
+        "env": {
+          "CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED": "approved"
+        }
+      }
+    ],
     "last_reviewed_at": "2026-05-09T00:00:00+00:00"
   },
   "packet_to_code_anchors": [
@@ -1602,7 +1612,7 @@
     "The Codex App/CLI PostToolUse task-standard narrow live probe harness seam then added `--task-standard-posttooluse-live`, approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running a live Codex command. The live probe remains unearned until explicitly approved and run; this seam earns harness readiness only and preserves signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport deferral, PreToolUse denial deferral, and PermissionRequest policy."
   ],
   "work_today": {
-    "slug": "cortex-effectiveness-v2-case-registry-gate0",
-    "note": "The no-live Cortex effectiveness v2 case-registry Gate 0 turned the measurement-stack diagnosis from `run_20260508T221352Z` into `.cortex/live_validation/cortex_effectiveness_v2_case_registry_gate0/v2_case_registry.json`, `gate0_report.json`, and `summary.json`. Verdict: `pass_cortex_effectiveness_v2_case_registry_gate0`. It preserves the v1 matrix artifact `run_20260508T221352Z` as `failure_silent_perception_contamination` and explicitly says no v1 live case was retroactively rescored. The registry defines five immutable `*_v2` case specs: `exactness_evidence_recovery_v2`, `truthful_closure_v2`, `blocker_surfacing_v2`, `continuity_after_interruption_v2`, and `clean_verified_work_control_v2`. Each case carries measurement rationale, baseline expectation, simple-hook challenge, silent-contamination guard, active-policy signal, dominance gates, acceptance criteria, forbidden shortcuts, v1 failure link, and the mission contract fields `executive_function`, `loop_stage`, `control_mode`, `truth_scope`, `model_io_path`, `product_spine`, and `contraction_implication`. Exactness, truthful closure, and blocker cases are designed not to collapse into simple-baseline parity; continuity includes a silent-contamination guard; clean verified-work remains a zero-intervention control. This earns v2 case-registry readiness only; it does not earn behavior lift, exactness value lift, broad Cortex lift, Codex App parity, shipping promotion, product progress, or AlphaEvolve candidate-evolution permission. No live Codex run occurred and no product host behavior, model-visible Cortex text, evaluator scoring, hidden verifier boundary, root hook, SRE law, fixture, or candidate policy changed. The next train is `cortex-effectiveness-v2-live-matrix-gate1`."
+    "slug": "cortex-effectiveness-v2-live-matrix-gate1",
+    "note": "The no-live Cortex effectiveness v2 live-matrix Gate 1 wired the v2 case registry into `.cortex/live_validation/cortex_effectiveness_v2_live_matrix_gate1/evaluator_design.json`, `v2_case_registry.json`, `live_plan.json`, `episode_table.jsonl`, `summary.json`, `leaderboard.json`, and `failure_analysis.json`. Verdict: `pass_cortex_effectiveness_v2_live_matrix_gate1`. It consumed the v2 registry, validated all five immutable v2 cases, and scheduled `60 dry-run rows`: four arms (`no_cortex_baseline`, `simple_hook_baseline`, `cortex_silent_perception`, `cortex_active_policy`) across five v2 families and three repeats: `exactness_evidence_recovery_v2`, `truthful_closure_v2`, `blocker_surfacing_v2`, `continuity_after_interruption_v2`, and `clean_verified_work_control_v2`. Row IDs include v2 `case_id`, repeat, and arm; workspace seeds are matched across arms for the same case/repeat while remaining row-isolatable later. The plan preserves `run_20260508T221352Z` as `failure_silent_perception_contamination`, does not replace `LIVE_MATRIX_CASES`, does not alter the v1 planner, and does not retroactively rescore v1 artifacts. It registers the future approval shape `CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --v2-live-matrix` with `not_run_approval_required` when approval is absent, but it does not implement or run the v2 live runner in this seam. This earns v2 live-matrix interface readiness only; it does not earn Cortex value, behavior lift, exactness value lift, broad Cortex lift, Codex App parity, shipping promotion, product progress, or AlphaEvolve candidate-evolution permission. No live Codex run occurred and no product host behavior, model-visible Cortex text, evaluator scoring, hidden verifier boundary, root hook, SRE law, fixture, or candidate policy changed. The next train is `cortex-effectiveness-v2-live-matrix-run`."
   }
 }

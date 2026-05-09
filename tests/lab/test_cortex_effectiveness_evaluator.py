@@ -22,11 +22,14 @@ from lab.cortex_effectiveness_evaluator import (
     SIMPLE_HOOK_SOURCE_PATH,
     TASK_FAMILIES,
     EvaluatorEpisodeRow,
+    build_v2_live_matrix_plan,
+    build_live_matrix_plan,
     evaluate_cortex_effectiveness_rows,
     gate0_synthetic_scenarios,
     mission_contract_errors,
     mission_objective_for_row,
     run_cortex_effectiveness_v2_case_registry_gate0,
+    run_cortex_effectiveness_v2_live_matrix_gate1,
     run_cortex_effectiveness_measurement_stack_rebuild_gate0,
     run_cortex_effectiveness_evaluator_build,
     run_cortex_effectiveness_evaluator_gate0,
@@ -714,6 +717,131 @@ def test_v2_case_registry_cli_passes(tmp_path: Path) -> None:
     assert (output_root / "summary.json").exists()
 
 
+def test_v2_live_matrix_gate1_writes_dry_run_plan(tmp_path: Path) -> None:
+    v1_plan_before = build_live_matrix_plan()
+    report = run_cortex_effectiveness_v2_live_matrix_gate1(output_root=tmp_path)
+    live_plan = json.loads((tmp_path / "live_plan.json").read_text())
+    rows = [
+        json.loads(line)
+        for line in (tmp_path / "episode_table.jsonl").read_text().splitlines()
+    ]
+    registry = json.loads((tmp_path / "v2_case_registry.json").read_text())
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_cortex_effectiveness_v2_live_matrix_gate1"
+    assert report["live_trials_ran"] is False
+    assert report["model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["exactness_value_lift_claim_allowed"] is False
+    assert report["broad_cortex_lift_claim_allowed"] is False
+    assert report["codex_app_parity_claim_allowed"] is False
+    assert report["shipping_promotion_claim_allowed"] is False
+    assert report["product_progress_claim_allowed"] is False
+    assert report["alphaevolve_mutation_loop_allowed"] is False
+    assert report["next_train_if_pass"] == "cortex-effectiveness-v2-live-matrix-run"
+    assert report["registry_validation_errors"] == []
+    assert report["mission_contract_errors"] == []
+    assert (tmp_path / "evaluator_design.json").exists()
+    assert (tmp_path / "leaderboard.json").exists()
+    assert (tmp_path / "failure_analysis.json").exists()
+    assert (tmp_path / "summary.json").exists()
+
+    assert live_plan["matrix_id"] == "cortex_effectiveness_v2_live_matrix"
+    assert live_plan["live_trials_ran"] is False
+    assert live_plan["registry_valid"] is True
+    assert live_plan["row_count"] == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT
+    assert len(rows) == live_plan["row_count"]
+    assert set(live_plan["arms"]) == set(ARMS)
+    assert set(live_plan["task_families"]) == set(TASK_FAMILIES)
+    assert set(DOMINANCE_GATES).issubset(set(live_plan["dominance_gates"]))
+    assert live_plan["v2_case_registry"]["historical_run_id"] == "run_20260508T221352Z"
+    assert (
+        live_plan["v2_case_registry"]["preserved_v1_verdict"]
+        == "failure_silent_perception_contamination"
+    )
+    assert live_plan["v2_case_registry"][
+        "no_v1_live_case_retroactively_rescored"
+    ] is True
+    assert live_plan["registered_live_commands"][0]["env"] == {
+        EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE
+    }
+    assert live_plan["approval"]["without_approval_verdict"] == (
+        "not_run_approval_required"
+    )
+    assert live_plan["approval"][
+        "future_live_command_registered_not_implemented_here"
+    ] is True
+
+    expected_case_ids = {
+        "exactness_evidence_recovery_v2",
+        "truthful_closure_v2",
+        "blocker_surfacing_v2",
+        "continuity_after_interruption_v2",
+        "clean_verified_work_control_v2",
+    }
+    assert set(live_plan["case_ids"]) == expected_case_ids
+    assert all(row["case_id"] in expected_case_ids for row in rows)
+    assert all(row["case_id"].endswith("_v2") for row in rows)
+    assert all(row["source"] == "v2_live_gate1_dry_run_plan" for row in rows)
+    assert all(row["metrics"]["live_trials_ran"] is False for row in rows)
+    assert all(
+        set(MISSION_OBJECTIVE_REQUIRED_FIELDS).issubset(
+            set(row["mission_objective"])
+        )
+        for row in rows
+    )
+    assert not any(evaluator.row_claims_product_value(evaluator._episode_row_from_json(row)) for row in rows)
+
+    plan_groups: dict[tuple[str, int], set[str]] = {}
+    for row in live_plan["rows"]:
+        key = (row["case_id"], int(row["repeat_index"]))
+        plan_groups.setdefault(key, set()).add(row["workspace_seed"])
+        assert "registry_hash" in row
+        assert row["live_trials_ran"] is False
+        assert row["case_materialization_status"] == (
+            "not_materialized_gate1_dry_run"
+        )
+    assert all(len(seeds) == 1 for seeds in plan_groups.values())
+    assert all(case["case_id"].endswith("_v2") for case in registry["cases"])
+    assert build_live_matrix_plan() == v1_plan_before
+
+
+def test_v2_live_matrix_plan_reports_invalid_registry_without_rows() -> None:
+    registry = evaluator.cortex_effectiveness_v2_case_registry()
+    del registry["cases"][0]["case_id"]
+
+    plan = build_v2_live_matrix_plan(registry=registry)
+
+    assert plan["registry_valid"] is False
+    assert plan["row_count"] == 0
+    assert plan["rows"] == []
+    assert plan["v2_case_registry"]["validation_errors"]
+
+
+def test_v2_live_matrix_gate1_cli_passes(tmp_path: Path) -> None:
+    output_root = tmp_path / "v2_live_gate1"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--v2-live-matrix-gate1",
+            "--require-pass",
+            "--output-root",
+            str(output_root),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "pass_cortex_effectiveness_v2_live_matrix_gate1" in result.stdout
+    assert (output_root / "v2_case_registry.json").exists()
+    assert (output_root / "live_plan.json").exists()
+    assert (output_root / "episode_table.jsonl").exists()
+    assert (output_root / "summary.json").exists()
+
+
 def test_simple_hook_baseline_module_is_small_independent_and_runnable() -> None:
     source = SIMPLE_HOOK_SOURCE_PATH.read_text(encoding="utf-8")
     loc = sum(
@@ -833,6 +961,7 @@ def test_gate0_source_keeps_alphaevolve_loop_deferred() -> None:
     assert "--simple-hook-baseline-gate0" in source
     assert "--measurement-stack-rebuild-gate0" in source
     assert "--v2-case-registry-gate0" in source
+    assert "--v2-live-matrix-gate1" in source
     assert "alphaevolve_loop_later" in source
     assert "program_database_fields" in source
     assert "candidate_representation" in source

@@ -24,6 +24,8 @@ EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS = {
     "cortex-executive-effectiveness-evaluator-live-gate1",
     "cortex-executive-effectiveness-evaluator-live-matrix-run",
     "cortex-effectiveness-measurement-stack-rebuild",
+    "cortex-effectiveness-v2-case-registry-gate0",
+    "cortex-effectiveness-v2-live-matrix-gate1",
     "cortex-simple-hook-baseline-challenger",
     "cortex-automation-product-boundary-contract",
 }
@@ -41,6 +43,8 @@ EVALUATOR_AUTHORIZED_SLUG_PREFIXES = (
 )
 EVALUATOR_AUTHORIZED_EXACT_SLUGS = {
     "cortex-effectiveness-measurement-stack-rebuild",
+    "cortex-effectiveness-v2-case-registry-gate0",
+    "cortex-effectiveness-v2-live-matrix-gate1",
 }
 ALLOWED_LIVE_SLUG_PARTS = (
     "evaluator",
@@ -143,12 +147,23 @@ CODE_OWNER_READS_BY_SLUG = {
         ".cortex/live_validation/cortex_effectiveness_evaluator_live_matrix/run_20260508T221352Z/leaderboard.json",
         ".cortex/live_validation/cortex_effectiveness_evaluator_live_matrix/run_20260508T221352Z/failure_analysis.json",
     ),
+    "cortex-effectiveness-v2-live-matrix-gate1": (
+        "lab/cortex_effectiveness_evaluator.py",
+        "lab/cortex_simple_hook_baseline.py",
+        ".cortex/live_validation/cortex_effectiveness_v2_case_registry_gate0/v2_case_registry.json",
+        "docs/recon/cortex_effectiveness_v2_case_registry_gate0.md",
+        "tests/lab/test_cortex_effectiveness_evaluator.py",
+    ),
 }
 ANTI_REINVENTION_SEARCHES_BY_SLUG = {
     "cortex-effectiveness-measurement-stack-rebuild": (
         "rg -n \"measurement_stack|EvaluatorEpisodeRow|evaluate_cortex_effectiveness_rows|decide_live_matrix_result|failure_silent_perception_contamination\" lab tests internal",
         "rg -n \"simple_hook_baseline|cortex_silent_perception|active_cortex|no_cortex_baseline\" lab tests internal",
         "rg -n \"PostToolUseEvidenceRecoveryEpisode|task_standard_posttooluse|failure_no_value\" lab tests docs/recon",
+    ),
+    "cortex-effectiveness-v2-live-matrix-gate1": (
+        "rg -n \"build_v2_live_matrix_plan|v2_live_matrix|v2_case_registry|LIVE_MATRIX_CASES|build_live_matrix_plan\" lab tests internal",
+        "rg -n \"simple_hook_parity|silent_perception|dominance_gates|failure_silent_perception_contamination\" lab tests docs/recon",
     ),
 }
 DEFAULT_ANTI_REINVENTION_SEARCHES = (
@@ -636,6 +651,16 @@ def _allowed_commands_for_slug(slug: str | None, git_state: GitState) -> tuple[s
     if slug == "cortex-effectiveness-measurement-stack-rebuild":
         return (
             "python3 lab/cortex_effectiveness_evaluator.py --measurement-stack-rebuild-gate0 --require-pass",
+            "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
+            "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
+            "python3 -m pytest tests/internal/test_docs_boundary.py -q",
+            "python3 internal/truth/generate_status.py --check",
+            "python3 internal/truth/generate_cortex_doc.py --check",
+            "git diff --check",
+        )
+    if slug == "cortex-effectiveness-v2-live-matrix-gate1":
+        return (
+            "python3 lab/cortex_effectiveness_evaluator.py --v2-live-matrix-gate1 --require-pass",
             "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
             "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
             "python3 -m pytest tests/internal/test_docs_boundary.py -q",

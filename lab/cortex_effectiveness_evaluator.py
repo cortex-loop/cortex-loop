@@ -55,6 +55,9 @@ DEFAULT_MEASUREMENT_STACK_OUTPUT_ROOT = Path(
 DEFAULT_V2_CASE_REGISTRY_OUTPUT_ROOT = Path(
     ".cortex/live_validation/cortex_effectiveness_v2_case_registry_gate0"
 )
+DEFAULT_V2_LIVE_GATE1_OUTPUT_ROOT = Path(
+    ".cortex/live_validation/cortex_effectiveness_v2_live_matrix_gate1"
+)
 HISTORICAL_EFFECTIVENESS_LIVE_MATRIX_RUN_ROOT = (
     DEFAULT_LIVE_MATRIX_OUTPUT_ROOT / "run_20260508T221352Z"
 )
@@ -72,6 +75,9 @@ EVALUATOR_LIVE_APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED"
 EVALUATOR_LIVE_APPROVAL_VALUE = "approved"
 EVALUATOR_LIVE_MATRIX_COMMAND = (
     "python3 lab/cortex_effectiveness_evaluator.py --live-matrix"
+)
+EVALUATOR_V2_LIVE_MATRIX_COMMAND = (
+    "python3 lab/cortex_effectiveness_evaluator.py --v2-live-matrix"
 )
 LIVE_MATRIX_REPEAT_COUNT = 3
 SIMPLE_HOOK_LOC_LIMIT = 500
@@ -423,6 +429,17 @@ def registered_live_commands() -> list[dict[str, Any]]:
     return [
         {
             "command": EVALUATOR_LIVE_MATRIX_COMMAND,
+            "env": {EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
+        }
+    ]
+
+
+def registered_v2_live_commands() -> list[dict[str, Any]]:
+    """Return the exact future v2 live command/env pair."""
+
+    return [
+        {
+            "command": EVALUATOR_V2_LIVE_MATRIX_COMMAND,
             "env": {EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
         }
     ]
@@ -1292,6 +1309,174 @@ def build_live_matrix_plan(
             "env": EVALUATOR_LIVE_APPROVAL_ENV,
             "required_value": EVALUATOR_LIVE_APPROVAL_VALUE,
             "without_approval_verdict": "not_run_approval_required",
+        },
+        "reports": [
+            "live_plan.json",
+            "episode_table.jsonl",
+            "summary.json",
+            "leaderboard.json",
+            "failure_analysis.json",
+        ],
+        "rows": row_payloads,
+    }
+
+
+def build_v2_live_matrix_plan(
+    *,
+    repeat_count: int = LIVE_MATRIX_REPEAT_COUNT,
+    registry: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build a no-live v2 matrix plan from the v2 case registry."""
+
+    case_registry = (
+        dict(registry) if registry is not None else cortex_effectiveness_v2_case_registry()
+    )
+    registry_errors = validate_cortex_effectiveness_v2_case_registry(case_registry)
+    registry_hash = _stable_hash(case_registry)
+    cases = (
+        case_registry.get("cases")
+        if isinstance(case_registry.get("cases"), list)
+        else []
+    )
+    cases_by_family = {
+        str(case["task_family"]): case
+        for case in cases
+        if isinstance(case, Mapping) and case.get("task_family") in TASK_FAMILIES
+    }
+    rows: list[EvaluatorEpisodeRow] = []
+    row_payloads: list[dict[str, Any]] = []
+    if not registry_errors:
+        for task_family in TASK_FAMILIES:
+            case = cases_by_family[task_family]
+            case_id = str(case["case_id"])
+            case_spec_hash = _stable_hash(case)
+            for repeat_index in range(1, repeat_count + 1):
+                workspace_seed = _stable_hash(
+                    {
+                        "matrix": "cortex_effectiveness_v2_live_matrix",
+                        "registry_hash": registry_hash,
+                        "task_family": task_family,
+                        "case_id": case_id,
+                        "repeat_index": repeat_index,
+                    }
+                )
+                for arm in ARMS:
+                    policy_candidate = _policy_candidate_for_arm(arm)
+                    row = _row(
+                        arm,
+                        task_family=task_family,
+                        case_id=case_id,
+                        repeat_index=repeat_index,
+                        policy_candidate=policy_candidate,
+                        source="v2_live_gate1_dry_run_plan",
+                        expected_verdict="not_run_v2_live_gate1_dry_run",
+                        notes=(
+                            "V2 dry-run schedule only; no live Codex command "
+                            "or fixture materialization executed."
+                        ),
+                        mission_objective=mission_objective_for_row(
+                            arm=arm,
+                            task_family=task_family,
+                            policy_candidate=policy_candidate,
+                        ),
+                        live_trials_ran=False,
+                        v2_case_registry_hash=registry_hash,
+                        v2_case_spec_hash=case_spec_hash,
+                    )
+                    row = EvaluatorEpisodeRow(
+                        **{
+                            **row.to_json(),
+                            "episode_id": _live_matrix_episode_id(
+                                {
+                                    "task_family": task_family,
+                                    "case_id": case_id,
+                                    "repeat_index": repeat_index,
+                                    "arm": arm,
+                                }
+                            ),
+                        }
+                    )
+                    payload = row.to_json()
+                    payload.update(
+                        {
+                            "workspace_seed": workspace_seed,
+                            "arm_settings": _live_matrix_arm_settings(arm),
+                            "registry_id": case_registry["registry_id"],
+                            "registry_hash": registry_hash,
+                            "case_spec_hash": case_spec_hash,
+                            "case_registry_version": case_registry["version"],
+                            "v1_failure_link": case["v1_failure_link"],
+                            "case_measurement_rationale": case[
+                                "measurement_rationale"
+                            ],
+                            "case_acceptance_criteria": case[
+                                "acceptance_criteria"
+                            ],
+                            "case_forbidden_shortcuts": case[
+                                "forbidden_shortcuts"
+                            ],
+                            "dominance_gates": list(case["dominance_gates"]),
+                            "approval": {
+                                "env": EVALUATOR_LIVE_APPROVAL_ENV,
+                                "required_value": EVALUATOR_LIVE_APPROVAL_VALUE,
+                                "without_approval_verdict": (
+                                    "not_run_approval_required"
+                                ),
+                            },
+                            "live_trials_ran": False,
+                            "case_materialization_status": (
+                                "not_materialized_gate1_dry_run"
+                            ),
+                        }
+                    )
+                    rows.append(row)
+                    row_payloads.append(payload)
+    return {
+        "matrix_id": "cortex_effectiveness_v2_live_matrix",
+        "live_trials_ran": False,
+        "repeat_count": repeat_count,
+        "row_count": len(rows),
+        "expected_row_count": len(ARMS) * len(TASK_FAMILIES) * repeat_count,
+        "arms": list(ARMS),
+        "task_families": list(TASK_FAMILIES),
+        "case_ids": []
+        if registry_errors
+        else [
+            str(cases_by_family[family]["case_id"])
+            for family in TASK_FAMILIES
+            if family in cases_by_family
+        ],
+        "v2_case_registry": {
+            "registry_id": case_registry.get("registry_id"),
+            "version": case_registry.get("version"),
+            "hash": registry_hash,
+            "historical_run_id": case_registry.get("historical_run_id"),
+            "preserved_v1_verdict": case_registry.get("preserved_v1_verdict"),
+            "no_v1_live_case_retroactively_rescored": case_registry.get(
+                "no_v1_live_case_retroactively_rescored"
+            ),
+            "validation_errors": list(registry_errors),
+        },
+        "registry_valid": not registry_errors,
+        "dominance_gates": list(DOMINANCE_GATES),
+        "registered_live_commands": registered_v2_live_commands(),
+        "workspace_isolation": {
+            "mode": "isolated_workspace_per_row_with_matched_pair_seed",
+            "matched_seed_fields": [
+                "registry_hash",
+                "task_family",
+                "case_id",
+                "repeat_index",
+            ],
+            "row_identity_fields": ["case_id", "repeat_index", "arm"],
+            "root_config_mutation_allowed": False,
+            "runtime_snapshot_allowed": False,
+        },
+        "approval": {
+            "env": EVALUATOR_LIVE_APPROVAL_ENV,
+            "required_value": EVALUATOR_LIVE_APPROVAL_VALUE,
+            "without_approval_verdict": "not_run_approval_required",
+            "future_live_command_registered_not_implemented_here": True,
         },
         "reports": [
             "live_plan.json",
@@ -2719,6 +2904,160 @@ def run_cortex_effectiveness_v2_case_registry_gate0(
     return report
 
 
+def run_cortex_effectiveness_v2_live_matrix_gate1(
+    output_root: Path | str = DEFAULT_V2_LIVE_GATE1_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    """Wire the v2 case registry into a no-live future matrix plan."""
+
+    root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
+    design = cortex_effectiveness_evaluator_design()
+    registry = cortex_effectiveness_v2_case_registry()
+    registry_errors = validate_cortex_effectiveness_v2_case_registry(registry)
+    live_plan = build_v2_live_matrix_plan(registry=registry)
+    rows = [
+        EvaluatorEpisodeRow(
+            task_family=row["task_family"],
+            case_id=row["case_id"],
+            repeat_index=int(row["repeat_index"]),
+            arm=row["arm"],
+            policy_candidate=row["policy_candidate"],
+            metrics=row["metrics"],
+            source=row["source"],
+            episode_id=row["episode_id"],
+            expected_verdict=row.get("expected_verdict"),
+            observed_verdict=row.get("observed_verdict"),
+            notes=row.get("notes", ""),
+            mission_objective=row.get("mission_objective"),
+        )
+        for row in live_plan["rows"]
+    ]
+    mission_contract_errors = validate_episode_rows_mission_contract(rows)
+    episode_table_path = root / "episode_table.jsonl"
+    write_episode_table(episode_table_path, rows)
+    leaderboard = {
+        "live_trials_ran": False,
+        "score_basis": "v2_live_gate1_dry_run_schedule_only",
+        "v2_case_registry_hash": live_plan["v2_case_registry"]["hash"],
+        "claim_allowed": {
+            "behavior_lift": False,
+            "exactness_value_lift": False,
+            "broad_cortex_lift": False,
+            "codex_app_parity": False,
+            "shipping_promotion": False,
+        },
+        "selection_status": "not_live_eligible_until_v2_live_matrix_run",
+    }
+    failure_analysis = {
+        "live_trials_ran": False,
+        "historical_run_id": registry["historical_run_id"],
+        "preserved_v1_verdict": registry["preserved_v1_verdict"],
+        "no_v1_live_case_retroactively_rescored": registry[
+            "no_v1_live_case_retroactively_rescored"
+        ],
+        "known_boundary_failures_preserved": list(DOMINANCE_GATES),
+        "simple_hook_parity_blocks_value": True,
+        "silent_success_blocks_value": True,
+        "positive_result_requires_user_review": True,
+        "v2_live_runner_not_implemented_in_this_seam": True,
+    }
+    v1_cases_snapshot = json.loads(json.dumps(LIVE_MATRIX_CASES, sort_keys=True))
+    checks = {
+        "v2_registry_valid": not registry_errors
+        and live_plan["registry_valid"] is True,
+        "registered_v2_live_command_env_pair": registered_v2_live_commands()
+        == live_plan["registered_live_commands"],
+        "approval_refusal_registered": live_plan["approval"][
+            "without_approval_verdict"
+        ]
+        == "not_run_approval_required",
+        "all_required_arms_scheduled": set(live_plan["arms"]) == set(ARMS),
+        "all_v2_task_families_scheduled": set(live_plan["task_families"])
+        == set(TASK_FAMILIES),
+        "all_case_ids_are_v2": all(
+            str(case_id).endswith("_v2") for case_id in live_plan["case_ids"]
+        ),
+        "episode_rows_written": episode_table_path.exists(),
+        "row_count_matches_v2_matrix": live_plan["row_count"]
+        == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT,
+        "mission_contract_preserved": not mission_contract_errors,
+        "dominance_gates_preserved": set(DOMINANCE_GATES).issubset(
+            set(live_plan["dominance_gates"])
+        ),
+        "workspace_seeds_matched_across_arms": all(
+            len(
+                {
+                    row["workspace_seed"]
+                    for row in live_plan["rows"]
+                    if row["task_family"] == family
+                    and int(row["repeat_index"]) == repeat_index
+                }
+            )
+            == 1
+            for family in TASK_FAMILIES
+            for repeat_index in range(1, LIVE_MATRIX_REPEAT_COUNT + 1)
+        ),
+        "v1_live_matrix_cases_not_replaced": v1_cases_snapshot == LIVE_MATRIX_CASES
+        and all(case["case_id"].endswith("_v1") for case in LIVE_MATRIX_CASES.values()),
+        "v1_negative_preserved": registry["preserved_v1_verdict"]
+        == "failure_silent_perception_contamination",
+        "no_v1_live_case_retroactively_rescored": registry[
+            "no_v1_live_case_retroactively_rescored"
+        ]
+        is True,
+        "live_trials_not_run": live_plan["live_trials_ran"] is False,
+        "v2_live_runner_not_implemented_here": live_plan["approval"][
+            "future_live_command_registered_not_implemented_here"
+        ]
+        is True,
+        "alphaevolve_mutation_loop_not_allowed": True,
+    }
+    passed = all(checks.values())
+    report = {
+        "passed": passed,
+        "verdict": (
+            "pass_cortex_effectiveness_v2_live_matrix_gate1"
+            if passed
+            else "failure_cortex_effectiveness_v2_live_matrix_gate1"
+        ),
+        "live_trials_ran": False,
+        "model_io_path": LAB_PROOF_MODEL_IO_PATH,
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": False,
+        "broad_cortex_lift_claim_allowed": False,
+        "codex_app_parity_claim_allowed": False,
+        "shipping_promotion_claim_allowed": False,
+        "product_progress_claim_allowed": False,
+        "alphaevolve_mutation_loop_allowed": False,
+        "next_train_if_pass": "cortex-effectiveness-v2-live-matrix-run",
+        "next_train_if_fail": (
+            "cortex-effectiveness-v2-live-matrix-interface-remediation"
+        ),
+        "artifact_paths": {
+            "evaluator_design": "evaluator_design.json",
+            "v2_case_registry": "v2_case_registry.json",
+            "live_plan": "live_plan.json",
+            "episode_table": "episode_table.jsonl",
+            "summary": "summary.json",
+            "leaderboard": "leaderboard.json",
+            "failure_analysis": "failure_analysis.json",
+        },
+        "registered_live_commands": registered_v2_live_commands(),
+        "checks": checks,
+        "registry_validation_errors": list(registry_errors),
+        "mission_contract_errors": list(mission_contract_errors),
+        "live_plan": {key: value for key, value in live_plan.items() if key != "rows"},
+        "failure_analysis": failure_analysis,
+    }
+    _write_json(root / "evaluator_design.json", design)
+    _write_json(root / "v2_case_registry.json", registry)
+    _write_json(root / "live_plan.json", live_plan)
+    _write_json(root / "leaderboard.json", leaderboard)
+    _write_json(root / "failure_analysis.json", failure_analysis)
+    _write_json(root / "summary.json", report)
+    return report
+
+
 def _repo_root_config_hash() -> str | None:
     root_config = Path(__file__).resolve().parents[1] / ".codex" / "config.toml"
     if not root_config.exists():
@@ -3311,6 +3650,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="write and validate the no-live v2 evaluator case registry",
     )
     parser.add_argument(
+        "--v2-live-matrix-gate1",
+        action="store_true",
+        help="wire the v2 case registry into a no-live matrix dry-run plan",
+    )
+    parser.add_argument(
         "--output-root",
         type=Path,
         default=None,
@@ -3332,13 +3676,15 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.simple_hook_baseline_gate0,
             args.measurement_stack_rebuild_gate0,
             args.v2_case_registry_gate0,
+            args.v2_live_matrix_gate1,
         )
     )
     if selected_modes != 1:
         parser.error(
             "select exactly one of --gate0, --build, --live-gate1, "
             "--live-matrix, --simple-hook-baseline-gate0, or "
-            "--measurement-stack-rebuild-gate0, or --v2-case-registry-gate0"
+            "--measurement-stack-rebuild-gate0, --v2-case-registry-gate0, "
+            "or --v2-live-matrix-gate1"
         )
 
     output_root = args.output_root
@@ -3353,6 +3699,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_root = DEFAULT_MEASUREMENT_STACK_OUTPUT_ROOT
         elif args.v2_case_registry_gate0:
             output_root = DEFAULT_V2_CASE_REGISTRY_OUTPUT_ROOT
+        elif args.v2_live_matrix_gate1:
+            output_root = DEFAULT_V2_LIVE_GATE1_OUTPUT_ROOT
         elif args.live_matrix:
             output_root = DEFAULT_LIVE_MATRIX_OUTPUT_ROOT
         else:
@@ -3370,6 +3718,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         report = run_cortex_effectiveness_measurement_stack_rebuild_gate0(output_root)
     elif args.v2_case_registry_gate0:
         report = run_cortex_effectiveness_v2_case_registry_gate0(output_root)
+    elif args.v2_live_matrix_gate1:
+        report = run_cortex_effectiveness_v2_live_matrix_gate1(output_root)
     else:
         report = run_cortex_effectiveness_evaluator_live_matrix(output_root)
 

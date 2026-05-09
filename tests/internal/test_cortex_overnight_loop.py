@@ -120,6 +120,28 @@ def test_classify_next_work_allows_measurement_stack_rebuild_with_strict_packet(
     )
 
 
+def test_classify_next_work_allows_v2_live_matrix_gate1_no_live() -> None:
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-effectiveness-v2-live-matrix-gate1",
+            surface="no-live lab/proof evaluator v2 live-matrix interface",
+            guardrail="No live Codex run in this seam.",
+            primary_metric=(
+                "Produce a 60-row v2 live-matrix dry-run plan from the v2 case registry."
+            ),
+        ),
+        _git(),
+    )
+
+    assert decision.status == "ready"
+    assert decision.safe_to_auto_merge is True
+    assert decision.live_codex_allowed is False
+    assert (
+        "python3 lab/cortex_effectiveness_evaluator.py --v2-live-matrix-gate1 --require-pass"
+        in decision.allowed_commands
+    )
+
+
 def test_fresh_chat_work_packet_forces_repo_grounding_and_anti_reinvention() -> None:
     status = _status(
         slug="cortex-effectiveness-measurement-stack-rebuild",
@@ -138,6 +160,29 @@ def test_fresh_chat_work_packet_forces_repo_grounding_and_anti_reinvention() -> 
     assert any("failure_silent_perception_contamination" in command for command in packet.anti_reinvention_searches)
     assert any("why this cycle is allowed" in item for item in packet.orientation_checklist)
     assert any("blocked is a successful" in rule for rule in packet.stop_rules)
+
+
+def test_v2_live_matrix_gate1_packet_forces_registry_grounding() -> None:
+    status = _status(
+        slug="cortex-effectiveness-v2-live-matrix-gate1",
+        surface="no-live lab/proof evaluator v2 live-matrix interface",
+    )
+    decision = loop.classify_next_work(status, _git())
+    packet = loop.build_work_packet(status, _git(), decision)
+
+    assert packet.model_io_path == loop.LAB_PROOF_MODEL_IO_PATH
+    assert (
+        ".cortex/live_validation/cortex_effectiveness_v2_case_registry_gate0/v2_case_registry.json"
+        in packet.required_code_owner_reads
+    )
+    assert any(
+        "build_v2_live_matrix_plan" in command
+        for command in packet.anti_reinvention_searches
+    )
+    assert any(
+        "failure_silent_perception_contamination" in command
+        for command in packet.anti_reinvention_searches
+    )
 
 
 def test_classify_next_work_refuses_dirty_main_but_allows_managed_resume() -> None:
