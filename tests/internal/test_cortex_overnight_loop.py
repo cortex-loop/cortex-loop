@@ -142,6 +142,36 @@ def test_classify_next_work_allows_v2_live_matrix_gate1_no_live() -> None:
     )
 
 
+def test_classify_next_work_allows_registered_v2_live_but_never_auto_merges() -> None:
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-effectiveness-v2-live-matrix-run",
+            surface="approval-gated live evaluator v2 matrix run",
+            guardrail="Codex CLI v2 live matrix is allowed only through the exact registered command/env pair.",
+            primary_metric="Run the v2 live evaluator matrix after no-spend preflight.",
+            extra={
+                "registered_live_commands": [
+                    {
+                        "command": "python3 lab/cortex_effectiveness_evaluator.py --v2-live-matrix",
+                        "env": {
+                            "CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED": "approved"
+                        },
+                    }
+                ]
+            },
+        ),
+        _git(),
+    )
+
+    assert decision.status == "ready"
+    assert decision.live_codex_allowed is True
+    assert decision.safe_to_auto_merge is False
+    assert (
+        "CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --v2-live-matrix"
+        in decision.allowed_commands
+    )
+
+
 def test_fresh_chat_work_packet_forces_repo_grounding_and_anti_reinvention() -> None:
     status = _status(
         slug="cortex-effectiveness-measurement-stack-rebuild",
@@ -183,6 +213,35 @@ def test_v2_live_matrix_gate1_packet_forces_registry_grounding() -> None:
         "failure_silent_perception_contamination" in command
         for command in packet.anti_reinvention_searches
     )
+
+
+def test_v2_live_matrix_run_packet_forces_gate1_and_runner_grounding() -> None:
+    status = _status(
+        slug="cortex-effectiveness-v2-live-matrix-run",
+        surface="approval-gated live evaluator v2 matrix run",
+        extra={
+            "registered_live_commands": [
+                {
+                    "command": "python3 lab/cortex_effectiveness_evaluator.py --v2-live-matrix",
+                    "env": {
+                        "CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED": "approved"
+                    },
+                }
+            ]
+        },
+    )
+    decision = loop.classify_next_work(status, _git())
+    packet = loop.build_work_packet(status, _git(), decision)
+
+    assert (
+        ".cortex/live_validation/cortex_effectiveness_v2_live_matrix_gate1/live_plan.json"
+        in packet.required_code_owner_reads
+    )
+    assert any(
+        "run_cortex_effectiveness_v2_live_matrix" in command
+        for command in packet.anti_reinvention_searches
+    )
+    assert any("--v2-live-matrix" in command for command in packet.allowed_commands)
 
 
 def test_classify_next_work_refuses_dirty_main_but_allows_managed_resume() -> None:

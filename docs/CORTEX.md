@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-effectiveness-v2-live-matrix-gate1`
-### Next Product Train
 - Slug: `cortex-effectiveness-v2-live-matrix-run`
-- Surface: `approval-gated live evaluator v2 matrix run`
-- Why now: The no-live v2 live-matrix Gate 1 passed with `.cortex/live_validation/cortex_effectiveness_v2_live_matrix_gate1/evaluator_design.json`, `v2_case_registry.json`, `live_plan.json`, `episode_table.jsonl`, `summary.json`, `leaderboard.json`, and `failure_analysis.json`. It consumed the v2 registry, preserved `run_20260508T221352Z` as `failure_silent_perception_contamination`, scheduled 60 dry-run rows across four arms, five v2 families, and three repeats, registered deterministic row IDs and matched workspace seeds, and kept simple-hook parity, silent success, and dominance gates as no-value. The next missing evidence is the approval-gated v2 live matrix itself.
+### Next Product Train
+- Slug: `cortex-active-policy-contraction-decision`
+- Surface: `no-live architecture and contraction decision`
+- Why now: The approval-gated v2 live matrix `run_20260509T112542Z` completed 60 rows across no-Cortex, simple-hook, silent Cortex, and active Cortex. Verdict: `failure_no_value`; all arms tied on every v2 family, active Cortex had zero family wins, root config stayed unchanged, no runtime snapshot loaded, no hidden-verifier leakage or overcontrol was recorded, and `run_20260508T221352Z` remains preserved as earlier negative v1 evidence. The registered verdict handling queues contraction decision rather than policy tuning, measurement claim, live rerun, or AlphaEvolve candidate evolution.
 
 ### Research Lines Under Evaluation
 

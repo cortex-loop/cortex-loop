@@ -22,6 +22,7 @@ from lab.cortex_effectiveness_evaluator import (
     SIMPLE_HOOK_SOURCE_PATH,
     TASK_FAMILIES,
     EvaluatorEpisodeRow,
+    build_v2_executable_live_matrix_plan,
     build_v2_live_matrix_plan,
     build_live_matrix_plan,
     evaluate_cortex_effectiveness_rows,
@@ -29,6 +30,7 @@ from lab.cortex_effectiveness_evaluator import (
     mission_contract_errors,
     mission_objective_for_row,
     run_cortex_effectiveness_v2_case_registry_gate0,
+    run_cortex_effectiveness_v2_live_matrix,
     run_cortex_effectiveness_v2_live_matrix_gate1,
     run_cortex_effectiveness_measurement_stack_rebuild_gate0,
     run_cortex_effectiveness_evaluator_build,
@@ -840,6 +842,121 @@ def test_v2_live_matrix_gate1_cli_passes(tmp_path: Path) -> None:
     assert (output_root / "live_plan.json").exists()
     assert (output_root / "episode_table.jsonl").exists()
     assert (output_root / "summary.json").exists()
+
+
+def test_v2_executable_live_matrix_plan_materializes_rows_without_changing_v1() -> None:
+    v1_plan_before = build_live_matrix_plan()
+
+    plan = build_v2_executable_live_matrix_plan()
+
+    assert plan["matrix_id"] == "cortex_effectiveness_v2_live_matrix"
+    assert plan["executable"] is True
+    assert plan["materialization_errors"] == []
+    assert plan["row_count"] == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT
+    assert plan["approval"][
+        "future_live_command_registered_not_implemented_here"
+    ] is False
+    assert all(row["prompt"] for row in plan["rows"])
+    assert all(row["prompt_hash"] for row in plan["rows"])
+    assert all(row["case_materialization_status"] == "materialized_v2_live_runner" for row in plan["rows"])
+    assert all(row["workspace_setup"] for row in plan["rows"])
+    assert all(row["verifier"] for row in plan["rows"])
+    assert {
+        row["mission_objective"]["model_io_path"]
+        for row in plan["rows"]
+        if row["arm"] == "cortex_active_policy"
+    } == {
+        "codex_hooks_UserPromptSubmit_PostToolUse_Stop_hookSpecificOutput_or_block_stdout"
+    }
+    assert build_live_matrix_plan() == v1_plan_before
+
+
+def test_v2_live_matrix_refuses_without_approval_and_runs_fake_matrix(tmp_path: Path) -> None:
+    refused = run_cortex_effectiveness_v2_live_matrix(
+        output_root=tmp_path / "refused",
+        approval_env={},
+    )
+    approved = run_cortex_effectiveness_v2_live_matrix(
+        output_root=tmp_path / "approved",
+        approval_env={EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
+        run_id="run_v2_fake",
+        row_runner=_fake_live_matrix_row,
+    )
+    run_root = tmp_path / "approved" / "run_v2_fake"
+    rows = [
+        json.loads(line)
+        for line in (run_root / "episode_table.jsonl").read_text().splitlines()
+    ]
+    live_plan = json.loads((run_root / "live_plan.json").read_text())
+
+    assert refused["verdict"] == "not_run_approval_required"
+    assert refused["live_trials_ran"] is False
+    assert refused["registered_live_commands"][0]["command"].endswith(
+        "--v2-live-matrix"
+    )
+    assert approved["verdict"] == "pass_scoped_cortex_value"
+    assert approved["live_trials_ran"] is True
+    assert approved["run_id"] == "run_v2_fake"
+    assert approved["row_count"] == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT
+    assert approved["completed_new_rows"] == approved["row_count"]
+    assert approved["skipped_existing_rows"] == 0
+    assert approved["positive_value_requires_user_review"] is True
+    assert approved["next_train_if_recorded"] == (
+        "cortex-effectiveness-v2-value-architecture-decision"
+    )
+    assert len(rows) == approved["row_count"]
+    assert live_plan["executable"] is True
+    assert live_plan["row_count"] == approved["row_count"]
+    assert (run_root / "v2_case_registry.json").exists()
+    assert (run_root / "leaderboard.json").exists()
+    assert (run_root / "failure_analysis.json").exists()
+    assert all(row["case_id"].endswith("_v2") for row in rows)
+
+
+def test_v2_live_matrix_resume_skips_completed_fake_rows(tmp_path: Path) -> None:
+    first = run_cortex_effectiveness_v2_live_matrix(
+        output_root=tmp_path,
+        approval_env={EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
+        run_id="run_v2_resume",
+        row_runner=_fake_live_matrix_row,
+    )
+
+    def forbidden_runner(**_: object) -> EvaluatorEpisodeRow:
+        raise AssertionError("completed rows should be reused")
+
+    second = run_cortex_effectiveness_v2_live_matrix(
+        output_root=tmp_path,
+        approval_env={EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE},
+        run_id="run_v2_resume",
+        row_runner=forbidden_runner,
+    )
+
+    assert first["row_count"] == second["row_count"]
+    assert second["completed_new_rows"] == 0
+    assert second["skipped_existing_rows"] == first["row_count"]
+
+
+def test_v2_live_matrix_cli_refusal_passes(tmp_path: Path) -> None:
+    output_root = tmp_path / "v2_live_refusal"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--v2-live-matrix",
+            "--output-root",
+            str(output_root),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "not_run_approval_required" in result.stdout
+    summary = json.loads((output_root / "summary.json").read_text())
+    assert summary["registered_live_commands"][0]["env"] == {
+        EVALUATOR_LIVE_APPROVAL_ENV: EVALUATOR_LIVE_APPROVAL_VALUE
+    }
 
 
 def test_simple_hook_baseline_module_is_small_independent_and_runnable() -> None:
