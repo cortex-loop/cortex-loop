@@ -94,6 +94,52 @@ def test_classify_next_work_allows_simple_hook_and_live_gate1_sequence() -> None
     assert simple_hook.live_codex_allowed is False
 
 
+def test_classify_next_work_allows_measurement_stack_rebuild_with_strict_packet() -> None:
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-effectiveness-measurement-stack-rebuild",
+            surface="no-live lab/proof evaluator measurement-stack remediation",
+            guardrail=(
+                "No live Codex run. Do not change product behavior, scoring to favor Cortex, "
+                "or hidden-verifier boundaries."
+            ),
+            primary_metric=(
+                "Preserve failure_silent_perception_contamination and rebuild measurement "
+                "without crediting simple-hook parity."
+            ),
+        ),
+        _git(),
+    )
+
+    assert decision.status == "ready"
+    assert decision.safe_to_auto_merge is True
+    assert decision.live_codex_allowed is False
+    assert (
+        "python3 lab/cortex_effectiveness_evaluator.py --measurement-stack-rebuild-gate0 --require-pass"
+        in decision.allowed_commands
+    )
+
+
+def test_fresh_chat_work_packet_forces_repo_grounding_and_anti_reinvention() -> None:
+    status = _status(
+        slug="cortex-effectiveness-measurement-stack-rebuild",
+        surface="no-live lab/proof evaluator measurement-stack remediation",
+    )
+    decision = loop.classify_next_work(status, _git())
+    packet = loop.build_work_packet(status, _git(), decision)
+
+    assert packet.do_not_use_prior_chat_context is True
+    assert packet.blocked_is_success is True
+    assert packet.model_io_path == loop.LAB_PROOF_MODEL_IO_PATH
+    assert packet.current_binding_evidence["artifact"] == "run_20260508T221352Z"
+    assert packet.current_binding_evidence["verdict"] == "failure_silent_perception_contamination"
+    assert "internal/truth/cortex_status.json" in packet.required_boot_reads
+    assert "lab/cortex_effectiveness_evaluator.py" in packet.required_code_owner_reads
+    assert any("failure_silent_perception_contamination" in command for command in packet.anti_reinvention_searches)
+    assert any("why this cycle is allowed" in item for item in packet.orientation_checklist)
+    assert any("blocked is a successful" in rule for rule in packet.stop_rules)
+
+
 def test_classify_next_work_refuses_dirty_main_but_allows_managed_resume() -> None:
     dirty_main = loop.classify_next_work(_status(), _git(dirty=True))
     managed_branch = loop.classify_next_work(
@@ -601,12 +647,15 @@ def test_run_once_emits_digest_even_when_blocked(tmp_path: Path, monkeypatch) ->
     )
 
     assert report["decision"]["status"] == "blocked"
+    assert report["work_packet"]["do_not_use_prior_chat_context"] is True
+    assert "internal/truth/cortex_status.json" in report["work_packet"]["required_boot_reads"]
     digest_path = Path(report["digest_path"])
     assert digest_path.exists()
     assert Path(report["cycle_state_path"]).exists()
     assert (tmp_path / "digests" / "latest_cycle_state.json").exists()
     text = digest_path.read_text()
     assert "Cortex Overnight Digest" in text
+    assert "Fresh-Chat Work Packet" in text
     assert "dirty resting state" in text
     assert "User Input Needed" in text
 

@@ -23,6 +23,7 @@ EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS = {
     "cortex-executive-effectiveness-evaluator-build",
     "cortex-executive-effectiveness-evaluator-live-gate1",
     "cortex-executive-effectiveness-evaluator-live-matrix-run",
+    "cortex-effectiveness-measurement-stack-rebuild",
     "cortex-simple-hook-baseline-challenger",
     "cortex-automation-product-boundary-contract",
 }
@@ -38,6 +39,9 @@ EVALUATOR_AUTHORIZED_SLUG_PREFIXES = (
     "cortex-automation-product-boundary-contract",
     "cortex-overnight-evaluator-automation-hardening",
 )
+EVALUATOR_AUTHORIZED_EXACT_SLUGS = {
+    "cortex-effectiveness-measurement-stack-rebuild",
+}
 ALLOWED_LIVE_SLUG_PARTS = (
     "evaluator",
     "paired-value",
@@ -116,6 +120,70 @@ FORBIDDEN_CANDIDATE_ROW_EXACT_PATHS = (
     "docs/CORTEX_STATUS.md",
     "lab/cortex_effectiveness_evaluator.py",
 )
+REQUIRED_BOOT_READS = (
+    "AGENTS.md",
+    "docs/CORTEX.md",
+    "docs/CORTEX_STATUS.md",
+    "internal/truth/cortex_status.json",
+    "docs/internal/REPO_WORKFLOW.md",
+    "internal/automation/cortex_overnight_loop.py",
+)
+DEFAULT_CODE_OWNER_READS = (
+    "lab/cortex_effectiveness_evaluator.py",
+    "lab/cortex_simple_hook_baseline.py",
+    "tests/lab/test_cortex_effectiveness_evaluator.py",
+    "tests/internal/test_cortex_overnight_loop.py",
+)
+CODE_OWNER_READS_BY_SLUG = {
+    "cortex-effectiveness-measurement-stack-rebuild": (
+        "lab/cortex_effectiveness_evaluator.py",
+        "lab/cortex_simple_hook_baseline.py",
+        "docs/recon/cortex_executive_effectiveness_evaluator_live_matrix_run.md",
+        ".cortex/live_validation/cortex_effectiveness_evaluator_live_matrix/run_20260508T221352Z/summary.json",
+        ".cortex/live_validation/cortex_effectiveness_evaluator_live_matrix/run_20260508T221352Z/leaderboard.json",
+        ".cortex/live_validation/cortex_effectiveness_evaluator_live_matrix/run_20260508T221352Z/failure_analysis.json",
+    ),
+}
+ANTI_REINVENTION_SEARCHES_BY_SLUG = {
+    "cortex-effectiveness-measurement-stack-rebuild": (
+        "rg -n \"measurement_stack|EvaluatorEpisodeRow|evaluate_cortex_effectiveness_rows|decide_live_matrix_result|failure_silent_perception_contamination\" lab tests internal",
+        "rg -n \"simple_hook_baseline|cortex_silent_perception|active_cortex|no_cortex_baseline\" lab tests internal",
+        "rg -n \"PostToolUseEvidenceRecoveryEpisode|task_standard_posttooluse|failure_no_value\" lab tests docs/recon",
+    ),
+}
+DEFAULT_ANTI_REINVENTION_SEARCHES = (
+    "rg -n \"EvaluatorEpisodeRow|evaluate_cortex_effectiveness_rows|simple_hook_baseline|cortex_silent_perception|active_cortex\" lab tests internal",
+)
+ORIENTATION_CHECKLIST = (
+    "state the Cortex product goal from docs/CORTEX.md without turning lab/eval/workflow into product identity",
+    "state current work_today.slug and next_product_train.slug from internal/truth/cortex_status.json",
+    "state last live matrix artifact and verdict, including that active Cortex did not beat simple hook",
+    "state whether the cycle surface is product or support and name the model_io_path or none_lab_proof_only",
+    "state why this cycle is allowed by the runner and why stopping is not the better action",
+    "state which existing owner module will be extended and why no new task-specific harness is needed",
+)
+CURRENT_BINDING_EVIDENCE = {
+    "artifact": "run_20260508T221352Z",
+    "artifact_root": ".cortex/live_validation/cortex_effectiveness_evaluator_live_matrix/run_20260508T221352Z/",
+    "verdict": "failure_silent_perception_contamination",
+    "interpretation": (
+        "Active Cortex did not beat the simple-hook baseline on any family; "
+        "the only discriminating continuity row improved in silent and active arms together."
+    ),
+    "next_train": "cortex-effectiveness-measurement-stack-rebuild",
+    "forbidden_inference": (
+        "Do not treat this as behavior lift, exactness value lift, product progress, "
+        "shipping promotion, or permission for candidate evolution."
+    ),
+}
+FRESH_CHAT_STOP_RULES = (
+    "do not use prior chat memory as authority; repo truth and the runner work packet are authority",
+    "read-only until required_boot_reads, required_code_owner_reads, and anti_reinvention_searches are complete",
+    "blocked is a successful automation outcome; do not improvise around a non-ready runner decision",
+    "do not create a new task-specific Gate 0 or harness if the general evaluator can express the case",
+    "do not edit product Cortex, evaluator scoring, fixtures, hidden verifier surfaces, packet law, or workflow gates unless current truth explicitly authorizes it",
+    "do not claim Cortex value when simple hook ties/wins or silent Cortex succeeds",
+)
 
 
 @dataclass(frozen=True)
@@ -150,6 +218,27 @@ class LoopDecision:
     reasons: tuple[str, ...]
     recommended_commands: tuple[str, ...]
     allowed_commands: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class WorkPacket:
+    contract_version: int
+    cortex_goal: str
+    do_not_use_prior_chat_context: bool
+    blocked_is_success: bool
+    current_train: str | None
+    next_train: str | None
+    decision_status: str
+    surface: str
+    model_io_path: str
+    current_binding_evidence: Mapping[str, str]
+    required_boot_reads: tuple[str, ...]
+    required_code_owner_reads: tuple[str, ...]
+    anti_reinvention_searches: tuple[str, ...]
+    orientation_checklist: tuple[str, ...]
+    stop_rules: tuple[str, ...]
+    allowed_commands: tuple[str, ...]
+    forbidden_product_claims: tuple[str, ...]
 
 
 def _run_git(root: Path, args: Sequence[str]) -> subprocess.CompletedProcess[str]:
@@ -544,6 +633,16 @@ def _managed_current_work_slug(
 
 
 def _allowed_commands_for_slug(slug: str | None, git_state: GitState) -> tuple[str, ...]:
+    if slug == "cortex-effectiveness-measurement-stack-rebuild":
+        return (
+            "python3 lab/cortex_effectiveness_evaluator.py --measurement-stack-rebuild-gate0 --require-pass",
+            "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
+            "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
+            "python3 -m pytest tests/internal/test_docs_boundary.py -q",
+            "python3 internal/truth/generate_status.py --check",
+            "python3 internal/truth/generate_cortex_doc.py --check",
+            "git diff --check",
+        )
     if slug == "cortex-executive-effectiveness-evaluator-build":
         return (
             "python3 lab/cortex_effectiveness_evaluator.py --build --require-pass",
@@ -600,6 +699,81 @@ def _allowed_commands_for_slug(slug: str | None, git_state: GitState) -> tuple[s
             f"python3 internal/workflow/repo_workflow.py start-session --agent codex --slug {slug}",
         )
     return ("follow current truth and repo workflow; no unregistered command batch",)
+
+
+def _is_evaluator_authorized_slug(slug: str) -> bool:
+    return slug in EVALUATOR_AUTHORIZED_EXACT_SLUGS or slug.startswith(
+        EVALUATOR_AUTHORIZED_SLUG_PREFIXES
+    )
+
+
+def _code_owner_reads_for_slug(slug: str | None) -> tuple[str, ...]:
+    if slug in CODE_OWNER_READS_BY_SLUG:
+        return CODE_OWNER_READS_BY_SLUG[slug]
+    return DEFAULT_CODE_OWNER_READS
+
+
+def _anti_reinvention_searches_for_slug(slug: str | None) -> tuple[str, ...]:
+    if slug in ANTI_REINVENTION_SEARCHES_BY_SLUG:
+        return ANTI_REINVENTION_SEARCHES_BY_SLUG[slug]
+    return DEFAULT_ANTI_REINVENTION_SEARCHES
+
+
+def _model_io_path_for_surface(surface: str, slug: str | None) -> str:
+    lowered = surface.lower()
+    if lowered.startswith("no-live") or "lab" in lowered or "proof" in lowered:
+        return LAB_PROOF_MODEL_IO_PATH
+    if slug and "posttooluse" in slug:
+        return "Codex PostToolUse hookSpecificOutput.additionalContext"
+    return "must_be_declared_by_product_spine"
+
+
+def build_work_packet(
+    status: Mapping[str, Any],
+    git_state: GitState,
+    decision: LoopDecision,
+) -> WorkPacket:
+    work_today = status.get("work_today") or {}
+    next_train = status.get("next_product_train") or {}
+    if not isinstance(work_today, Mapping):
+        work_today = {}
+    if not isinstance(next_train, Mapping):
+        next_train = {}
+    current_train = work_today.get("slug")
+    current_train_text = str(current_train) if isinstance(current_train, str) else None
+    next_slug = decision.next_slug
+    surface = str(next_train.get("surface") or "")
+    return WorkPacket(
+        contract_version=1,
+        cortex_goal=(
+            "Cortex is the shipped multi-host executive layer around a model/CLI: "
+            "continuity, focused persistence, context adoption, brake, truthful "
+            "closure, blocker surfacing, preservation, and capability-aware routing "
+            "that improve model behavior through lawful lifecycle control and model I/O."
+        ),
+        do_not_use_prior_chat_context=True,
+        blocked_is_success=True,
+        current_train=current_train_text,
+        next_train=next_slug,
+        decision_status=decision.status,
+        surface=surface,
+        model_io_path=_model_io_path_for_surface(surface, next_slug),
+        current_binding_evidence=CURRENT_BINDING_EVIDENCE,
+        required_boot_reads=REQUIRED_BOOT_READS,
+        required_code_owner_reads=_code_owner_reads_for_slug(next_slug),
+        anti_reinvention_searches=_anti_reinvention_searches_for_slug(next_slug),
+        orientation_checklist=ORIENTATION_CHECKLIST,
+        stop_rules=FRESH_CHAT_STOP_RULES,
+        allowed_commands=decision.allowed_commands,
+        forbidden_product_claims=(
+            "behavior_lift",
+            "exactness_value_lift",
+            "broad_cortex_lift",
+            "Codex App parity",
+            "shipping_promotion",
+            "product_progress_without_model_io",
+        ),
+    )
 
 
 def _previous_ready_noop_reason(
@@ -675,7 +849,7 @@ def classify_next_work(
         slug_text = None
     else:
         slug_text = active_slug
-        if not slug_text.startswith(EVALUATOR_AUTHORIZED_SLUG_PREFIXES):
+        if not _is_evaluator_authorized_slug(slug_text):
             reasons.append(f"next train `{slug_text}` is not evaluator-authorized")
 
     noop_reason = _previous_ready_noop_reason(
@@ -829,6 +1003,7 @@ def render_digest(
     bloat: BloatMetrics,
     candidate_contraction: Sequence[str] = (),
     candidate_rows: Sequence[Mapping[str, Any]] = (),
+    work_packet: Mapping[str, Any] | None = None,
 ) -> str:
     mission_summary = candidate_mission_summary(candidate_rows)
     lines = [
@@ -869,6 +1044,29 @@ def render_digest(
         lines.extend(f"- `{command}`" for command in decision.allowed_commands)
     else:
         lines.append("- none")
+    if work_packet is not None:
+        lines.extend(
+            [
+                "",
+                "## Fresh-Chat Work Packet",
+                "",
+                f"- Contract version: `{work_packet.get('contract_version')}`",
+                f"- Do not use prior chat context: `{work_packet.get('do_not_use_prior_chat_context')}`",
+                f"- Blocked is success: `{work_packet.get('blocked_is_success')}`",
+                f"- Model-I/O path: `{work_packet.get('model_io_path')}`",
+                f"- Binding artifact: `{(work_packet.get('current_binding_evidence') or {}).get('artifact')}`",
+                f"- Binding verdict: `{(work_packet.get('current_binding_evidence') or {}).get('verdict')}`",
+                "",
+                "Required reads before edits:",
+            ]
+        )
+        lines.extend(f"- `{path}`" for path in work_packet.get("required_boot_reads", ()))
+        lines.extend(["", "Code-owner reads before edits:"])
+        lines.extend(f"- `{path}`" for path in work_packet.get("required_code_owner_reads", ()))
+        lines.extend(["", "Anti-reinvention searches:"])
+        lines.extend(f"- `{command}`" for command in work_packet.get("anti_reinvention_searches", ()))
+        lines.extend(["", "Orientation checklist:"])
+        lines.extend(f"- {item}" for item in work_packet.get("orientation_checklist", ()))
     lines.extend(["", "## Contraction Candidates", ""])
     if candidate_contraction:
         lines.extend(f"- `{candidate}` lost to simple baseline at least twice" for candidate in candidate_contraction)
@@ -926,6 +1124,7 @@ def run_once(
             candidate_contraction=contraction,
             candidate_rows=rows,
         )
+        work_packet = build_work_packet(status, git_state, decision)
         day_dir = digest_root / now.date().isoformat()
         day_dir.mkdir(parents=True, exist_ok=True)
         digest_text = render_digest(
@@ -935,6 +1134,7 @@ def run_once(
             bloat=bloat,
             candidate_contraction=contraction,
             candidate_rows=rows,
+            work_packet=asdict(work_packet),
         )
         digest_path = day_dir / "digest.md"
         report_path = day_dir / "cycle_report.json"
@@ -952,6 +1152,7 @@ def run_once(
             "git_state": asdict(git_state),
             "bloat": asdict(bloat),
             "decision": asdict(decision),
+            "work_packet": asdict(work_packet),
             "mission_objective_summary": candidate_mission_summary(rows),
             "contraction_candidates": list(contraction),
             "digest_path": str(digest_path),
