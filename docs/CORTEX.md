@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-retained-active-policy-spine-live-gate1`
-### Next Product Train
 - Slug: `cortex-retained-active-policy-spine-live-run`
-- Surface: `approval-gated retained-spine evaluator live matrix`
-- Why now: The retained-spine Live Gate 1 no-live seam `pass_cortex_retained_active_policy_spine_live_gate1` produced a 60-row dry-run matrix, kept PostToolUse proof surfaces role-demoted, preserved the v1/v2 negative artifacts, and registered the exact future live command/env pair. The next step is the approval-gated live run, not search or policy tuning.
+### Next Product Train
+- Slug: `cortex-retained-spine-live-matrix-materialization-remediation`
+- Surface: `no-live retained-spine evaluator materialization remediation`
+- Why now: The approval-gated retained-spine live run completed 60 rows but returned `fail` with `mission_contract_error`: all 15 `simple_hook_baseline` rows used `lab_simple_hook_prompt_context` and were rejected as product-facing model I/O without a product spine. The run preserved root config, avoided runtime snapshots, avoided hidden-verifier leakage, kept PostToolUse disabled, and recorded no overcontrol, but the result is not interpretable until the evaluator materialization contract is repaired no-live.
 
 ### Research Lines Under Evaluation
 

@@ -117,7 +117,8 @@
     "docs/recon/cortex_active_policy_contraction_decision.md",
     "docs/recon/cortex_posttooluse_proof_surface_role_demotion.md",
     "docs/recon/cortex_retained_active_policy_spine_gate0.md",
-    "docs/recon/cortex_retained_active_policy_spine_live_gate1.md"
+    "docs/recon/cortex_retained_active_policy_spine_live_gate1.md",
+    "docs/recon/cortex_retained_active_policy_spine_live_run.md"
   ],
   "bio_to_code_matrix": [
     {
@@ -476,7 +477,8 @@
           "docs/recon/cortex_active_policy_contraction_decision.md",
           "docs/recon/cortex_posttooluse_proof_surface_role_demotion.md",
           "docs/recon/cortex_retained_active_policy_spine_gate0.md",
-          "docs/recon/cortex_retained_active_policy_spine_live_gate1.md"
+          "docs/recon/cortex_retained_active_policy_spine_live_gate1.md",
+          "docs/recon/cortex_retained_active_policy_spine_live_run.md"
         ],
         "update_rule": "Add a recon when a proof or decision is earned; do not treat recon alone as shipping truth without status promotion."
       }
@@ -950,22 +952,15 @@
     ]
   },
   "next_product_train": {
-    "executive_benefit": "Run the retained UserPromptSubmit + Stop + TaskStandardSpine spine through the registered four-arm v2 evaluator live matrix to test whether the smaller active spine beats no-Cortex, simple-hook, and silent controls before any program database, candidate generation, or AlphaEvolve automation loop.",
-    "guardrail": "No product code deletion, no product behavior change, no product host behavior change, no model-visible Cortex text change, no evaluator scoring or fixtures change, no hidden-verifier boundary change, no root hook change, no SRE law change, no active policy mutation, no PostToolUse reactivation, and no AlphaEvolve candidate policy. Live Codex is allowed only through the exact registered retained-spine evaluator command/env pair with explicit approval in the current turn. Do not claim broad Cortex lift, Codex App parity, shipping promotion, product progress, or candidate-evolution permission. Do not change product behavior, model-visible Cortex text, evaluator scoring or fixtures, hidden-verifier boundaries, root hooks, SRE law, active policy, or candidate policy during this live seam.",
-    "kill_rule": "Fail or stop if the seam runs any unregistered live command, changes scoring or fixtures to favor Cortex, reactivates PostToolUse as earned active policy, treats simple-hook parity or silent success as Cortex value, mutates product policy after live starts, loads a runtime snapshot, mutates root config, omits any arm/family/repeat, or queues candidate evolution from anything short of scoped retained-spine value.",
+    "executive_benefit": "Repair the retained-spine evaluator materialization bug exposed by `run_20260509T192719Z` so the four-arm matrix can distinguish lab simple-hook prompt context from product-facing model I/O before any retained-spine value interpretation, live rerun, program database, candidate generation, or AlphaEvolve automation loop.",
+      "guardrail": "No live Codex run. No product behavior change. No product code deletion. Do not change product behavior, product host behavior, model-visible Cortex text, evaluator scoring or fixtures to favor Cortex, hidden-verifier boundaries, root hooks, SRE law, active policy, PostToolUse policy or PostToolUse reactivation, or AlphaEvolve candidate policy. The existing live artifact `run_20260509T192719Z` must remain `fail` under the registered result until a no-live remediation explicitly replays it; do not reinterpret it as Cortex value inside the closeout seam.",
+    "kill_rule": "Fail or stop if the seam reruns live before no-live materialization repair, treats the mission-contract failure as retained-spine value or no-value parity, changes scoring or fixtures to favor Cortex, mutates product policy, adds a product spine to the lab simple-hook support arm, reactivates PostToolUse as earned active policy, loads a runtime snapshot, mutates root config, omits preservation of `run_20260509T192719Z`, or queues candidate evolution.",
     "last_reviewed_at": "2026-05-09T00:00:00+00:00",
-    "primary_metric": "With explicit current-turn approval, execute `CORTEX_CODEX_APP_CLI_RETAINED_SPINE_LIVE_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-matrix`; record whether `userpromptsubmit_stop_taskstandard_spine` earns scoped retained-spine value over `no_cortex_baseline`, `simple_hook_baseline`, and `cortex_silent_perception` with no dominance failure. Simple-hook parity and silent-perception success remain no-value blockers.",
-    "registered_live_commands": [
-      {
-        "command": "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-matrix",
-        "env": {
-          "CORTEX_CODEX_APP_CLI_RETAINED_SPINE_LIVE_APPROVED": "approved"
-        }
-      }
-    ],
-    "slug": "cortex-retained-active-policy-spine-live-run",
-    "surface": "approval-gated retained-spine evaluator live matrix",
-    "why_now": "The retained-spine Live Gate 1 no-live seam `pass_cortex_retained_active_policy_spine_live_gate1` produced a 60-row dry-run matrix, kept PostToolUse proof surfaces role-demoted, preserved the v1/v2 negative artifacts, and registered the exact future live command/env pair. The next step is the approval-gated live run, not search or policy tuning."
+    "primary_metric": "No-live repair proves that `simple_hook_baseline` rows use lab/support model I/O without a product spine, preserves all 60 rows from `run_20260509T192719Z`, keeps `userpromptsubmit_stop_taskstandard_spine` active rows PostToolUse-free, and replays the artifact through mission-contract validation without scoring/fixture/product-policy changes.",
+    "registered_live_commands": [],
+    "slug": "cortex-retained-spine-live-matrix-materialization-remediation",
+    "surface": "no-live retained-spine evaluator materialization remediation",
+    "why_now": "The approval-gated retained-spine live run completed 60 rows but returned `fail` with `mission_contract_error`: all 15 `simple_hook_baseline` rows used `lab_simple_hook_prompt_context` and were rejected as product-facing model I/O without a product spine. The run preserved root config, avoided runtime snapshots, avoided hidden-verifier leakage, kept PostToolUse disabled, and recorded no overcontrol, but the result is not interpretable until the evaluator materialization contract is repaired no-live."
   },
   "packet_to_code_anchors": [
     {
@@ -1622,7 +1617,7 @@
     "The Codex App/CLI PostToolUse task-standard narrow live probe harness seam then added `--task-standard-posttooluse-live`, approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running a live Codex command. The live probe remains unearned until explicitly approved and run; this seam earns harness readiness only and preserves signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport deferral, PreToolUse denial deferral, and PermissionRequest policy."
   ],
   "work_today": {
-    "note": "The no-live retained-spine Live Gate 1 seam produced `pass_cortex_retained_active_policy_spine_live_gate1` and wrote `.cortex/live_validation/cortex_retained_active_policy_spine_live_gate1/retained_spine_contract.json`, `evaluator_design.json`, `live_plan.json`, `episode_table.jsonl`, `summary.json`, `leaderboard.json`, and `failure_analysis.json`. It schedules `60` dry-run rows (`4` arms x `5` v2 task families x `3` repeats) for the retained active-policy spine `userpromptsubmit_stop_taskstandard_spine` against `no_cortex_baseline`, `simple_hook_baseline`, `cortex_silent_perception`, and `cortex_active_policy`. The active arm uses only `userpromptsubmit_stop_taskstandard_spine`; PostToolUse task-standard context remains `role_demoted_non_current_support_history` and is not reactivated as current strategy, product progress, or earned active policy. The seam registers the future retained-spine live command/env pair `CORTEX_CODEX_APP_CLI_RETAINED_SPINE_LIVE_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-matrix`; without approval the command returns `not_run_approval_required`, and the live runner remains not implemented in this no-live seam. The plan consumes the v2 registry, preserves `run_20260508T221352Z` as `failure_silent_perception_contamination`, preserves `run_20260509T112542Z` as `failure_no_value`, keeps simple-hook parity and silent-perception success as value blockers, and does not rescore v1/v2 artifacts. This seam did not run live, delete product code, change product host behavior, model-visible Cortex text, evaluator scoring, fixtures, hidden-verifier boundaries, root hooks, SRE law, active policy, or candidate policy. It does not earn Cortex value, behavior lift, exactness value lift, broad Cortex lift, Codex App parity, shipping promotion, product progress, or AlphaEvolve candidate-evolution permission. The next train is `cortex-retained-active-policy-spine-live-run`.",
-    "slug": "cortex-retained-active-policy-spine-live-gate1"
+    "note": "The approval-gated retained-spine live run executed `CORTEX_CODEX_APP_CLI_RETAINED_SPINE_LIVE_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-matrix` and produced artifact `run_20260509T192719Z` under `.cortex/live_validation/cortex_retained_active_policy_spine_live_matrix/`. It wrote `retained_spine_contract.json`, `evaluator_design.json`, `v2_case_registry.json`, `live_plan.json`, `episode_table.jsonl`, `summary.json`, `leaderboard.json`, `failure_analysis.json`, `latest_run.json`, and per-row `trials/` artifacts. It completed `60` live rows (`4` arms x `5` v2 task families x `3` repeats) for `userpromptsubmit_stop_taskstandard_spine` against `no_cortex_baseline`, `simple_hook_baseline`, `cortex_silent_perception`, and `cortex_active_policy`. The registered verdict is `fail` with failure reason `mission_contract_error`: the 15 `simple_hook_baseline` rows used `lab_simple_hook_prompt_context`, which the mission-contract validator treated as product-facing model I/O requiring a product spine. Artifact review confirmed all arms/families/repeats were present, root config stayed unchanged, no runtime snapshot loaded, no hidden-verifier leakage was recorded, no clean-control overcontrol was recorded, and PostToolUse task-standard context stayed disabled and role-demoted. Because the failure is evaluator materialization underfit, this seam does not interpret retained-spine value, no-value parity, or product lift; it preserves `run_20260508T221352Z` as `failure_silent_perception_contamination`, preserves `run_20260509T112542Z` as `failure_no_value`, and queues no-live materialization remediation. This seam does not earn Cortex value, behavior lift, exactness value lift, broad Cortex lift, Codex App parity, shipping promotion, product progress, retained-spine value, or AlphaEvolve candidate-evolution permission. The next train is `cortex-retained-spine-live-matrix-materialization-remediation`.",
+    "slug": "cortex-retained-active-policy-spine-live-run"
   }
 }
