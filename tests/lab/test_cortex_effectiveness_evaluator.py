@@ -21,7 +21,9 @@ from lab.cortex_effectiveness_evaluator import (
     SIMPLE_HOOK_LOC_LIMIT,
     SIMPLE_HOOK_SOURCE_PATH,
     TASK_FAMILIES,
+    RETAINED_SPINE_LIVE_APPROVAL_ENV,
     EvaluatorEpisodeRow,
+    build_retained_spine_live_gate1_plan,
     build_v2_executable_live_matrix_plan,
     build_v2_live_matrix_plan,
     build_live_matrix_plan,
@@ -38,6 +40,8 @@ from lab.cortex_effectiveness_evaluator import (
     run_cortex_effectiveness_evaluator_live_gate1,
     run_cortex_effectiveness_evaluator_live_matrix,
     run_cortex_retained_active_policy_spine_gate0,
+    run_cortex_retained_active_policy_spine_live_gate1,
+    run_cortex_retained_active_policy_spine_live_matrix,
     run_cortex_simple_hook_baseline_gate0,
 )
 from lab.cortex_simple_hook_baseline import (
@@ -1094,6 +1098,129 @@ def test_retained_active_policy_spine_cli_passes(tmp_path: Path) -> None:
     assert (output_root / "summary.json").exists()
 
 
+def test_retained_spine_live_gate1_builds_no_live_dry_run_matrix(
+    tmp_path: Path,
+) -> None:
+    report = run_cortex_retained_active_policy_spine_live_gate1(output_root=tmp_path)
+    live_plan = json.loads((tmp_path / "live_plan.json").read_text())
+    rows = [
+        json.loads(line)
+        for line in (tmp_path / "episode_table.jsonl").read_text().splitlines()
+    ]
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_cortex_retained_active_policy_spine_live_gate1"
+    assert report["live_trials_ran"] is False
+    assert report["model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+    assert report["policy_candidate"] == "userpromptsubmit_stop_taskstandard_spine"
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["alphaevolve_candidate_evolution_allowed"] is False
+    assert report["posttooluse_reactivated_as_earned_policy"] is False
+    assert report["next_train_if_pass"] == "cortex-retained-active-policy-spine-live-run"
+    assert report["checks"]["active_rows_use_retained_spine_only"] is True
+    assert report["checks"]["posttooluse_not_reactivated"] is True
+    assert report["checks"]["workspace_seeds_matched_across_arms"] is True
+    assert report["checks"]["simple_hook_parity_blocks_value"] is True
+    assert report["checks"]["silent_success_blocks_value"] is True
+    assert live_plan["row_count"] == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT
+    assert live_plan["approval"]["env"] == RETAINED_SPINE_LIVE_APPROVAL_ENV
+    assert live_plan["approval"]["without_approval_verdict"] == "not_run_approval_required"
+    assert live_plan["approval"]["future_live_command_registered_not_implemented_here"] is True
+    assert set(live_plan["arms"]) == set(ARMS)
+    assert set(live_plan["task_families"]) == set(TASK_FAMILIES)
+    assert all(str(case_id).endswith("_v2") for case_id in live_plan["case_ids"])
+    assert len(rows) == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT
+    assert all(
+        row["policy_candidate"] == "userpromptsubmit_stop_taskstandard_spine"
+        for row in live_plan["rows"]
+        if row["arm"] == "cortex_active_policy"
+    )
+    assert all(
+        row["arm_settings"]["enable_posttooluse_task_standard_context"] is False
+        for row in live_plan["rows"]
+    )
+    assert (tmp_path / "retained_spine_contract.json").exists()
+    assert (tmp_path / "evaluator_design.json").exists()
+    assert (tmp_path / "leaderboard.json").exists()
+    assert (tmp_path / "failure_analysis.json").exists()
+
+
+def test_retained_spine_live_gate1_plan_keeps_pair_seeds_matched() -> None:
+    plan = build_retained_spine_live_gate1_plan()
+
+    assert plan["row_count"] == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT
+    for task_family in TASK_FAMILIES:
+        for repeat_index in range(1, LIVE_MATRIX_REPEAT_COUNT + 1):
+            seeds = {
+                row["workspace_seed"]
+                for row in plan["rows"]
+                if row["task_family"] == task_family
+                and int(row["repeat_index"]) == repeat_index
+            }
+            assert len(seeds) == 1
+    assert all(
+        row["policy_candidate"] != "userpromptsubmit_stop_taskstandard_spine"
+        for row in plan["rows"]
+        if row["arm"] != "cortex_active_policy"
+    )
+
+
+def test_retained_spine_live_matrix_refusal_placeholder(tmp_path: Path) -> None:
+    refused = run_cortex_retained_active_policy_spine_live_matrix(
+        output_root=tmp_path / "refused",
+        approval_env={},
+    )
+    approved_placeholder = run_cortex_retained_active_policy_spine_live_matrix(
+        output_root=tmp_path / "approved_placeholder",
+        approval_env={RETAINED_SPINE_LIVE_APPROVAL_ENV: "approved"},
+    )
+
+    assert refused["verdict"] == "not_run_approval_required"
+    assert refused["approval_env"] == RETAINED_SPINE_LIVE_APPROVAL_ENV
+    assert refused["live_trials_ran"] is False
+    assert approved_placeholder["verdict"] == (
+        "not_run_retained_spine_live_runner_not_implemented"
+    )
+    assert approved_placeholder["live_trials_ran"] is False
+
+
+def test_retained_spine_live_gate1_cli_passes_and_live_matrix_cli_refuses(
+    tmp_path: Path,
+) -> None:
+    gate_root = tmp_path / "retained_spine_live_gate1"
+    gate = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--retained-spine-live-gate1",
+            "--require-pass",
+            "--output-root",
+            str(gate_root),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    refusal = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--retained-spine-live-matrix",
+            "--output-root",
+            str(tmp_path / "retained_spine_live_matrix_refusal"),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "pass_cortex_retained_active_policy_spine_live_gate1" in gate.stdout
+    assert (gate_root / "live_plan.json").exists()
+    assert "not_run_approval_required" in refusal.stdout
+
+
 def test_live_gate1_cli_passes_and_live_matrix_cli_refuses(tmp_path: Path) -> None:
     gate_root = tmp_path / "live_gate1"
     gate = subprocess.run(
@@ -1140,6 +1267,8 @@ def test_gate0_source_keeps_alphaevolve_loop_deferred() -> None:
     assert "--v2-case-registry-gate0" in source
     assert "--v2-live-matrix-gate1" in source
     assert "--retained-active-policy-spine-gate0" in source
+    assert "--retained-spine-live-gate1" in source
+    assert "--retained-spine-live-matrix" in source
     assert "alphaevolve_loop_later" in source
     assert "program_database_fields" in source
     assert "candidate_representation" in source

@@ -64,6 +64,12 @@ DEFAULT_V2_LIVE_MATRIX_OUTPUT_ROOT = Path(
 DEFAULT_RETAINED_SPINE_OUTPUT_ROOT = Path(
     ".cortex/live_validation/cortex_retained_active_policy_spine_gate0"
 )
+DEFAULT_RETAINED_SPINE_LIVE_GATE1_OUTPUT_ROOT = Path(
+    ".cortex/live_validation/cortex_retained_active_policy_spine_live_gate1"
+)
+DEFAULT_RETAINED_SPINE_LIVE_MATRIX_OUTPUT_ROOT = Path(
+    ".cortex/live_validation/cortex_retained_active_policy_spine_live_matrix"
+)
 HISTORICAL_EFFECTIVENESS_LIVE_MATRIX_RUN_ROOT = (
     DEFAULT_LIVE_MATRIX_OUTPUT_ROOT / "run_20260508T221352Z"
 )
@@ -79,6 +85,10 @@ MEASUREMENT_STACK_REQUIRED_ARTIFACTS: tuple[str, ...] = (
 )
 EVALUATOR_LIVE_APPROVAL_ENV = "CORTEX_CODEX_APP_CLI_EVALUATOR_LIVE_APPROVED"
 EVALUATOR_LIVE_APPROVAL_VALUE = "approved"
+RETAINED_SPINE_LIVE_APPROVAL_ENV = (
+    "CORTEX_CODEX_APP_CLI_RETAINED_SPINE_LIVE_APPROVED"
+)
+RETAINED_SPINE_LIVE_APPROVAL_VALUE = "approved"
 EVALUATOR_LIVE_MATRIX_COMMAND = (
     "python3 lab/cortex_effectiveness_evaluator.py --live-matrix"
 )
@@ -87,6 +97,9 @@ EVALUATOR_V2_LIVE_MATRIX_COMMAND = (
 )
 RETAINED_SPINE_LIVE_GATE1_COMMAND = (
     "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-gate1"
+)
+RETAINED_SPINE_LIVE_MATRIX_COMMAND = (
+    "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-matrix"
 )
 LIVE_MATRIX_REPEAT_COUNT = 3
 SIMPLE_HOOK_LOC_LIMIT = 500
@@ -454,6 +467,21 @@ def registered_v2_live_commands() -> list[dict[str, Any]]:
     ]
 
 
+def registered_retained_spine_live_commands() -> list[dict[str, Any]]:
+    """Return the exact future retained-spine live command/env pair."""
+
+    return [
+        {
+            "command": RETAINED_SPINE_LIVE_MATRIX_COMMAND,
+            "env": {
+                RETAINED_SPINE_LIVE_APPROVAL_ENV: (
+                    RETAINED_SPINE_LIVE_APPROVAL_VALUE
+                )
+            },
+        }
+    ]
+
+
 def _write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -562,6 +590,31 @@ def _live_matrix_arm_settings(arm: str) -> dict[str, Any]:
             "enable_posttooluse_task_standard_context": True,
         }
     raise ValueError(f"unknown evaluator arm: {arm}")
+
+
+def _retained_spine_arm_settings(arm: str) -> dict[str, Any]:
+    settings = dict(_live_matrix_arm_settings(arm))
+    if arm in {"cortex_silent_perception", "cortex_active_policy"}:
+        settings.update(
+            {
+                "policy_candidate": _retained_spine_policy_candidate_for_arm(arm),
+                "enable_userpromptsubmit_task_standard": True,
+                "enable_stop_continuation_gate": True,
+                "enable_posttooluse_task_standard_context": False,
+                "posttooluse_role_demoted": True,
+            }
+        )
+    else:
+        settings.update(
+            {
+                "policy_candidate": _retained_spine_policy_candidate_for_arm(arm),
+                "enable_userpromptsubmit_task_standard": False,
+                "enable_stop_continuation_gate": False,
+                "enable_posttooluse_task_standard_context": False,
+                "posttooluse_role_demoted": True,
+            }
+        )
+    return settings
 
 
 def _live_matrix_model_io_path(arm: str) -> str:
@@ -1237,6 +1290,12 @@ def _policy_candidate_for_arm(arm: str) -> str:
     return "lifecycle_composed_policy"
 
 
+def _retained_spine_policy_candidate_for_arm(arm: str) -> str:
+    if arm == "cortex_active_policy":
+        return "userpromptsubmit_stop_taskstandard_spine"
+    return _policy_candidate_for_arm(arm)
+
+
 def build_live_matrix_plan(
     *,
     repeat_count: int = LIVE_MATRIX_REPEAT_COUNT,
@@ -1496,6 +1555,113 @@ def build_v2_live_matrix_plan(
         ],
         "rows": row_payloads,
     }
+
+
+def build_retained_spine_live_gate1_plan(
+    *,
+    repeat_count: int = LIVE_MATRIX_REPEAT_COUNT,
+    registry: Mapping[str, Any] | None = None,
+    contract: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build the retained-spine no-live matrix plan from the v2 registry."""
+
+    case_registry = (
+        dict(registry) if registry is not None else cortex_effectiveness_v2_case_registry()
+    )
+    spine_contract = (
+        dict(contract)
+        if contract is not None
+        else retained_active_policy_spine_contract()
+    )
+    contract_errors = validate_retained_active_policy_spine_contract(spine_contract)
+    contract_hash = _stable_hash(spine_contract)
+    base_plan = build_v2_live_matrix_plan(
+        repeat_count=repeat_count,
+        registry=case_registry,
+    )
+    rows: list[dict[str, Any]] = []
+    if not contract_errors:
+        for payload in base_plan["rows"]:
+            arm = str(payload["arm"])
+            task_family = str(payload["task_family"])
+            policy_candidate = _retained_spine_policy_candidate_for_arm(arm)
+            row = {
+                **payload,
+                "source": "retained_spine_live_gate1_dry_run_plan",
+                "episode_id": "retained_spine__" + str(payload["episode_id"]),
+                "expected_verdict": "not_run_retained_spine_live_gate1_dry_run",
+                "policy_candidate": policy_candidate,
+                "mission_objective": mission_objective_for_row(
+                    arm=arm,
+                    task_family=task_family,
+                    policy_candidate=policy_candidate,
+                ),
+                "notes": (
+                    "Retained-spine dry-run schedule only; no live Codex "
+                    "command or product behavior change executed."
+                ),
+                "arm_settings": _retained_spine_arm_settings(arm),
+                "retained_spine_id": spine_contract["retained_spine_id"],
+                "retained_spine_contract_hash": contract_hash,
+                "retained_spine_components": [
+                    component["component_id"]
+                    for component in spine_contract["retained_spine_components"]
+                ],
+                "posttooluse_role_demoted": True,
+                "approval": {
+                    "env": RETAINED_SPINE_LIVE_APPROVAL_ENV,
+                    "required_value": RETAINED_SPINE_LIVE_APPROVAL_VALUE,
+                    "without_approval_verdict": "not_run_approval_required",
+                },
+                "case_materialization_status": (
+                    "not_materialized_retained_spine_gate1_dry_run"
+                ),
+            }
+            rows.append(row)
+    plan = {
+        **base_plan,
+        "matrix_id": "cortex_retained_active_policy_spine_live_gate1",
+        "row_count": len(rows),
+        "retained_spine": {
+            "retained_spine_id": spine_contract.get("retained_spine_id"),
+            "policy_candidate": spine_contract.get(
+                "retained_policy_candidate_for_next_gate", {}
+            ).get("policy_candidate"),
+            "hash": contract_hash,
+            "validation_errors": list(contract_errors),
+        },
+        "retained_spine_contract_valid": not contract_errors,
+        "registered_live_commands": registered_retained_spine_live_commands(),
+        "workspace_isolation": {
+            "mode": "isolated_workspace_per_row_with_matched_pair_seed",
+            "matched_seed_fields": [
+                "registry_hash",
+                "task_family",
+                "case_id",
+                "repeat_index",
+            ],
+            "row_identity_fields": ["case_id", "repeat_index", "arm"],
+            "root_config_mutation_allowed": False,
+            "runtime_snapshot_allowed": False,
+        },
+        "approval": {
+            "env": RETAINED_SPINE_LIVE_APPROVAL_ENV,
+            "required_value": RETAINED_SPINE_LIVE_APPROVAL_VALUE,
+            "without_approval_verdict": "not_run_approval_required",
+            "future_live_command_registered_not_implemented_here": True,
+        },
+        "reports": [
+            "retained_spine_contract.json",
+            "evaluator_design.json",
+            "live_plan.json",
+            "episode_table.jsonl",
+            "summary.json",
+            "leaderboard.json",
+            "failure_analysis.json",
+        ],
+        "rows": rows,
+    }
+    return plan
 
 
 def cortex_effectiveness_v2_case_materializations() -> dict[str, dict[str, Any]]:
@@ -4593,6 +4759,232 @@ def run_cortex_retained_active_policy_spine_gate0(
     return report
 
 
+def run_cortex_retained_active_policy_spine_live_gate1(
+    output_root: Path | str = DEFAULT_RETAINED_SPINE_LIVE_GATE1_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    """Wire the retained active-policy spine into a no-live matrix dry-run."""
+
+    root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
+    design = cortex_effectiveness_evaluator_design()
+    registry = cortex_effectiveness_v2_case_registry()
+    contract = retained_active_policy_spine_contract()
+    registry_errors = validate_cortex_effectiveness_v2_case_registry(registry)
+    contract_errors = validate_retained_active_policy_spine_contract(contract)
+    live_plan = build_retained_spine_live_gate1_plan(
+        registry=registry,
+        contract=contract,
+    )
+    rows = [
+        EvaluatorEpisodeRow(
+            task_family=row["task_family"],
+            case_id=row["case_id"],
+            repeat_index=int(row["repeat_index"]),
+            arm=row["arm"],
+            policy_candidate=row["policy_candidate"],
+            metrics=row["metrics"],
+            source=row["source"],
+            episode_id=row["episode_id"],
+            expected_verdict=row.get("expected_verdict"),
+            observed_verdict=row.get("observed_verdict"),
+            notes=row.get("notes", ""),
+            mission_objective=row.get("mission_objective"),
+        )
+        for row in live_plan["rows"]
+    ]
+    mission_contract_errors = validate_episode_rows_mission_contract(rows)
+    episode_table_path = root / "episode_table.jsonl"
+    write_episode_table(episode_table_path, rows)
+    leaderboard = {
+        "live_trials_ran": False,
+        "score_basis": "retained_spine_live_gate1_dry_run_schedule_only",
+        "retained_spine_id": contract["retained_spine_id"],
+        "policy_candidate": "userpromptsubmit_stop_taskstandard_spine",
+        "claim_allowed": {
+            "behavior_lift": False,
+            "exactness_value_lift": False,
+            "broad_cortex_lift": False,
+            "codex_app_parity": False,
+            "shipping_promotion": False,
+            "product_progress": False,
+        },
+        "selection_status": "not_live_eligible_until_retained_spine_live_run",
+    }
+    failure_analysis = {
+        "live_trials_ran": False,
+        "retained_spine_id": contract["retained_spine_id"],
+        "posttooluse_reactivated_as_earned_policy": False,
+        "posttooluse_role": "role_demoted_non_current_support_history",
+        "known_boundary_failures_preserved": list(DOMINANCE_GATES),
+        "simple_hook_parity_blocks_value": True,
+        "silent_success_blocks_value": True,
+        "positive_result_requires_user_review": True,
+        "v1_negative_artifact_preserved": "run_20260508T221352Z",
+        "v2_negative_artifact_preserved": "run_20260509T112542Z",
+        "v2_live_verdict_preserved": "failure_no_value",
+        "future_live_runner_not_implemented_in_this_seam": True,
+    }
+    checks = {
+        "retained_spine_contract_valid": not contract_errors
+        and live_plan["retained_spine_contract_valid"] is True,
+        "v2_registry_valid": not registry_errors
+        and live_plan["registry_valid"] is True,
+        "registered_retained_spine_live_command_env_pair": (
+            registered_retained_spine_live_commands()
+            == live_plan["registered_live_commands"]
+        ),
+        "approval_refusal_registered": live_plan["approval"][
+            "without_approval_verdict"
+        ]
+        == "not_run_approval_required",
+        "all_required_arms_scheduled": set(live_plan["arms"]) == set(ARMS),
+        "all_v2_task_families_scheduled": set(live_plan["task_families"])
+        == set(TASK_FAMILIES),
+        "all_case_ids_are_v2": all(
+            str(case_id).endswith("_v2") for case_id in live_plan["case_ids"]
+        ),
+        "episode_rows_written": episode_table_path.exists(),
+        "row_count_matches_retained_spine_matrix": live_plan["row_count"]
+        == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT,
+        "mission_contract_preserved": not mission_contract_errors,
+        "active_rows_use_retained_spine_only": all(
+            row["policy_candidate"] == "userpromptsubmit_stop_taskstandard_spine"
+            for row in live_plan["rows"]
+            if row["arm"] == "cortex_active_policy"
+        ),
+        "non_active_rows_do_not_use_retained_spine": all(
+            row["policy_candidate"] != "userpromptsubmit_stop_taskstandard_spine"
+            for row in live_plan["rows"]
+            if row["arm"] != "cortex_active_policy"
+        ),
+        "posttooluse_not_reactivated": all(
+            row["arm_settings"]["enable_posttooluse_task_standard_context"] is False
+            for row in live_plan["rows"]
+        ),
+        "workspace_seeds_matched_across_arms": all(
+            len(
+                {
+                    row["workspace_seed"]
+                    for row in live_plan["rows"]
+                    if row["task_family"] == family
+                    and int(row["repeat_index"]) == repeat_index
+                }
+            )
+            == 1
+            for family in TASK_FAMILIES
+            for repeat_index in range(1, LIVE_MATRIX_REPEAT_COUNT + 1)
+        ),
+        "dominance_gates_preserved": set(DOMINANCE_GATES).issubset(
+            set(live_plan["dominance_gates"])
+        ),
+        "simple_hook_parity_blocks_value": failure_analysis[
+            "simple_hook_parity_blocks_value"
+        ]
+        is True,
+        "silent_success_blocks_value": failure_analysis[
+            "silent_success_blocks_value"
+        ]
+        is True,
+        "v2_negative_artifact_preserved": failure_analysis[
+            "v2_negative_artifact_preserved"
+        ]
+        == "run_20260509T112542Z",
+        "live_trials_not_run": live_plan["live_trials_ran"] is False,
+        "future_live_runner_not_implemented_here": live_plan["approval"][
+            "future_live_command_registered_not_implemented_here"
+        ]
+        is True,
+        "alphaevolve_mutation_loop_not_allowed": True,
+    }
+    passed = all(checks.values())
+    report = {
+        "passed": passed,
+        "verdict": (
+            "pass_cortex_retained_active_policy_spine_live_gate1"
+            if passed
+            else "failure_cortex_retained_active_policy_spine_live_gate1"
+        ),
+        "live_trials_ran": False,
+        "model_io_path": LAB_PROOF_MODEL_IO_PATH,
+        "retained_spine_id": contract["retained_spine_id"],
+        "policy_candidate": "userpromptsubmit_stop_taskstandard_spine",
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": False,
+        "broad_cortex_lift_claim_allowed": False,
+        "codex_app_parity_claim_allowed": False,
+        "shipping_promotion_claim_allowed": False,
+        "product_progress_claim_allowed": False,
+        "alphaevolve_candidate_evolution_allowed": False,
+        "posttooluse_reactivated_as_earned_policy": False,
+        "next_train_if_pass": "cortex-retained-active-policy-spine-live-run",
+        "next_train_if_fail": (
+            "cortex-retained-active-policy-spine-live-gate1-remediation"
+        ),
+        "artifact_paths": {
+            "retained_spine_contract": "retained_spine_contract.json",
+            "evaluator_design": "evaluator_design.json",
+            "live_plan": "live_plan.json",
+            "episode_table": "episode_table.jsonl",
+            "summary": "summary.json",
+            "leaderboard": "leaderboard.json",
+            "failure_analysis": "failure_analysis.json",
+        },
+        "registered_live_commands": registered_retained_spine_live_commands(),
+        "checks": checks,
+        "registry_validation_errors": list(registry_errors),
+        "contract_validation_errors": list(contract_errors),
+        "mission_contract_errors": list(mission_contract_errors),
+        "live_plan": {key: value for key, value in live_plan.items() if key != "rows"},
+        "failure_analysis": failure_analysis,
+    }
+    _write_json(root / "retained_spine_contract.json", contract)
+    _write_json(root / "evaluator_design.json", design)
+    _write_json(root / "live_plan.json", live_plan)
+    _write_json(root / "leaderboard.json", leaderboard)
+    _write_json(root / "failure_analysis.json", failure_analysis)
+    _write_json(root / "summary.json", report)
+    return report
+
+
+def run_cortex_retained_active_policy_spine_live_matrix(
+    output_root: Path | str = DEFAULT_RETAINED_SPINE_LIVE_MATRIX_OUTPUT_ROOT,
+    *,
+    approval_env: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    """Refusal-only placeholder for the future retained-spine live matrix."""
+
+    env = approval_env if approval_env is not None else os.environ
+    root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
+    approved = (
+        env.get(RETAINED_SPINE_LIVE_APPROVAL_ENV)
+        == RETAINED_SPINE_LIVE_APPROVAL_VALUE
+    )
+    report = {
+        "passed": False,
+        "verdict": (
+            "not_run_retained_spine_live_runner_not_implemented"
+            if approved
+            else "not_run_approval_required"
+        ),
+        "live_trials_ran": False,
+        "approval_required": not approved,
+        "approval_env": RETAINED_SPINE_LIVE_APPROVAL_ENV,
+        "required_value": RETAINED_SPINE_LIVE_APPROVAL_VALUE,
+        "registered_live_commands": registered_retained_spine_live_commands(),
+        "future_live_runner_not_implemented_in_this_seam": True,
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": False,
+        "broad_cortex_lift_claim_allowed": False,
+        "codex_app_parity_claim_allowed": False,
+        "shipping_promotion_claim_allowed": False,
+        "product_progress_claim_allowed": False,
+        "alphaevolve_candidate_evolution_allowed": False,
+    }
+    _write_json(root / "summary.json", report)
+    return report
+
+
 def run_cortex_effectiveness_evaluator_gate0(
     output_root: Path | str = DEFAULT_OUTPUT_ROOT,
 ) -> dict[str, Any]:
@@ -4757,6 +5149,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="prove the retained active-policy spine contract without live trials",
     )
     parser.add_argument(
+        "--retained-spine-live-gate1",
+        action="store_true",
+        help="wire the retained active-policy spine into a no-live matrix dry-run plan",
+    )
+    parser.add_argument(
+        "--retained-spine-live-matrix",
+        action="store_true",
+        help="approval-gated future retained-spine live matrix command placeholder",
+    )
+    parser.add_argument(
         "--output-root",
         type=Path,
         default=None,
@@ -4781,6 +5183,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.v2_live_matrix_gate1,
             args.v2_live_matrix,
             args.retained_active_policy_spine_gate0,
+            args.retained_spine_live_gate1,
+            args.retained_spine_live_matrix,
         )
     )
     if selected_modes != 1:
@@ -4789,7 +5193,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             "--live-matrix, --simple-hook-baseline-gate0, or "
             "--measurement-stack-rebuild-gate0, --v2-case-registry-gate0, "
             "--v2-live-matrix-gate1, --v2-live-matrix, or "
-            "--retained-active-policy-spine-gate0"
+            "--retained-active-policy-spine-gate0, "
+            "--retained-spine-live-gate1, or --retained-spine-live-matrix"
         )
 
     output_root = args.output_root
@@ -4810,6 +5215,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             output_root = DEFAULT_V2_LIVE_MATRIX_OUTPUT_ROOT
         elif args.retained_active_policy_spine_gate0:
             output_root = DEFAULT_RETAINED_SPINE_OUTPUT_ROOT
+        elif args.retained_spine_live_gate1:
+            output_root = DEFAULT_RETAINED_SPINE_LIVE_GATE1_OUTPUT_ROOT
+        elif args.retained_spine_live_matrix:
+            output_root = DEFAULT_RETAINED_SPINE_LIVE_MATRIX_OUTPUT_ROOT
         elif args.live_matrix:
             output_root = DEFAULT_LIVE_MATRIX_OUTPUT_ROOT
         else:
@@ -4833,6 +5242,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         report = run_cortex_effectiveness_v2_live_matrix(output_root)
     elif args.retained_active_policy_spine_gate0:
         report = run_cortex_retained_active_policy_spine_gate0(output_root)
+    elif args.retained_spine_live_gate1:
+        report = run_cortex_retained_active_policy_spine_live_gate1(output_root)
+    elif args.retained_spine_live_matrix:
+        report = run_cortex_retained_active_policy_spine_live_matrix(output_root)
     else:
         report = run_cortex_effectiveness_evaluator_live_matrix(output_root)
 

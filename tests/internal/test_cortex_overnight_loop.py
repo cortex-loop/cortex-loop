@@ -165,6 +165,33 @@ def test_classify_next_work_allows_retained_active_policy_spine_gate0() -> None:
     )
 
 
+def test_classify_next_work_allows_retained_spine_live_gate1_no_live() -> None:
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-retained-active-policy-spine-live-gate1",
+            surface="no-live retained-spine evaluator dry-run gate",
+            guardrail="No live Codex run in this seam.",
+            primary_metric=(
+                "Produce a no-live dry-run matrix plan and artifact set for "
+                "userpromptsubmit_stop_taskstandard_spine."
+            ),
+        ),
+        _git(),
+    )
+
+    assert decision.status == "ready"
+    assert decision.safe_to_auto_merge is True
+    assert decision.live_codex_allowed is False
+    assert (
+        "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-gate1 --require-pass"
+        in decision.allowed_commands
+    )
+    assert (
+        "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-matrix"
+        in decision.allowed_commands
+    )
+
+
 def test_classify_next_work_allows_registered_v2_live_but_never_auto_merges() -> None:
     decision = loop.classify_next_work(
         _status(

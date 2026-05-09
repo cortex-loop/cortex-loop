@@ -174,6 +174,14 @@ CODE_OWNER_READS_BY_SLUG = {
         "tests/lab/test_cortex_effectiveness_evaluator.py",
         "tests/internal/test_docs_boundary.py",
     ),
+    "cortex-retained-active-policy-spine-live-gate1": (
+        "lab/cortex_effectiveness_evaluator.py",
+        ".cortex/live_validation/cortex_retained_active_policy_spine_gate0/retained_spine_contract.json",
+        ".cortex/live_validation/cortex_effectiveness_v2_case_registry_gate0/v2_case_registry.json",
+        "docs/recon/cortex_retained_active_policy_spine_gate0.md",
+        "tests/lab/test_cortex_effectiveness_evaluator.py",
+        "tests/internal/test_docs_boundary.py",
+    ),
 }
 ANTI_REINVENTION_SEARCHES_BY_SLUG = {
     "cortex-effectiveness-measurement-stack-rebuild": (
@@ -192,6 +200,10 @@ ANTI_REINVENTION_SEARCHES_BY_SLUG = {
     "cortex-retained-active-policy-spine-gate0": (
         "rg -n \"retained active-policy spine|UserPromptSubmit task-standard|Stop closure|TaskStandardSpine|tool_evidence\" docs/recon cortex tests lab internal",
         "rg -n \"PostToolUse proof-surface|role-demoted|failure_no_value|simple_hook_baseline|candidate evolution\" docs/recon lab tests internal",
+    ),
+    "cortex-retained-active-policy-spine-live-gate1": (
+        "rg -n \"retained_spine|userpromptsubmit_stop_taskstandard_spine|build_v2_live_matrix_plan|v2_case_registry\" lab tests internal docs/recon",
+        "rg -n \"role_demoted_non_current_support_history|PostToolUse|simple_hook_baseline|cortex_silent_perception\" docs/recon lab tests internal",
     ),
 }
 DEFAULT_ANTI_REINVENTION_SEARCHES = (
@@ -752,6 +764,17 @@ def _allowed_commands_for_slug(slug: str | None, git_state: GitState) -> tuple[s
     if slug == "cortex-retained-active-policy-spine-gate0":
         return (
             "python3 lab/cortex_effectiveness_evaluator.py --retained-active-policy-spine-gate0 --require-pass",
+            "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
+            "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
+            "python3 -m pytest tests/internal/test_docs_boundary.py -q",
+            "python3 internal/truth/generate_status.py --check",
+            "python3 internal/truth/generate_cortex_doc.py --check",
+            "git diff --check",
+        )
+    if slug == "cortex-retained-active-policy-spine-live-gate1":
+        return (
+            "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-gate1 --require-pass",
+            "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-matrix",
             "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
             "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
             "python3 -m pytest tests/internal/test_docs_boundary.py -q",
