@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-effectiveness-measurement-stack-rebuild`
-### Next Product Train
 - Slug: `cortex-effectiveness-v2-case-registry-gate0`
-- Surface: `no-live lab/proof evaluator v2 case-registry design`
-- Why now: The measurement-stack Gate 0 preserved `failure_silent_perception_contamination` for `run_20260508T221352Z` and diagnosed the v1 matrix as under-discriminating: exactness/evidence recovery, truthful closure, blocker surfacing, and clean controls were baseline parity, while continuity repeat 1 was silent-contaminated. The next move is to design sharper v2 cases before any live rerun, candidate generator, program database promotion, or value claim.
+### Next Product Train
+- Slug: `cortex-effectiveness-v2-live-matrix-gate1`
+- Surface: `no-live lab/proof evaluator v2 live-matrix interface`
+- Why now: The v2 case-registry Gate 0 passed with `v2_case_registry.json`, `gate0_report.json`, and `summary.json`, preserving `run_20260508T221352Z` as `failure_silent_perception_contamination` and registering five immutable `*_v2` case specs. The registry is not yet connected to the live-matrix planning interface; that no-live wiring must happen before any v2 live run, candidate generator, program database promotion, or Cortex value claim.
 
 ### Research Lines Under Evaluation
 

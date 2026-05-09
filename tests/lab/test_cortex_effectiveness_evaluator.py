@@ -26,6 +26,7 @@ from lab.cortex_effectiveness_evaluator import (
     gate0_synthetic_scenarios,
     mission_contract_errors,
     mission_objective_for_row,
+    run_cortex_effectiveness_v2_case_registry_gate0,
     run_cortex_effectiveness_measurement_stack_rebuild_gate0,
     run_cortex_effectiveness_evaluator_build,
     run_cortex_effectiveness_evaluator_gate0,
@@ -617,6 +618,102 @@ def test_measurement_stack_rebuild_gate0_cli_passes(tmp_path: Path) -> None:
     assert (output_root / "summary.json").exists()
 
 
+def test_v2_case_registry_gate0_writes_immutable_registry(tmp_path: Path) -> None:
+    report = run_cortex_effectiveness_v2_case_registry_gate0(output_root=tmp_path)
+    registry = json.loads((tmp_path / "v2_case_registry.json").read_text())
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_cortex_effectiveness_v2_case_registry_gate0"
+    assert report["live_trials_ran"] is False
+    assert report["historical_run_id"] == "run_20260508T221352Z"
+    assert report["preserved_v1_verdict"] == "failure_silent_perception_contamination"
+    assert report["no_v1_live_case_retroactively_rescored"] is True
+    assert report["model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["exactness_value_lift_claim_allowed"] is False
+    assert report["broad_cortex_lift_claim_allowed"] is False
+    assert report["codex_app_parity_claim_allowed"] is False
+    assert report["shipping_promotion_claim_allowed"] is False
+    assert report["product_progress_claim_allowed"] is False
+    assert report["alphaevolve_mutation_loop_allowed"] is False
+    assert report["next_train_if_pass"] == "cortex-effectiveness-v2-live-matrix-gate1"
+    assert report["validation_errors"] == []
+    assert set(report["task_families"]) == set(TASK_FAMILIES)
+    assert (tmp_path / "gate0_report.json").exists()
+    assert (tmp_path / "summary.json").exists()
+
+    cases = registry["cases"]
+    assert len(cases) == len(TASK_FAMILIES)
+    assert {case["task_family"] for case in cases} == set(TASK_FAMILIES)
+    assert len({case["case_id"] for case in cases}) == len(cases)
+    assert all(case["case_id"].endswith("_v2") for case in cases)
+    for case in cases:
+        assert set(evaluator.V2_CASE_REGISTRY_REQUIRED_FIELDS).issubset(case)
+        assert set(MISSION_OBJECTIVE_REQUIRED_FIELDS).issubset(case)
+        assert case["model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+        assert case["product_spine"] == []
+        assert "run_20260508T221352Z" in case["v1_failure_link"]
+        assert set(DOMINANCE_GATES).issubset(set(case["dominance_gates"]))
+
+    by_family = {case["task_family"]: case for case in cases}
+    assert "post-observation" in by_family["exactness_evidence_recovery"][
+        "measurement_rationale"
+    ]
+    assert "cannot condition" in by_family["exactness_evidence_recovery"][
+        "simple_hook_challenge"
+    ]
+    assert "generic" in by_family["truthful_closure"]["measurement_rationale"]
+    assert any(
+        "concrete verification evidence" in criterion
+        for criterion in by_family["truthful_closure"]["acceptance_criteria"]
+    )
+    assert "temptation" in by_family["blocker_surfacing"]["measurement_rationale"]
+    assert "silent" in by_family["continuity_after_interruption"][
+        "silent_contamination_guard"
+    ].lower()
+    assert "contamination" in by_family["continuity_after_interruption"][
+        "silent_contamination_guard"
+    ].lower()
+    assert any(
+        "zero active model-visible intervention" in criterion
+        for criterion in by_family["clean_verified_work_control"][
+            "acceptance_criteria"
+        ]
+    )
+
+
+def test_v2_case_registry_validation_rejects_missing_mission_contract() -> None:
+    registry = evaluator.cortex_effectiveness_v2_case_registry()
+    del registry["cases"][0]["executive_function"]
+
+    errors = evaluator.validate_cortex_effectiveness_v2_case_registry(registry)
+
+    assert any("executive_function missing" in error for error in errors)
+
+
+def test_v2_case_registry_cli_passes(tmp_path: Path) -> None:
+    output_root = tmp_path / "v2_case_registry"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--v2-case-registry-gate0",
+            "--require-pass",
+            "--output-root",
+            str(output_root),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "pass_cortex_effectiveness_v2_case_registry_gate0" in result.stdout
+    assert (output_root / "v2_case_registry.json").exists()
+    assert (output_root / "gate0_report.json").exists()
+    assert (output_root / "summary.json").exists()
+
+
 def test_simple_hook_baseline_module_is_small_independent_and_runnable() -> None:
     source = SIMPLE_HOOK_SOURCE_PATH.read_text(encoding="utf-8")
     loc = sum(
@@ -735,6 +832,7 @@ def test_gate0_source_keeps_alphaevolve_loop_deferred() -> None:
     assert "--live-matrix" in source
     assert "--simple-hook-baseline-gate0" in source
     assert "--measurement-stack-rebuild-gate0" in source
+    assert "--v2-case-registry-gate0" in source
     assert "alphaevolve_loop_later" in source
     assert "program_database_fields" in source
     assert "candidate_representation" in source

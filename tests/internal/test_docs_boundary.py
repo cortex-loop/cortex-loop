@@ -337,8 +337,8 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_PATH = (
     / "cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun.md"
 )
 
-CURRENT_WORK_SLUG = "cortex-effectiveness-measurement-stack-rebuild"
-NEXT_PRODUCT_TRAIN_SLUG = "cortex-effectiveness-v2-case-registry-gate0"
+CURRENT_WORK_SLUG = "cortex-effectiveness-v2-case-registry-gate0"
+NEXT_PRODUCT_TRAIN_SLUG = "cortex-effectiveness-v2-live-matrix-gate1"
 CONTEXT_LOOP_TRACE_REMEDIATION_RECON_PATH = (
     REPO_ROOT
     / "docs"
@@ -439,6 +439,12 @@ CORTEX_EFFECTIVENESS_MEASUREMENT_STACK_REBUILD_GATE0_PATH = (
     / "docs"
     / "recon"
     / "cortex_effectiveness_measurement_stack_rebuild_gate0.md"
+)
+CORTEX_EFFECTIVENESS_V2_CASE_REGISTRY_GATE0_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_effectiveness_v2_case_registry_gate0.md"
 )
 
 CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_AFTER_SHARED_TOOL_EVIDENCE_PATH = (
@@ -553,30 +559,29 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
 ) -> None:
     assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     work_note = status["work_today"]["note"].lower()
-    assert "no-live cortex effectiveness measurement-stack gate 0" in work_note
+    assert "no-live cortex effectiveness v2 case-registry gate 0" in work_note
     assert "run_20260508t221352z" in work_note
-    assert ".cortex/live_validation/cortex_effectiveness_evaluator_live_matrix/" in work_note
+    assert ".cortex/live_validation/cortex_effectiveness_v2_case_registry_gate0/" in work_note
+    assert "v2_case_registry.json" in work_note
     assert "summary.json" in work_note
-    assert "leaderboard.json" in work_note
-    assert "failure_analysis.json" in work_note
-    assert "episode_table.jsonl" in work_note
-    assert ".cortex/live_validation/cortex_effectiveness_measurement_stack_rebuild_gate0/" in work_note
-    assert "measurement_diagnosis.json" in work_note
-    assert "case_discriminability.json" in work_note
     assert "gate0_report.json" in work_note
-    assert "registered verdict `failure_silent_perception_contamination`" in work_note
-    assert "exactness/evidence recovery" in work_note
-    assert "truthful closure" in work_note
-    assert "blocker surfacing" in work_note
-    assert "clean verified-work controls" in work_note
-    assert "baseline parity" in work_note
-    assert "classified as `too_easy`" in work_note
-    assert "zero-intervention `control_valid`" in work_note
-    assert "continuity repeat 1" in work_note
-    assert "`silent_contaminated`" in work_note
-    assert "silent cortex and active cortex both scored 4 against no-cortex at 1" in work_note
-    assert "no active-candidate signal" in work_note
-    assert "measurement diagnosis only" in work_note
+    assert "`pass_cortex_effectiveness_v2_case_registry_gate0`" in work_note
+    assert "`failure_silent_perception_contamination`" in work_note
+    assert "no v1 live case was retroactively rescored" in work_note
+    assert "exactness_evidence_recovery_v2" in work_note
+    assert "truthful_closure_v2" in work_note
+    assert "blocker_surfacing_v2" in work_note
+    assert "continuity_after_interruption_v2" in work_note
+    assert "clean_verified_work_control_v2" in work_note
+    assert "measurement rationale" in work_note
+    assert "simple-hook challenge" in work_note
+    assert "silent-contamination guard" in work_note
+    assert "active-policy signal" in work_note
+    assert "dominance gates" in work_note
+    assert "mission contract fields" in work_note
+    assert "not to collapse into simple-baseline parity" in work_note
+    assert "zero-intervention control" in work_note
+    assert "v2 case-registry readiness only" in work_note
     assert "does not earn behavior lift" in work_note
     assert "exactness value lift" in work_note
     assert "broad cortex lift" in work_note
@@ -585,38 +590,51 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
     assert "product progress" in work_note
     assert "alphaevolve candidate-evolution permission" in work_note
     assert "no live codex run occurred" in work_note
-    assert "no current v1 live case was retroactively rescored" in work_note
-    assert "next train is `cortex-effectiveness-v2-case-registry-gate0`" in work_note
+    assert "no product host behavior" in work_note
+    assert "model-visible cortex text" in work_note
+    assert "evaluator scoring" in work_note
+    assert "hidden verifier boundary" in work_note
+    assert "candidate policy" in work_note
+    assert "next train is `cortex-effectiveness-v2-live-matrix-gate1`" in work_note
 
     next_train = status["next_product_train"]
     assert next_train["slug"] == NEXT_PRODUCT_TRAIN_SLUG
-    assert next_train["surface"] == "no-live lab/proof evaluator v2 case-registry design"
-    assert "design the v2 evaluator case registry" in next_train[
+    assert next_train["surface"] == "no-live lab/proof evaluator v2 live-matrix interface"
+    assert "wire the v2 evaluator case registry" in next_train[
         "executive_benefit"
     ].lower()
-    assert "discriminate active lifecycle policy" in next_train[
+    assert "future four-arm matrix plan" in next_train[
         "executive_benefit"
     ].lower()
+    assert "no-cortex" in next_train["executive_benefit"].lower()
+    assert "simple-hook" in next_train["executive_benefit"].lower()
     assert "run_20260508t221352z" in next_train["why_now"].lower()
-    assert "baseline parity" in next_train["why_now"].lower()
-    assert "silent-contaminated" in next_train["why_now"].lower()
-    assert "before any live rerun" in next_train["why_now"].lower()
+    assert "failure_silent_perception_contamination" in next_train["why_now"].lower()
+    assert "five immutable `*_v2` case specs" in next_train["why_now"].lower()
+    assert "not yet connected to the live-matrix planning interface" in next_train[
+        "why_now"
+    ].lower()
     primary_metric = next_train["primary_metric"].lower()
-    assert "no-live v2 case-registry artifact" in primary_metric
-    assert "immutable task-family cases" in primary_metric
-    assert "baseline expectations" in primary_metric
-    assert "silent-contamination controls" in primary_metric
-    assert "dominance gates" in primary_metric
-    assert "active lifecycle control" in primary_metric
-    assert "simple-hook reminders or silent perception" in primary_metric
+    assert "no-live v2 live-matrix dry-run plan" in primary_metric
+    assert "consumes the v2 registry" in primary_metric
+    assert "all four arms" in primary_metric
+    assert "all five v2 families" in primary_metric
+    assert "deterministic row ids" in primary_metric
+    assert "workspace isolation" in primary_metric
+    assert "live_plan.json" in primary_metric
+    assert "episode_table.jsonl" in primary_metric
+    assert "leaderboard.json" in primary_metric
+    assert "failure_analysis.json" in primary_metric
+    assert "refuses without the exact approval env" in primary_metric
+    assert "simple-hook parity" in primary_metric
+    assert "silent success" in primary_metric
     guardrail = next_train["guardrail"].lower()
     assert "no live codex run in this seam" in guardrail
     assert "do not change product host behavior" in guardrail
     assert "product model-visible text" in guardrail
     assert "candidate policy" in guardrail
-    assert "evaluator scoring to favor cortex" in guardrail
+    assert "evaluator scoring" in guardrail
     assert "hidden-verifier boundaries" in guardrail
-    assert "fixtures without explicit measurement justification" in guardrail
     assert "root hooks" in guardrail
     assert "sre law" in guardrail
     assert "matcher threshold" in guardrail
@@ -627,16 +645,18 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
     assert "typed-intervention" in guardrail
     assert "host-runtime extraction" in guardrail
     assert "alphaevolve candidate mutation" in guardrail
-    assert "must not retroactively rescore v1 artifacts" in guardrail
+    assert "do not replace or rescore v1 artifacts" in guardrail
+    assert "dry-run/future-live plan" in guardrail
     kill_rule = next_train["kill_rule"].lower()
-    assert "masks the `run_20260508t221352z` negative verdict" in kill_rule
-    assert "credits active cortex for simple-hook parity" in kill_rule
-    assert "silent-perception success" in kill_rule
-    assert "weakens dominance gates" in kill_rule
-    assert "changes product behavior" in kill_rule
-    assert "implements live fixtures without measurement rationale" in kill_rule
-    assert "mutates scoring to favor cortex" in kill_rule
-    assert "queues candidate evolution" in kill_rule
+    assert "gate 1 runs live" in kill_rule
+    assert "changes scoring" in kill_rule
+    assert "omits a required arm or v2 family" in kill_rule
+    assert "weakens simple-hook/silent no-value rules" in kill_rule
+    assert "dominance gates" in kill_rule
+    assert "lacks approval refusal" in kill_rule
+    assert "mutates product behavior" in kill_rule
+    assert "rewrites v1 evidence" in kill_rule
+    assert "queues candidate evolution/value claims" in kill_rule
 
 
 def _find_repo_files(filename: str) -> list[str]:
@@ -1452,6 +1472,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_codex_app_cli_value_ablation_audit.md",
         "cortex_effectiveness_measurement_stack_rebuild_gate0.md",
         "cortex_effectiveness_strategy_reset.md",
+        "cortex_effectiveness_v2_case_registry_gate0.md",
         "cortex_executive_effectiveness_evaluator_build.md",
         "cortex_executive_effectiveness_evaluator_gate0.md",
         "cortex_executive_effectiveness_evaluator_live_gate1.md",
@@ -4395,6 +4416,66 @@ def test_cortex_effectiveness_measurement_stack_rebuild_gate0_pins_diagnosis() -
     _assert_current_posttooluse_strategy_failure_audit_status(status)
 
 
+def test_cortex_effectiveness_v2_case_registry_gate0_pins_registry() -> None:
+    text = _read(CORTEX_EFFECTIVENESS_V2_CASE_REGISTRY_GATE0_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    for phrase in (
+        "Surface: no-live lab/proof evaluator v2 case-registry design",
+        "`pass_cortex_effectiveness_v2_case_registry_gate0`",
+        "`run_20260508T221352Z`",
+        "`failure_silent_perception_contamination`",
+        "`v2_case_registry.json`",
+        "`gate0_report.json`",
+        "`summary.json`",
+        "`none_lab_proof_only`",
+        "No v1 artifact was retroactively rescored",
+        "`exactness_evidence_recovery_v2`",
+        "`truthful_closure_v2`",
+        "`blocker_surfacing_v2`",
+        "`continuity_after_interruption_v2`",
+        "`clean_verified_work_control_v2`",
+        "post-observation correction",
+        "generic success",
+        "honest unresolved dependency reporting",
+        "silent Cortex beat no-Cortex",
+        "zero-intervention control",
+        "`executive_function`",
+        "`loop_stage`",
+        "`control_mode`",
+        "`truth_scope`",
+        "`model_io_path`",
+        "`product_spine`",
+        "`contraction_implication`",
+        "`cortex-effectiveness-v2-live-matrix-gate1`",
+    ):
+        assert phrase in text
+
+    for forbidden in (
+        "No behavior lift",
+        "No exactness value lift",
+        "No broad Cortex lift",
+        "No Codex App parity",
+        "No shipping promotion",
+        "No product progress",
+        "No AlphaEvolve-style candidate evolution",
+        "No live Codex run occurred",
+        "No product host behavior changed",
+        "No model-visible Cortex text changed",
+        "No evaluator scoring was changed to favor Cortex",
+        "No current v1 live case was retroactively rescored",
+    ):
+        assert forbidden in text
+
+    assert "recon/cortex_effectiveness_v2_case_registry_gate0.md" in docs_index
+    assert (
+        "docs/recon/cortex_effectiveness_v2_case_registry_gate0.md"
+        in status["active_docs"]
+    )
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
+
+
 def test_task_standard_sre_correspondence_is_lawfully_mapped() -> None:
     cortex_doc = _read(CORTEX_DOC_PATH)
     sre_doc = _read(CORTEX_V2_SRE_PATH)
@@ -4805,7 +4886,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     ].lower()
     assert (
         status["next_product_train"]["surface"]
-        == "no-live lab/proof evaluator v2 case-registry design"
+        == "no-live lab/proof evaluator v2 live-matrix interface"
     )
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
     assert "brain-capability-observation-and-inference" in deferred_lines
@@ -4891,20 +4972,25 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "## Next Product Train" in text
     assert "## Research Lines Under Evaluation" in text
     assert "host/tool reliability and affordance priors are earned" in text
-    assert "`cortex-effectiveness-measurement-stack-rebuild`" in text
+    assert "`cortex-effectiveness-v2-case-registry-gate0`" in text
     assert "run_20260508T221352Z" in text
     assert "failure_silent_perception_contamination" in text
-    assert "baseline parity" in text.lower()
-    assert "case_discriminability.json" in text
-    assert "cortex-effectiveness-v2-case-registry-gate0" in text
+    assert "v2_case_registry.json" in text
+    assert "exactness_evidence_recovery_v2" in text
+    assert "truthful_closure_v2" in text
+    assert "blocker_surfacing_v2" in text
+    assert "continuity_after_interruption_v2" in text
+    assert "clean_verified_work_control_v2" in text
+    assert "cortex-effectiveness-v2-live-matrix-gate1" in text
     assert (
         "- Next product train after the current focus: "
-        "`cortex-effectiveness-v2-case-registry-gate0`"
+        "`cortex-effectiveness-v2-live-matrix-gate1`"
     ) in text
-    assert "- Train: `cortex-effectiveness-v2-case-registry-gate0`" in text
-    assert "no-live lab/proof evaluator v2 case-registry design" in text.lower()
-    assert "immutable task-family cases" in text.lower()
-    assert "simple-hook reminders or silent perception" in text.lower()
+    assert "- Train: `cortex-effectiveness-v2-live-matrix-gate1`" in text
+    assert "no-live lab/proof evaluator v2 live-matrix interface" in text.lower()
+    assert "consumes the v2 registry" in text.lower()
+    assert "all four arms" in text.lower()
+    assert "all five v2 families" in text.lower()
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()
