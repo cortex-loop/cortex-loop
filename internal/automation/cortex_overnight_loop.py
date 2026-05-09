@@ -32,6 +32,7 @@ EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS = {
     "cortex-retained-active-policy-spine-live-run",
     "cortex-retained-spine-live-matrix-materialization-remediation",
     "cortex-retained-spine-measurement-stack-remediation",
+    "cortex-retained-spine-clean-control-stability-gate0",
     "cortex-simple-hook-baseline-challenger",
     "cortex-automation-product-boundary-contract",
 }
@@ -57,6 +58,7 @@ EVALUATOR_AUTHORIZED_EXACT_SLUGS = {
     "cortex-retained-active-policy-spine-live-run",
     "cortex-retained-spine-live-matrix-materialization-remediation",
     "cortex-retained-spine-measurement-stack-remediation",
+    "cortex-retained-spine-clean-control-stability-gate0",
 }
 ALLOWED_LIVE_SLUG_PARTS = (
     "evaluator",
@@ -214,6 +216,17 @@ CODE_OWNER_READS_BY_SLUG = {
         "tests/lab/test_cortex_effectiveness_evaluator.py",
         "tests/internal/test_docs_boundary.py",
     ),
+    "cortex-retained-spine-clean-control-stability-gate0": (
+        "lab/cortex_effectiveness_evaluator.py",
+        ".cortex/live_validation/cortex_retained_active_policy_spine_live_matrix/run_20260509T192719Z/summary.json",
+        ".cortex/live_validation/cortex_retained_active_policy_spine_live_matrix/run_20260509T192719Z/episode_table.jsonl",
+        ".cortex/live_validation/cortex_retained_spine_live_matrix_materialization_remediation_gate0/corrected_replay_report.json",
+        ".cortex/live_validation/cortex_retained_spine_measurement_stack_remediation_gate0/measurement_diagnosis.json",
+        ".cortex/live_validation/cortex_retained_spine_measurement_stack_remediation_gate0/silent_contamination_diagnosis.json",
+        "docs/recon/cortex_retained_spine_measurement_stack_remediation.md",
+        "tests/lab/test_cortex_effectiveness_evaluator.py",
+        "tests/internal/test_docs_boundary.py",
+    ),
 }
 ANTI_REINVENTION_SEARCHES_BY_SLUG = {
     "cortex-effectiveness-measurement-stack-rebuild": (
@@ -248,6 +261,10 @@ ANTI_REINVENTION_SEARCHES_BY_SLUG = {
     "cortex-retained-spine-measurement-stack-remediation": (
         "rg -n \"retained_spine_measurement|silent_perception_beat_no_cortex|active_underperformance|control_instability\" lab tests docs/recon internal",
         "rg -n \"run_20260509T192719Z|clean_verified_work_control_v2|exactness_evidence_recovery_v2|failure_silent_perception_contamination\" .cortex/live_validation lab tests docs/recon internal",
+    ),
+    "cortex-retained-spine-clean-control-stability-gate0": (
+        "rg -n \"clean_control_stability|clean_verified_work_control_v2|no_cortex_closure_readout_instability|silent_arm_model_io_isolated\" lab tests docs/recon internal .cortex/live_validation",
+        "rg -n \"run_20260509T192719Z|mission_contract_error|failure_silent_perception_contamination|cortex-retained-spine-clean-control-stability-gate0\" internal/truth docs tests lab .cortex/live_validation",
     ),
 }
 DEFAULT_ANTI_REINVENTION_SEARCHES = (
@@ -854,6 +871,16 @@ def _allowed_commands_for_slug(slug: str | None, git_state: GitState) -> tuple[s
         return (
             "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
             "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-measurement-stack-remediation-gate0 --require-pass",
+            "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
+            "python3 -m pytest tests/internal/test_docs_boundary.py -q",
+            "python3 internal/truth/generate_status.py --check",
+            "python3 internal/truth/generate_cortex_doc.py --check",
+            "git diff --check",
+        )
+    if slug == "cortex-retained-spine-clean-control-stability-gate0":
+        return (
+            "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
+            "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-clean-control-stability-gate0 --require-pass",
             "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
             "python3 -m pytest tests/internal/test_docs_boundary.py -q",
             "python3 internal/truth/generate_status.py --check",

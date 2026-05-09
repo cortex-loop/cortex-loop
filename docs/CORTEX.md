@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-retained-spine-measurement-stack-remediation`
-### Next Product Train
 - Slug: `cortex-retained-spine-clean-control-stability-gate0`
-- Surface: `no-live retained-spine clean-control stability gate`
-- Why now: The retained-spine measurement-stack remediation passed and preserved raw `fail` / `mission_contract_error`, corrected replay `failure_silent_perception_contamination` / `silent_perception_beat_no_cortex`, clean-control repeat 1 `silent_contamination`, exactness repeat 2 `active_underperformance`, and zero retained-spine family wins. The diagnosis found no silent model-visible/support I/O leak, so the immediate blocker is clean-control measurement stability rather than policy tuning or candidate evolution.
+### Next Product Train
+- Slug: `cortex-retained-spine-clean-control-replication-gate1`
+- Surface: `no-live retained-spine clean-control replication gate`
+- Why now: The retained-spine clean-control stability Gate 0 passed and preserved raw `fail` / `mission_contract_error`, corrected replay `failure_silent_perception_contamination` / `silent_perception_beat_no_cortex`, PostToolUse disabled, retained-spine active rows only, unchanged root config, absent runtime snapshot, and hidden-verifier boundary. It classified clean-control repeat 1 as `no_cortex_closure_readout_instability` with `stdout_stderr_and_verifier_artifacts`: no-Cortex reported `command not found: python` and did not report the successful `python3` fallback, while the comparison arms reported closure evidence. The diagnosis found silent-arm model I/O isolation clean, so the immediate blocker is narrow clean-control replication readiness rather than policy tuning, live matrix rerun, or candidate evolution.
 
 ### Research Lines Under Evaluation
 

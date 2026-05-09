@@ -345,6 +345,10 @@ Active docs:
   no-live diagnosis of the corrected retained-spine replay, preserving raw
   `fail` evidence while classifying clean-control silent contamination and
   queueing clean-control stability proof before any rerun or policy search
+- [Cortex Retained-Spine Clean-Control Stability Gate 0](recon/cortex_retained_spine_clean_control_stability_gate0.md) —
+  no-live diagnosis of `clean_verified_work_control_v2` repeat 1 as
+  no-Cortex closure/evidence readout instability, queueing a narrow
+  clean-control replication gate before any retained-spine value interpretation
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation
