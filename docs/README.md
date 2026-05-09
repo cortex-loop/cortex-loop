@@ -326,6 +326,10 @@ Active docs:
   no-live archive/role-demotion decision moving the PostToolUse-specific Gate
   0/live proof train to historical support while the general four-arm
   evaluator owns value comparison
+- [Cortex Retained Active-Policy Spine Gate 0](recon/cortex_retained_active_policy_spine_gate0.md) —
+  no-live retained-spine proof gate naming the smallest UserPromptSubmit/Stop/
+  task-standard spine still worth testing before any search or candidate
+  evolution
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation
