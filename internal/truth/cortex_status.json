@@ -109,7 +109,8 @@
     "docs/recon/cortex_automation_product_boundary_contract.md",
     "docs/recon/cortex_executive_effectiveness_evaluator_live_gate1.md",
     "docs/recon/cortex_simple_hook_baseline_challenger.md",
-    "docs/recon/cortex_executive_effectiveness_evaluator_live_matrix_run.md"
+    "docs/recon/cortex_executive_effectiveness_evaluator_live_matrix_run.md",
+    "docs/recon/cortex_effectiveness_measurement_stack_rebuild_gate0.md"
   ],
   "bio_to_code_matrix": [
     {
@@ -460,7 +461,8 @@
           "docs/recon/cortex_automation_product_boundary_contract.md",
           "docs/recon/cortex_executive_effectiveness_evaluator_live_gate1.md",
           "docs/recon/cortex_simple_hook_baseline_challenger.md",
-          "docs/recon/cortex_executive_effectiveness_evaluator_live_matrix_run.md"
+          "docs/recon/cortex_executive_effectiveness_evaluator_live_matrix_run.md",
+          "docs/recon/cortex_effectiveness_measurement_stack_rebuild_gate0.md"
         ],
         "update_rule": "Add a recon when a proof or decision is earned; do not treat recon alone as shipping truth without status promotion."
       }
@@ -934,13 +936,13 @@
     ]
   },
   "next_product_train": {
-    "slug": "cortex-effectiveness-measurement-stack-rebuild",
-    "surface": "no-live lab/proof evaluator measurement-stack remediation",
-    "executive_benefit": "Rebuild the Cortex effectiveness measurement stack before candidate evolution, because the first real four-arm matrix showed baseline parity on most families and silent-perception contamination on the only discriminating continuity repeat.",
-    "why_now": "Live artifact `run_20260508T221352Z` produced 60 rows across no-Cortex, simple-hook, silent Cortex, and active Cortex. Active Cortex did not beat the simple-hook baseline on any family; exactness, truthful closure, blocker surfacing, and clean verified-work controls were all baseline parity, and continuity repeat 1 improved equally in silent and active arms. The current matrix can run, but it cannot yet isolate active lifecycle-policy value.",
-    "primary_metric": "Produce a no-live measurement-stack rebuild plan and replay proof that preserves `failure_silent_perception_contamination`, diagnoses baseline-parity and silent-contamination causes, hardens task-family/case discriminators, and keeps simple-hook parity plus silent success as no-value before any candidate generator, program database promotion, or live value claim.",
-    "guardrail": "No live Codex run in this seam. Do not change product host behavior, product model-visible text, signed UserPromptSubmit text, PostToolUse text, Stop text, candidate policy, evaluator scoring to favor Cortex, hidden-verifier boundaries, fixtures without explicit measurement justification, root hooks, SRE law, matcher threshold, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed-intervention, host-runtime extraction, or AlphaEvolve candidate mutation.",
-    "kill_rule": "Fail if the rebuild masks the `run_20260508T221352Z` negative verdict, credits active Cortex for simple-hook parity or silent-perception success, weakens dominance gates, changes product behavior, mutates fixtures or scoring without explicit measurement-stack rationale, or queues candidate evolution before the evaluator can discriminate active policy value.",
+    "slug": "cortex-effectiveness-v2-case-registry-gate0",
+    "surface": "no-live lab/proof evaluator v2 case-registry design",
+    "executive_benefit": "Design the v2 evaluator case registry so the next four-arm matrix can discriminate active lifecycle policy from no-Cortex, simple-hook, and silent-perception effects before candidate evolution.",
+    "why_now": "The measurement-stack Gate 0 preserved `failure_silent_perception_contamination` for `run_20260508T221352Z` and diagnosed the v1 matrix as under-discriminating: exactness/evidence recovery, truthful closure, blocker surfacing, and clean controls were baseline parity, while continuity repeat 1 was silent-contaminated. The next move is to design sharper v2 cases before any live rerun, candidate generator, program database promotion, or value claim.",
+    "primary_metric": "Produce a no-live v2 case-registry artifact that names immutable task-family cases, baseline expectations, silent-contamination controls, dominance gates, and acceptance criteria showing why each case can test active lifecycle control rather than simple-hook reminders or silent perception.",
+    "guardrail": "No live Codex run in this seam. Do not change product host behavior, product model-visible text, signed UserPromptSubmit text, PostToolUse text, Stop text, candidate policy, evaluator scoring to favor Cortex, hidden-verifier boundaries, root hooks, SRE law, matcher threshold, Sinkhorn/transport, PreToolUse denial, PermissionRequest policy, output-law centralization, typed-intervention, host-runtime extraction, or AlphaEvolve candidate mutation. Do not add fixtures without explicit measurement justification. V2 cases may be specified only with explicit measurement rationale and must not retroactively rescore v1 artifacts.",
+    "kill_rule": "Fail if the v2 registry masks the `run_20260508T221352Z` negative verdict, credits active Cortex for simple-hook parity or silent-perception success, weakens dominance gates, changes product behavior, implements live fixtures without measurement rationale, mutates scoring to favor Cortex, or queues candidate evolution before the evaluator can discriminate active policy value.",
     "last_reviewed_at": "2026-05-09T00:00:00+00:00"
   },
   "packet_to_code_anchors": [
@@ -1598,7 +1600,7 @@
     "The Codex App/CLI PostToolUse task-standard narrow live probe harness seam then added `--task-standard-posttooluse-live`, approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running a live Codex command. The live probe remains unearned until explicitly approved and run; this seam earns harness readiness only and preserves signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport deferral, PreToolUse denial deferral, and PermissionRequest policy."
   ],
   "work_today": {
-    "slug": "cortex-executive-effectiveness-evaluator-live-matrix-run",
-    "note": "The first real four-arm Cortex executive effectiveness matrix ran through the exact registered approval-gated command/env and produced live artifact `run_20260508T221352Z` under `.cortex/live_validation/cortex_effectiveness_evaluator_live_matrix/`. The evaluator emitted `live_plan.json`, `episode_table.jsonl`, `summary.json`, `leaderboard.json`, `failure_analysis.json`, and per-row trial artifacts for 60 rows: no-Cortex, simple-hook, silent-Cortex, and active-Cortex arms across exactness/evidence recovery, truthful closure, blocker surfacing, continuity after interruption, and clean verified-work controls with three repeats each. Verdict: `failure_silent_perception_contamination`, not Cortex value. Active Cortex beat neither the simple-hook baseline nor no-Cortex on any family; exactness, truthful closure, blocker surfacing, and clean verified-work were baseline parity, and continuity repeat 1 was the only discriminating row but silent Cortex and active Cortex both scored 4 against no-Cortex at 1. Root config stayed unchanged, runtime snapshots stayed absent, trace ambiguity and hidden-verifier leakage were absent, and clean-control active rows did not overcontrol. This earns evaluator live-matrix evidence only; it does not earn behavior lift, exactness value lift, broad Cortex lift, Codex App parity, shipping promotion, product progress, or AlphaEvolve candidate-evolution permission. The next train is measurement-stack rebuild, not policy mutation."
+    "slug": "cortex-effectiveness-measurement-stack-rebuild",
+    "note": "The no-live Cortex effectiveness measurement-stack Gate 0 diagnosed live artifact `run_20260508T221352Z` from `.cortex/live_validation/cortex_effectiveness_evaluator_live_matrix/` and preserved the registered verdict `failure_silent_perception_contamination`. It loaded `summary.json`, `leaderboard.json`, `failure_analysis.json`, and `episode_table.jsonl`, then emitted `.cortex/live_validation/cortex_effectiveness_measurement_stack_rebuild_gate0/measurement_diagnosis.json`, `case_discriminability.json`, `gate0_report.json`, and `summary.json`. Diagnosis: exactness/evidence recovery, truthful closure, blocker surfacing, and clean verified-work controls were baseline parity; exactness, truthful closure, and blocker surfacing were classified as `too_easy`; clean verified-work remained a valid zero-intervention `control_valid`; continuity repeat 1 was `silent_contaminated` because silent Cortex and active Cortex both scored 4 against no-Cortex at 1. No active-candidate signal was found. This earns measurement diagnosis only; it does not earn behavior lift, exactness value lift, broad Cortex lift, Codex App parity, shipping promotion, product progress, or AlphaEvolve candidate-evolution permission. No live Codex run occurred and no current v1 live case was retroactively rescored. The next train is `cortex-effectiveness-v2-case-registry-gate0`."
   }
 }
