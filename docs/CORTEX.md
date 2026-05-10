@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-retained-spine-clean-control-replication-live-run`
-### Next Product Train
 - Slug: `cortex-retained-active-policy-contraction-or-rebuild-decision`
-- Surface: `no-live retained active-policy contraction or rebuild decision`
-- Why now: The approved clean-control-only replication live command `CORTEX_CODEX_APP_CLI_RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --retained-spine-clean-control-replication-live` produced `run_20260510T122608Z` with 20 rows, all four arms, `clean_verified_work_control_v2`, five repeats, root config unchanged, runtime snapshot absent, hidden verifier not leaked, PostToolUse disabled and role-demoted, and silent arm isolated. Active rows used `userpromptsubmit_stop_taskstandard_spine` only. The verdict `pass_clean_control_stable` means the prior no-Cortex clean-control closure/evidence instability classified as `no_cortex_closure_readout_instability` did not reproduce. Because no-Cortex, simple-hook, and silent Cortex were stable and active Cortex still has no earned value signal, the next move is a no-live contraction/rebuild decision, not policy tuning, another live run, or candidate evolution.
+### Next Product Train
+- Slug: `cortex-stop-only-retained-spine-gate0`
+- Surface: `no-live Stop-only retained active-policy proof gate`
+- Why now: The contraction decision `decision_contract_retained_spine_to_stop_only` found that UserPromptSubmit task-standard formation cannot remain the center of active value search after simple-hook parity, silent success blockers, and active clean-control underperformance. Stop closure / continuation still has independent product model-I/O evidence from prior task-standard Stop-gating runs, so the disciplined next step is to isolate Stop-only before any deletion, rebuild, live rerun, or candidate evolution.
 
 ### Research Lines Under Evaluation
 
