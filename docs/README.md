@@ -353,6 +353,11 @@ Active docs:
   no-live registration of a 20-row clean-control-only retained-spine
   replication plan and refusal-only future live command before any live result
   interpretation
+- [Cortex Retained-Spine Clean-Control Replication Live Run](recon/cortex_retained_spine_clean_control_replication_live_run.md) —
+  approval-gated 20-row clean-control-only replication producing
+  `pass_clean_control_stable`, with no-Cortex readout stable across five
+  repeats and the next train queued to retained active-policy contraction or
+  rebuild decision
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation
