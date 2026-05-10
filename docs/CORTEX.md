@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-retained-spine-clean-control-replication-gate1`
-### Next Product Train
 - Slug: `cortex-retained-spine-clean-control-replication-live-run`
-- Surface: `approval-gated retained-spine clean-control replication live run`
-- Why now: The no-live retained-spine clean-control replication Gate 1 passed and wrote `clean_control_replication_plan.json`, `episode_table.jsonl`, `gate1_report.json`, `summary.json`, and `registered_live_command.json` under `.cortex/live_validation/cortex_retained_spine_clean_control_replication_gate1/`. The live-run seam has now replaced the refusal-only placeholder with an executable, resume-safe runner behind the same exact approval env. Without approval it returns `not_run_approval_required`; with `CORTEX_CODEX_APP_CLI_RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVED=approved` it will execute exactly 20 clean-control-only rows under `.cortex/live_validation/cortex_retained_spine_clean_control_replication_live/<run_id>/` and record whether no-Cortex closure/evidence readout instability reproduces. No live trials have run without approval. The plan uses `clean_verified_work_control_v2`, schedules five repeats across no-Cortex, simple-hook, silent Cortex, and active Cortex, keeps active rows on `userpromptsubmit_stop_taskstandard_spine`, keeps PostToolUse disabled and role-demoted, preserves simple-hook support I/O as lab-only metadata, keeps non-active mission rows at `model_io_path=none_lab_proof_only` with `product_spine=[]`, and allows no Cortex value, product progress, full matrix rerun, PostToolUse reactivation, or AlphaEvolve candidate evolution before the approved replication result.
+### Next Product Train
+- Slug: `cortex-retained-active-policy-contraction-or-rebuild-decision`
+- Surface: `no-live retained active-policy contraction or rebuild decision`
+- Why now: The approved clean-control-only replication live command `CORTEX_CODEX_APP_CLI_RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --retained-spine-clean-control-replication-live` produced `run_20260510T122608Z` with 20 rows, all four arms, `clean_verified_work_control_v2`, five repeats, root config unchanged, runtime snapshot absent, hidden verifier not leaked, PostToolUse disabled and role-demoted, and silent arm isolated. Active rows used `userpromptsubmit_stop_taskstandard_spine` only. The verdict `pass_clean_control_stable` means the prior no-Cortex clean-control closure/evidence instability classified as `no_cortex_closure_readout_instability` did not reproduce. Because no-Cortex, simple-hook, and silent Cortex were stable and active Cortex still has no earned value signal, the next move is a no-live contraction/rebuild decision, not policy tuning, another live run, or candidate evolution.
 
 ### Research Lines Under Evaluation
 
