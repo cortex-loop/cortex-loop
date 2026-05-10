@@ -625,16 +625,20 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
 ) -> None:
     assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     work_note = status["work_today"]["note"].lower()
-    assert "no-live retained-spine clean-control replication gate 1" in work_note
-    assert "run_20260509t192719z" in work_note
+    assert "retained-spine clean-control replication live-run seam" in work_note
+    assert "refusal-only `--retained-spine-clean-control-replication-live` placeholder" in work_note
     assert "--retained-spine-clean-control-replication-gate1 --require-pass" in work_note
     assert "clean_control_replication_plan.json" in work_note
     assert "episode_table.jsonl" in work_note
-    assert "gate1_report.json" in work_note
     assert "summary.json" in work_note
     assert "registered_live_command.json" in work_note
+    assert "leaderboard.json" in work_note
+    assert "failure_analysis.json" in work_note
+    assert "latest_run.json" in work_note
+    assert "per-row `trials/`" in work_note
+    assert "cortex_retained_spine_clean_control_replication_live/<run_id>" in work_note
     assert "clean_verified_work_control_v2" in work_note
-    assert "20 dry-run rows" in work_note
+    assert "20-row plan" in work_note
     assert "four arms" in work_note
     assert "five repeats" in work_note
     assert "matched workspace seeds" in work_note
@@ -650,9 +654,13 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
     )
     assert "--retained-spine-clean-control-replication-live" in work_note
     assert "not_run_approval_required" in work_note
-    assert "not_run_registered_future_live_only" in work_note
-    assert "next train is `cortex-retained-spine-clean-control-replication-live-run`" in work_note
-    assert "replication readiness only" in work_note
+    assert "pass_clean_control_stable" in work_note
+    assert "failure_no_cortex_readout_instability" in work_note
+    assert "failure_silent_arm_leakage" in work_note
+    assert "failure_boundary_dominance" in work_note
+    assert "no live trials have run" in work_note
+    assert "next train remains `cortex-retained-spine-clean-control-replication-live-run`" in work_note
+    assert "runner readiness only" in work_note
     assert "retained-spine value" in work_note
     assert "retained-spine no-value parity" in work_note
     assert "cortex value" in work_note
@@ -677,7 +685,10 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
     assert "posttooluse disabled" in next_train["executive_benefit"].lower()
     assert "clean_control_replication_plan.json" in next_train["why_now"].lower()
     assert "not_run_approval_required" in next_train["why_now"].lower()
-    assert "not_run_registered_future_live_only" in next_train["why_now"].lower()
+    assert "executable, resume-safe runner" in next_train["why_now"].lower()
+    assert "will execute exactly 20 clean-control-only rows" in next_train[
+        "why_now"
+    ].lower()
     assert "userpromptsubmit_stop_taskstandard_spine" in next_train["why_now"].lower()
     assert "model_io_path=none_lab_proof_only" in next_train["why_now"].lower()
     primary_metric = next_train["primary_metric"].lower()
@@ -5778,7 +5789,8 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "registered_live_command.json" in text
     assert "clean_verified_work_control_v2" in text
     assert "no_cortex_closure_readout_instability" in text
-    assert "not_run_registered_future_live_only" in text
+    assert "pass_clean_control_stable" in text
+    assert "failure_no_cortex_readout_instability" in text
     assert "PostToolUse reactivation" in text
     assert (
         "- Next product train after the current focus: "

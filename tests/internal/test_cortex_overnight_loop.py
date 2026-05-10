@@ -328,6 +328,46 @@ def test_classify_next_work_allows_retained_spine_clean_control_replication_gate
     )
 
 
+def test_classify_next_work_allows_registered_clean_control_replication_live() -> None:
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-retained-spine-clean-control-replication-live-run",
+            surface="approval-gated retained-spine clean-control replication live run",
+            guardrail=(
+                "Live Codex may run only through the exact registered command/env pair."
+            ),
+            primary_metric=(
+                "Approval-gated clean-control-only replication live run executes "
+                "exactly 20 rows."
+            ),
+            extra={
+                "registered_live_commands": [
+                    {
+                        "command": (
+                            "python3 lab/cortex_effectiveness_evaluator.py "
+                            "--retained-spine-clean-control-replication-live"
+                        ),
+                        "env": {
+                            "CORTEX_CODEX_APP_CLI_RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVED": "approved"
+                        },
+                    }
+                ]
+            },
+        ),
+        _git(),
+    )
+
+    assert decision.status == "ready"
+    assert decision.live_codex_allowed is True
+    assert decision.safe_to_auto_merge is False
+    assert (
+        "CORTEX_CODEX_APP_CLI_RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVED=approved "
+        "python3 lab/cortex_effectiveness_evaluator.py "
+        "--retained-spine-clean-control-replication-live"
+        in decision.allowed_commands
+    )
+
+
 def test_classify_next_work_allows_registered_v2_live_but_never_auto_merges() -> None:
     decision = loop.classify_next_work(
         _status(

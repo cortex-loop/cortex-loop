@@ -34,6 +34,7 @@ EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS = {
     "cortex-retained-spine-measurement-stack-remediation",
     "cortex-retained-spine-clean-control-stability-gate0",
     "cortex-retained-spine-clean-control-replication-gate1",
+    "cortex-retained-spine-clean-control-replication-live-run",
     "cortex-simple-hook-baseline-challenger",
     "cortex-automation-product-boundary-contract",
 }
@@ -61,6 +62,7 @@ EVALUATOR_AUTHORIZED_EXACT_SLUGS = {
     "cortex-retained-spine-measurement-stack-remediation",
     "cortex-retained-spine-clean-control-stability-gate0",
     "cortex-retained-spine-clean-control-replication-gate1",
+    "cortex-retained-spine-clean-control-replication-live-run",
 }
 ALLOWED_LIVE_SLUG_PARTS = (
     "evaluator",
@@ -913,6 +915,18 @@ def _allowed_commands_for_slug(slug: str | None, git_state: GitState) -> tuple[s
             "python3 internal/truth/generate_cortex_doc.py --check",
             "git diff --check",
         )
+    if slug == "cortex-retained-spine-clean-control-replication-live-run":
+        return (
+            "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
+            "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
+            "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-clean-control-replication-gate1 --require-pass",
+            "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-clean-control-replication-live",
+            "CORTEX_CODEX_APP_CLI_RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --retained-spine-clean-control-replication-live",
+            "python3 -m pytest tests/internal/test_docs_boundary.py -q",
+            "python3 internal/truth/generate_status.py --check",
+            "python3 internal/truth/generate_cortex_doc.py --check",
+            "git diff --check",
+        )
     if slug == "cortex-simple-hook-baseline-challenger":
         return (
             "python3 lab/cortex_effectiveness_evaluator.py --simple-hook-baseline-gate0 --require-pass",
@@ -1183,7 +1197,10 @@ def classify_next_work(
     )
     live_allowed = (
         live_requested
-        and "evaluator" in ((slug_text or "").lower() + " " + combined)
+        and (
+            "evaluator" in ((slug_text or "").lower() + " " + combined)
+            or slug_text in EVALUATOR_AUTHORIZED_EXACT_SLUGS
+        )
         and bool(registered_live_commands)
     )
     if live_requested and not live_allowed:
