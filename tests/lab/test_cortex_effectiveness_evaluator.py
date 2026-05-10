@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import inspect
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -28,6 +27,7 @@ from lab.cortex_effectiveness_evaluator import (
     RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT,
     RETAINED_SPINE_LIVE_APPROVAL_ENV,
     EvaluatorEpisodeRow,
+    build_retained_spine_clean_control_replication_executable_plan,
     build_retained_spine_clean_control_replication_plan,
     build_retained_spine_executable_live_matrix_plan,
     build_retained_spine_live_gate1_plan,
@@ -132,6 +132,72 @@ def _fake_live_matrix_row(
             arm=arm,
             task_family=task_family,
             policy_candidate=policy_candidate,
+        ),
+    )
+
+
+def _fake_clean_control_replication_row(
+    *,
+    plan_row: dict[str, object],
+    trial_root: Path,
+    model: str,
+    mode: str = "stable",
+) -> EvaluatorEpisodeRow:
+    arm = str(plan_row["arm"])
+    repeat_index = int(plan_row["repeat_index"])
+    metrics = {field: False for field in SCORE_FIELDS}
+    metrics.update(
+        {
+            "task_success": True,
+            "truthful_closure": True,
+            "evidence_recovery": True,
+            "v2_verifier_exit_code": 0,
+            "model": model,
+            "workspace_seed": str(plan_row["workspace_seed"]),
+            "model_visible_cortex_output_count": 0,
+            "suppressed_cortex_output_count": 1
+            if arm == "cortex_silent_perception"
+            else 0,
+            "subject_config_product_only": True,
+            "subject_config_contains_posttooluse_context_flag": False,
+            "runtime_snapshot_loaded": False,
+            "hidden_verifier_leakage": False,
+            "trace_ambiguity": False,
+            "repeated_intervention_loop": False,
+            "overcontrol": False,
+            "support_model_io_path": None,
+            "artifacts": {
+                "stdout": str(trial_root / "stdout.jsonl"),
+                "stderr": str(trial_root / "stderr.txt"),
+                "v2_verifier_stdout": str(trial_root / "v2_verifier_stdout.txt"),
+                "v2_verifier_stderr": str(trial_root / "v2_verifier_stderr.txt"),
+            },
+        }
+    )
+    if mode == "readout_instability" and arm == "no_cortex_baseline" and repeat_index == 1:
+        metrics["truthful_closure"] = False
+        metrics["evidence_recovery"] = False
+    if mode == "silent_leak" and arm == "cortex_silent_perception" and repeat_index == 1:
+        metrics["support_model_io_path"] = "leaked_silent_support_context"
+    if mode == "active_overcontrol" and arm == "cortex_active_policy" and repeat_index == 1:
+        metrics["overcontrol"] = True
+    if mode == "missing_artifacts" and arm == "no_cortex_baseline" and repeat_index == 1:
+        metrics.pop("artifacts", None)
+    return EvaluatorEpisodeRow(
+        task_family=str(plan_row["task_family"]),
+        case_id=str(plan_row["case_id"]),
+        repeat_index=repeat_index,
+        arm=arm,
+        policy_candidate=str(plan_row["policy_candidate"]),
+        metrics=metrics,
+        source="retained_spine_clean_control_replication_fake",
+        episode_id=str(plan_row["episode_id"]),
+        expected_verdict="retained_spine_clean_control_replication_live_scored",
+        notes=f"trial_root={trial_root}",
+        mission_objective=evaluator._retained_spine_mission_objective_for_row(
+            arm=arm,
+            task_family=str(plan_row["task_family"]),
+            policy_candidate=str(plan_row["policy_candidate"]),
         ),
     )
 
@@ -1608,29 +1674,157 @@ def test_retained_spine_clean_control_replication_plan_keeps_support_io_lab_only
     )
 
 
-def test_retained_spine_clean_control_replication_live_placeholder_refuses(
+def test_retained_spine_clean_control_replication_executable_plan_is_live_ready() -> None:
+    plan = build_retained_spine_clean_control_replication_executable_plan()
+
+    assert plan["matrix_id"] == "cortex_retained_spine_clean_control_replication_live"
+    assert plan["executable"] is True
+    assert plan["executable_future_live_runner_implemented"] is True
+    assert plan["approval"]["with_approval_verdict_this_seam"] == (
+        "execute_registered_live_rows"
+    )
+    assert plan["approval"]["future_live_command_registered_not_implemented_here"] is False
+    assert len(plan["rows"]) == len(ARMS) * RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT
+    assert all(
+        row["case_materialization_status"]
+        == "materialized_clean_control_replication_live_runner"
+        for row in plan["rows"]
+    )
+
+
+def test_retained_spine_clean_control_replication_live_refuses_and_runs_fake(
     tmp_path: Path,
 ) -> None:
     refused = run_cortex_retained_spine_clean_control_replication_live(
         output_root=tmp_path / "refused",
         approval_env={},
     )
-    approved_placeholder = run_cortex_retained_spine_clean_control_replication_live(
+    approved = run_cortex_retained_spine_clean_control_replication_live(
         output_root=tmp_path / "approved",
         approval_env={
             RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV: (
                 RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE
             )
         },
+        run_id="run_clean_control_fake",
+        row_runner=_fake_clean_control_replication_row,
     )
+    run_root = tmp_path / "approved" / "run_clean_control_fake"
+    rows = [
+        json.loads(line)
+        for line in (run_root / "episode_table.jsonl").read_text().splitlines()
+    ]
+    plan = json.loads((run_root / "clean_control_replication_plan.json").read_text())
 
     assert refused["passed"] is False
     assert refused["verdict"] == "not_run_approval_required"
     assert refused["live_trials_ran"] is False
-    assert approved_placeholder["passed"] is False
-    assert approved_placeholder["verdict"] == "not_run_registered_future_live_only"
-    assert approved_placeholder["live_trials_ran"] is False
-    assert approved_placeholder["future_live_command_executable_in_this_seam"] is False
+    assert approved["passed"] is True
+    assert approved["verdict"] == "pass_clean_control_stable"
+    assert approved["live_trials_ran"] is True
+    assert approved["row_count"] == len(ARMS) * RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT
+    assert approved["completed_new_rows"] == approved["row_count"]
+    assert approved["skipped_existing_rows"] == 0
+    assert approved["next_train_if_recorded"] == (
+        "cortex-retained-active-policy-contraction-or-rebuild-decision"
+    )
+    assert approved["retained_spine_value_claim_allowed"] is False
+    assert approved["product_progress_claim_allowed"] is False
+    assert len(rows) == approved["row_count"]
+    assert plan["executable"] is True
+    assert all(row["case_id"] == "clean_verified_work_control_v2" for row in rows)
+    assert all(
+        row["policy_candidate"] == "userpromptsubmit_stop_taskstandard_spine"
+        for row in rows
+        if row["arm"] == "cortex_active_policy"
+    )
+    assert all(
+        row["metrics"].get("subject_config_contains_posttooluse_context_flag")
+        is not True
+        for row in rows
+    )
+    assert (run_root / "registered_live_command.json").exists()
+    assert (run_root / "leaderboard.json").exists()
+    assert (run_root / "failure_analysis.json").exists()
+
+
+def test_retained_spine_clean_control_replication_live_resume_skips_completed_rows(
+    tmp_path: Path,
+) -> None:
+    first = run_cortex_retained_spine_clean_control_replication_live(
+        output_root=tmp_path,
+        approval_env={
+            RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV: (
+                RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE
+            )
+        },
+        run_id="run_clean_control_resume",
+        row_runner=_fake_clean_control_replication_row,
+    )
+
+    def forbidden_runner(**_: object) -> EvaluatorEpisodeRow:
+        raise AssertionError("completed clean-control rows should be reused")
+
+    second = run_cortex_retained_spine_clean_control_replication_live(
+        output_root=tmp_path,
+        approval_env={
+            RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV: (
+                RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE
+            )
+        },
+        run_id="run_clean_control_resume",
+        row_runner=forbidden_runner,
+    )
+
+    assert first["row_count"] == second["row_count"]
+    assert second["completed_new_rows"] == 0
+    assert second["skipped_existing_rows"] == first["row_count"]
+
+
+def test_retained_spine_clean_control_replication_decision_classifies_boundaries() -> None:
+    plan = build_retained_spine_clean_control_replication_executable_plan()
+
+    def rows(mode: str) -> list[EvaluatorEpisodeRow]:
+        return [
+            _fake_clean_control_replication_row(
+                plan_row=row,
+                trial_root=Path("/tmp") / str(row["episode_id"]),
+                model="fake-model",
+                mode=mode,
+            )
+            for row in plan["rows"]
+        ]
+
+    stable = evaluator._retained_spine_clean_control_replication_decision(
+        rows("stable"),
+    )
+    readout = evaluator._retained_spine_clean_control_replication_decision(
+        rows("readout_instability"),
+    )
+    silent = evaluator._retained_spine_clean_control_replication_decision(
+        rows("silent_leak"),
+    )
+    overcontrol = evaluator._retained_spine_clean_control_replication_decision(
+        rows("active_overcontrol"),
+    )
+    missing_artifacts = evaluator._retained_spine_clean_control_replication_decision(
+        rows("missing_artifacts"),
+    )
+    root_mutation = evaluator._retained_spine_clean_control_replication_decision(
+        rows("stable"),
+        root_config_changed=True,
+    )
+
+    assert stable["verdict"] == "pass_clean_control_stable"
+    assert readout["verdict"] == "failure_no_cortex_readout_instability"
+    assert readout["failure_reason"] == "no_cortex_closure_evidence_readout_instability"
+    assert silent["verdict"] == "failure_silent_arm_leakage"
+    assert overcontrol["verdict"] == "failure_boundary_dominance"
+    assert overcontrol["failure_reason"] == "overcontrol"
+    assert missing_artifacts["verdict"] == "failure_boundary_dominance"
+    assert missing_artifacts["failure_reason"] == "missing_trial_artifacts"
+    assert root_mutation["verdict"] == "failure_boundary_dominance"
+    assert root_mutation["failure_reason"] == "root_config_mutation"
 
 
 def test_retained_spine_clean_control_stability_cli_passes(tmp_path: Path) -> None:
@@ -1683,30 +1877,10 @@ def test_retained_spine_clean_control_replication_gate1_cli_passes_and_live_refu
         text=True,
         capture_output=True,
     )
-    approved_placeholder = subprocess.run(
-        [
-            sys.executable,
-            "lab/cortex_effectiveness_evaluator.py",
-            "--retained-spine-clean-control-replication-live",
-            "--output-root",
-            str(tmp_path / "retained_spine_clean_control_replication_approved"),
-        ],
-        cwd=Path(__file__).resolve().parents[2],
-        env={
-            **os.environ,
-            RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV: (
-                RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE
-            ),
-        },
-        check=True,
-        text=True,
-        capture_output=True,
-    )
 
     assert "pass_cortex_retained_spine_clean_control_replication_gate1" in gate.stdout
     assert (gate_root / "clean_control_replication_plan.json").exists()
     assert "not_run_approval_required" in refusal.stdout
-    assert "not_run_registered_future_live_only" in approved_placeholder.stdout
 
 
 def test_retained_spine_measurement_stack_remediation_cli_passes(
