@@ -358,6 +358,10 @@ Active docs:
   `pass_clean_control_stable`, with no-Cortex readout stable across five
   repeats and the next train queued to retained active-policy contraction or
   rebuild decision
+- [Cortex Retained Active-Policy Contraction Or Rebuild Decision](recon/cortex_retained_active_policy_contraction_or_rebuild_decision.md) —
+  no-live contraction decision recording that the composed retained spine
+  still earned no value after stable clean-control replication, contracting
+  the next proof to a Stop-only retained spine Gate 0
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation
