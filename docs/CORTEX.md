@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-stop-only-retained-spine-gate0`
-### Next Product Train
 - Slug: `cortex-stop-only-retained-spine-live-gate1`
-- Surface: `no-live Stop-only retained-spine live-matrix interface gate`
-- Why now: Gate 0 passed with `pass_cortex_stop_only_retained_spine_gate0`: it named `stop_only_closure_continuation_spine`, Codex Stop `hookSpecificOutput` or block stdout continuation as the only active product model-I/O path, UserPromptSubmit and PostToolUse as excluded active paths, and simple-hook parity/silent success as no-value blockers. The next safe step is a dry-run interface gate, not live execution.
+### Next Product Train
+- Slug: `cortex-stop-only-retained-spine-live-run`
+- Surface: `approval-gated Stop-only retained-spine live matrix`
+- Why now: Gate 1 passed with `pass_cortex_stop_only_retained_spine_live_gate1`: it wrote a 60-row dry-run plan, preserved the Stop-only contract, proved active rows use only Stop closure/continuation model I/O, and registered approval refusal for `CORTEX_CODEX_APP_CLI_STOP_ONLY_RETAINED_SPINE_LIVE_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --stop-only-retained-spine-live-matrix`. The next step is the separately approved live run, not policy tuning.
 
 ### Research Lines Under Evaluation
 

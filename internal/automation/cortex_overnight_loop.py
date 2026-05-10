@@ -36,6 +36,7 @@ EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS = {
     "cortex-retained-spine-clean-control-replication-gate1",
     "cortex-retained-spine-clean-control-replication-live-run",
     "cortex-stop-only-retained-spine-gate0",
+    "cortex-stop-only-retained-spine-live-gate1",
     "cortex-simple-hook-baseline-challenger",
     "cortex-automation-product-boundary-contract",
 }
@@ -65,6 +66,7 @@ EVALUATOR_AUTHORIZED_EXACT_SLUGS = {
     "cortex-retained-spine-clean-control-replication-gate1",
     "cortex-retained-spine-clean-control-replication-live-run",
     "cortex-stop-only-retained-spine-gate0",
+    "cortex-stop-only-retained-spine-live-gate1",
 }
 ALLOWED_LIVE_SLUG_PARTS = (
     "evaluator",
@@ -249,6 +251,14 @@ CODE_OWNER_READS_BY_SLUG = {
         "tests/lab/test_cortex_effectiveness_evaluator.py",
         "tests/internal/test_docs_boundary.py",
     ),
+    "cortex-stop-only-retained-spine-live-gate1": (
+        "lab/cortex_effectiveness_evaluator.py",
+        ".cortex/live_validation/cortex_stop_only_retained_spine_gate0/stop_only_spine_contract.json",
+        ".cortex/live_validation/cortex_effectiveness_v2_case_registry_gate0/v2_case_registry.json",
+        "docs/recon/cortex_stop_only_retained_spine_gate0.md",
+        "tests/lab/test_cortex_effectiveness_evaluator.py",
+        "tests/internal/test_docs_boundary.py",
+    ),
 }
 ANTI_REINVENTION_SEARCHES_BY_SLUG = {
     "cortex-effectiveness-measurement-stack-rebuild": (
@@ -295,6 +305,10 @@ ANTI_REINVENTION_SEARCHES_BY_SLUG = {
     "cortex-stop-only-retained-spine-gate0": (
         "rg -n \"stop_only|stop-only|Stop closure|stop_closure_continuation_gate|userpromptsubmit_stop_taskstandard_spine\" lab tests docs/recon internal",
         "rg -n \"decision_contract_retained_spine_to_stop_only|run_20260509T112542Z|run_20260510T122608Z|failure_no_value|pass_clean_control_stable\" internal/truth docs/recon tests",
+    ),
+    "cortex-stop-only-retained-spine-live-gate1": (
+        "rg -n \"stop_only|stop-only|stop_only_closure_continuation_spine|build_stop_only_retained_spine_live_gate1_plan\" lab tests docs/recon internal",
+        "rg -n \"UserPromptSubmit|PostToolUse|enable_userpromptsubmit_task_standard|enable_posttooluse_task_standard_context|CORTEX_CODEX_APP_CLI_STOP_ONLY_RETAINED_SPINE_LIVE_APPROVED\" lab tests docs/recon internal",
     ),
 }
 DEFAULT_ANTI_REINVENTION_SEARCHES = (
@@ -943,6 +957,17 @@ def _allowed_commands_for_slug(slug: str | None, git_state: GitState) -> tuple[s
     if slug == "cortex-stop-only-retained-spine-gate0":
         return (
             "python3 lab/cortex_effectiveness_evaluator.py --stop-only-retained-spine-gate0 --require-pass",
+            "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
+            "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
+            "python3 -m pytest tests/internal/test_docs_boundary.py -q",
+            "python3 internal/truth/generate_status.py --check",
+            "python3 internal/truth/generate_cortex_doc.py --check",
+            "git diff --check",
+        )
+    if slug == "cortex-stop-only-retained-spine-live-gate1":
+        return (
+            "python3 lab/cortex_effectiveness_evaluator.py --stop-only-retained-spine-live-gate1 --require-pass",
+            "python3 lab/cortex_effectiveness_evaluator.py --stop-only-retained-spine-live-matrix",
             "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
             "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
             "python3 -m pytest tests/internal/test_docs_boundary.py -q",

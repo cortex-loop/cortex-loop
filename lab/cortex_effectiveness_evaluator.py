@@ -90,6 +90,12 @@ DEFAULT_RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_LIVE_OUTPUT_ROOT = Path(
 DEFAULT_STOP_ONLY_RETAINED_SPINE_OUTPUT_ROOT = Path(
     ".cortex/live_validation/cortex_stop_only_retained_spine_gate0"
 )
+DEFAULT_STOP_ONLY_RETAINED_SPINE_LIVE_GATE1_OUTPUT_ROOT = Path(
+    ".cortex/live_validation/cortex_stop_only_retained_spine_live_gate1"
+)
+DEFAULT_STOP_ONLY_RETAINED_SPINE_LIVE_MATRIX_OUTPUT_ROOT = Path(
+    ".cortex/live_validation/cortex_stop_only_retained_spine_live_matrix"
+)
 HISTORICAL_EFFECTIVENESS_LIVE_MATRIX_RUN_ROOT = (
     DEFAULT_LIVE_MATRIX_OUTPUT_ROOT / "run_20260508T221352Z"
 )
@@ -133,6 +139,10 @@ RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV = (
     "CORTEX_CODEX_APP_CLI_RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVED"
 )
 RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE = "approved"
+STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_ENV = (
+    "CORTEX_CODEX_APP_CLI_STOP_ONLY_RETAINED_SPINE_LIVE_APPROVED"
+)
+STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_VALUE = "approved"
 EVALUATOR_LIVE_MATRIX_COMMAND = (
     "python3 lab/cortex_effectiveness_evaluator.py --live-matrix"
 )
@@ -148,6 +158,14 @@ RETAINED_SPINE_LIVE_MATRIX_COMMAND = (
 RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_LIVE_COMMAND = (
     "python3 lab/cortex_effectiveness_evaluator.py "
     "--retained-spine-clean-control-replication-live"
+)
+STOP_ONLY_RETAINED_SPINE_LIVE_GATE1_COMMAND = (
+    "python3 lab/cortex_effectiveness_evaluator.py "
+    "--stop-only-retained-spine-live-gate1"
+)
+STOP_ONLY_RETAINED_SPINE_LIVE_MATRIX_COMMAND = (
+    "python3 lab/cortex_effectiveness_evaluator.py "
+    "--stop-only-retained-spine-live-matrix"
 )
 LIVE_MATRIX_REPEAT_COUNT = 3
 RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT = 5
@@ -553,6 +571,21 @@ def registered_retained_spine_clean_control_replication_live_commands() -> list[
     ]
 
 
+def registered_stop_only_retained_spine_live_commands() -> list[dict[str, Any]]:
+    """Return the exact future Stop-only retained-spine command/env pair."""
+
+    return [
+        {
+            "command": STOP_ONLY_RETAINED_SPINE_LIVE_MATRIX_COMMAND,
+            "env": {
+                STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_ENV: (
+                    STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_VALUE
+                )
+            },
+        }
+    ]
+
+
 def _write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -776,6 +809,107 @@ def _retained_spine_mission_objective_for_row(
             "Retained-spine live evaluator row; contraction is decided after "
             "comparing the minimal UserPromptSubmit+Stop spine against "
             "no-Cortex, simple-hook, and silent controls."
+        ),
+    }
+
+
+def _stop_only_spine_policy_candidate_for_arm(arm: str) -> str:
+    if arm == "cortex_active_policy":
+        return "stop_only_closure_continuation_spine"
+    return _policy_candidate_for_arm(arm)
+
+
+def _stop_only_spine_model_io_path(arm: str) -> str:
+    if arm == "cortex_active_policy":
+        return "codex_hooks_Stop_hookSpecificOutput_or_block_stdout"
+    return LAB_PROOF_MODEL_IO_PATH
+
+
+def _stop_only_spine_support_model_io_path(arm: str) -> str | None:
+    if arm == "simple_hook_baseline":
+        return SIMPLE_HOOK_SUPPORT_MODEL_IO_PATH
+    return None
+
+
+def _stop_only_spine_product_spine(arm: str) -> list[str]:
+    if arm != "cortex_active_policy":
+        return []
+    return [
+        "capability: truthful closure and continuation",
+        "state law: TaskStandardSpine plus shared tool-evidence phase law as non-model-visible support only",
+        "enforcement decision: Stop closure / continuation decision only",
+        "host action: Codex Stop hook response",
+        "model I/O: Codex Stop hookSpecificOutput or block stdout continuation",
+    ]
+
+
+def _stop_only_spine_arm_settings(arm: str) -> dict[str, Any]:
+    settings = dict(_live_matrix_arm_settings(arm))
+    settings.update(
+        {
+            "policy_candidate": _stop_only_spine_policy_candidate_for_arm(arm),
+            "enable_userpromptsubmit_task_standard": False,
+            "enable_task_standard_text": False,
+            "enable_posttooluse_task_standard_context": False,
+            "posttooluse_role_demoted": True,
+            "userpromptsubmit_active_context_excluded": True,
+        }
+    )
+    if arm == "cortex_active_policy":
+        settings.update(
+            {
+                "uses_codex_hooks": True,
+                "disable_model_visible_blocks": False,
+                "enable_stop_continuation_gate": True,
+                "active_product_model_io_path": (
+                    "Codex Stop hookSpecificOutput or block stdout continuation"
+                ),
+            }
+        )
+    elif arm == "cortex_silent_perception":
+        settings.update(
+            {
+                "uses_codex_hooks": True,
+                "disable_model_visible_blocks": True,
+                "enable_stop_continuation_gate": True,
+                "active_product_model_io_path": LAB_PROOF_MODEL_IO_PATH,
+            }
+        )
+    else:
+        settings.update(
+            {
+                "enable_stop_continuation_gate": False,
+                "active_product_model_io_path": LAB_PROOF_MODEL_IO_PATH,
+            }
+        )
+    return settings
+
+
+def _stop_only_spine_mission_objective_for_row(
+    *,
+    arm: str,
+    task_family: str,
+    policy_candidate: str,
+) -> dict[str, Any]:
+    objective = mission_objective_for_row(
+        arm=arm,
+        task_family=task_family,
+        policy_candidate=policy_candidate,
+    )
+    if arm == "cortex_active_policy":
+        objective = {
+            **objective,
+            "control_mode": "stop_continuation",
+        }
+    return {
+        **objective,
+        "model_io_path": _stop_only_spine_model_io_path(arm),
+        "product_spine": _stop_only_spine_product_spine(arm),
+        "contraction_implication": "none_with_reason",
+        "contraction_reason": (
+            "Stop-only retained-spine evaluator row; contraction remains "
+            "blocked until Stop-only is compared against no-Cortex, "
+            "simple-hook, and silent controls."
         ),
     }
 
@@ -5577,6 +5711,434 @@ def run_cortex_stop_only_retained_spine_gate0(
     return report
 
 
+def load_stop_only_retained_spine_gate0_contract(
+    contract_path: Path | str = (
+        DEFAULT_STOP_ONLY_RETAINED_SPINE_OUTPUT_ROOT / "stop_only_spine_contract.json"
+    ),
+) -> tuple[dict[str, Any] | None, tuple[str, ...], str]:
+    """Load the Gate 0 Stop-only contract as the Gate 1 source of truth."""
+
+    path = Path(contract_path)
+    if not path.exists():
+        return None, (f"missing_stop_only_gate0_contract:{path}",), str(path)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return None, (f"invalid_stop_only_gate0_contract_json:{exc}",), str(path)
+    if not isinstance(payload, dict):
+        return None, ("stop_only_gate0_contract_must_be_object",), str(path)
+    return payload, validate_stop_only_retained_spine_contract(payload), str(path)
+
+
+def build_stop_only_retained_spine_live_gate1_plan(
+    *,
+    repeat_count: int = LIVE_MATRIX_REPEAT_COUNT,
+    registry: Mapping[str, Any] | None = None,
+    contract: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build the Stop-only no-live matrix plan from the v2 registry."""
+
+    case_registry = (
+        dict(registry) if registry is not None else cortex_effectiveness_v2_case_registry()
+    )
+    spine_contract = (
+        dict(contract)
+        if contract is not None
+        else stop_only_retained_spine_contract()
+    )
+    contract_errors = validate_stop_only_retained_spine_contract(spine_contract)
+    contract_hash = _stable_hash(spine_contract)
+    base_plan = build_v2_live_matrix_plan(
+        repeat_count=repeat_count,
+        registry=case_registry,
+    )
+    rows: list[dict[str, Any]] = []
+    if not contract_errors:
+        for payload in base_plan["rows"]:
+            arm = str(payload["arm"])
+            task_family = str(payload["task_family"])
+            policy_candidate = _stop_only_spine_policy_candidate_for_arm(arm)
+            mission_objective = _stop_only_spine_mission_objective_for_row(
+                arm=arm,
+                task_family=task_family,
+                policy_candidate=policy_candidate,
+            )
+            row = {
+                **payload,
+                "source": "stop_only_retained_spine_live_gate1_dry_run_plan",
+                "episode_id": "stop_only_retained_spine__"
+                + str(payload["episode_id"]),
+                "expected_verdict": (
+                    "not_run_stop_only_retained_spine_live_gate1_dry_run"
+                ),
+                "policy_candidate": policy_candidate,
+                "mission_objective": mission_objective,
+                "notes": (
+                    "Stop-only dry-run schedule only; no live Codex command "
+                    "or product behavior change executed."
+                ),
+                "arm_settings": _stop_only_spine_arm_settings(arm),
+                "active_policy_candidate": (
+                    spine_contract["active_policy_candidate"]
+                    if arm == "cortex_active_policy"
+                    else policy_candidate
+                ),
+                "stop_only_spine_contract_hash": contract_hash,
+                "stop_only_active_component_ids": [
+                    component["component_id"]
+                    for component in spine_contract["active_components"]
+                ],
+                "allowed_support_law_ids": [
+                    item["support_id"]
+                    for item in spine_contract["allowed_support_law"]
+                ],
+                "posttooluse_role_demoted": True,
+                "userpromptsubmit_active_context_excluded": True,
+                "arm_model_io_path": _stop_only_spine_model_io_path(arm),
+                "support_model_io_path": _stop_only_spine_support_model_io_path(arm),
+                "approval": {
+                    "env": STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_ENV,
+                    "required_value": STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_VALUE,
+                    "without_approval_verdict": "not_run_approval_required",
+                },
+                "case_materialization_status": (
+                    "not_materialized_stop_only_retained_spine_gate1_dry_run"
+                ),
+            }
+            rows.append(row)
+    plan = {
+        **base_plan,
+        "matrix_id": "cortex_stop_only_retained_spine_live_gate1",
+        "row_count": len(rows),
+        "stop_only_spine": {
+            "active_policy_candidate": spine_contract.get("active_policy_candidate"),
+            "active_product_model_io_path": spine_contract.get(
+                "active_product_model_io_path"
+            ),
+            "hash": contract_hash,
+            "validation_errors": list(contract_errors),
+        },
+        "stop_only_spine_contract_valid": not contract_errors,
+        "registered_live_commands": registered_stop_only_retained_spine_live_commands(),
+        "workspace_isolation": {
+            "mode": "isolated_workspace_per_row_with_matched_pair_seed",
+            "matched_seed_fields": [
+                "registry_hash",
+                "task_family",
+                "case_id",
+                "repeat_index",
+            ],
+            "row_identity_fields": ["case_id", "repeat_index", "arm"],
+            "root_config_mutation_allowed": False,
+            "runtime_snapshot_allowed": False,
+        },
+        "approval": {
+            "env": STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_ENV,
+            "required_value": STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_VALUE,
+            "without_approval_verdict": "not_run_approval_required",
+            "future_live_command_registered_not_implemented_here": True,
+        },
+        "reports": [
+            "stop_only_spine_contract.json",
+            "evaluator_design.json",
+            "v2_case_registry.json",
+            "live_plan.json",
+            "episode_table.jsonl",
+            "summary.json",
+            "leaderboard.json",
+            "failure_analysis.json",
+            "registered_live_command.json",
+        ],
+        "rows": rows,
+    }
+    return plan
+
+
+def run_cortex_stop_only_retained_spine_live_gate1(
+    output_root: Path | str = DEFAULT_STOP_ONLY_RETAINED_SPINE_LIVE_GATE1_OUTPUT_ROOT,
+    *,
+    gate0_contract_path: Path | str = (
+        DEFAULT_STOP_ONLY_RETAINED_SPINE_OUTPUT_ROOT / "stop_only_spine_contract.json"
+    ),
+) -> dict[str, Any]:
+    """Wire the Stop-only retained spine into a no-live matrix dry-run."""
+
+    root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
+    design = cortex_effectiveness_evaluator_design()
+    registry = cortex_effectiveness_v2_case_registry()
+    contract, contract_load_errors, contract_source = (
+        load_stop_only_retained_spine_gate0_contract(gate0_contract_path)
+    )
+    registry_errors = validate_cortex_effectiveness_v2_case_registry(registry)
+    live_plan = build_stop_only_retained_spine_live_gate1_plan(
+        registry=registry,
+        contract=contract or {},
+    )
+    rows = [
+        EvaluatorEpisodeRow(
+            task_family=row["task_family"],
+            case_id=row["case_id"],
+            repeat_index=int(row["repeat_index"]),
+            arm=row["arm"],
+            policy_candidate=row["policy_candidate"],
+            metrics=row["metrics"],
+            source=row["source"],
+            episode_id=row["episode_id"],
+            expected_verdict=row.get("expected_verdict"),
+            observed_verdict=row.get("observed_verdict"),
+            notes=row.get("notes", ""),
+            mission_objective=row.get("mission_objective"),
+        )
+        for row in live_plan["rows"]
+    ]
+    mission_contract_errors = validate_episode_rows_mission_contract(rows)
+    episode_table_path = root / "episode_table.jsonl"
+    write_episode_table(episode_table_path, rows)
+    leaderboard = {
+        "live_trials_ran": False,
+        "score_basis": "stop_only_retained_spine_live_gate1_dry_run_schedule_only",
+        "active_policy_candidate": (
+            contract.get("active_policy_candidate") if contract else None
+        ),
+        "claim_allowed": {
+            "behavior_lift": False,
+            "exactness_value_lift": False,
+            "broad_cortex_lift": False,
+            "codex_app_parity": False,
+            "shipping_promotion": False,
+            "product_progress": False,
+            "retained_spine_value": False,
+        },
+        "selection_status": "not_live_eligible_until_stop_only_live_run",
+    }
+    failure_analysis = {
+        "live_trials_ran": False,
+        "active_policy_candidate": (
+            contract.get("active_policy_candidate") if contract else None
+        ),
+        "userpromptsubmit_active_value_reactivated": False,
+        "userpromptsubmit_role": "historical_support_law_not_active_value_path",
+        "posttooluse_reactivated_as_earned_policy": False,
+        "posttooluse_role": "role_demoted_non_current_support_history",
+        "known_boundary_failures_preserved": list(DOMINANCE_GATES),
+        "simple_hook_parity_blocks_value": True,
+        "silent_success_blocks_value": True,
+        "positive_result_requires_user_review": True,
+        "v2_negative_artifact_preserved": "run_20260509T112542Z",
+        "clean_control_stability_artifact_preserved": "run_20260510T122608Z",
+        "future_live_runner_not_implemented_in_this_seam": True,
+    }
+    checks = {
+        "stop_only_gate0_contract_loaded": contract is not None
+        and not contract_load_errors,
+        "stop_only_contract_source_is_gate0_artifact": (
+            contract_source.endswith("stop_only_spine_contract.json")
+        ),
+        "v2_registry_valid": not registry_errors
+        and live_plan["registry_valid"] is True,
+        "registered_stop_only_live_command_env_pair": (
+            registered_stop_only_retained_spine_live_commands()
+            == live_plan["registered_live_commands"]
+        ),
+        "approval_refusal_registered": live_plan["approval"][
+            "without_approval_verdict"
+        ]
+        == "not_run_approval_required",
+        "all_required_arms_scheduled": set(live_plan["arms"]) == set(ARMS),
+        "all_v2_task_families_scheduled": set(live_plan["task_families"])
+        == set(TASK_FAMILIES),
+        "all_case_ids_are_v2": all(
+            str(case_id).endswith("_v2") for case_id in live_plan["case_ids"]
+        ),
+        "episode_rows_written": episode_table_path.exists(),
+        "row_count_matches_stop_only_matrix": live_plan["row_count"]
+        == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT,
+        "mission_contract_preserved": not mission_contract_errors,
+        "active_rows_use_stop_only_candidate": all(
+            row["policy_candidate"] == "stop_only_closure_continuation_spine"
+            for row in live_plan["rows"]
+            if row["arm"] == "cortex_active_policy"
+        ),
+        "active_rows_use_stop_only_model_io": all(
+            row["mission_objective"]["model_io_path"]
+            == "codex_hooks_Stop_hookSpecificOutput_or_block_stdout"
+            and "UserPromptSubmit" not in str(row["mission_objective"]["product_spine"])
+            and "PostToolUse" not in str(row["mission_objective"]["product_spine"])
+            for row in live_plan["rows"]
+            if row["arm"] == "cortex_active_policy"
+        ),
+        "active_rows_disable_userpromptsubmit_context": all(
+            row["arm_settings"]["enable_userpromptsubmit_task_standard"] is False
+            and row["arm_settings"]["enable_task_standard_text"] is False
+            for row in live_plan["rows"]
+            if row["arm"] == "cortex_active_policy"
+        ),
+        "posttooluse_not_reactivated": all(
+            row["arm_settings"]["enable_posttooluse_task_standard_context"] is False
+            for row in live_plan["rows"]
+        ),
+        "non_active_rows_lab_only": all(
+            row["mission_objective"]["model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+            and row["mission_objective"]["product_spine"] == []
+            for row in live_plan["rows"]
+            if row["arm"] != "cortex_active_policy"
+        ),
+        "simple_hook_support_context_metadata_only": all(
+            row["support_model_io_path"] == SIMPLE_HOOK_SUPPORT_MODEL_IO_PATH
+            and row["mission_objective"]["model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+            for row in live_plan["rows"]
+            if row["arm"] == "simple_hook_baseline"
+        ),
+        "silent_rows_emit_no_model_visible_cortex_output": all(
+            row["arm_settings"]["disable_model_visible_blocks"] is True
+            and row["arm_settings"]["enable_task_standard_text"] is False
+            and row["arm_settings"]["enable_posttooluse_task_standard_context"]
+            is False
+            for row in live_plan["rows"]
+            if row["arm"] == "cortex_silent_perception"
+        ),
+        "workspace_seeds_matched_across_arms": all(
+            len(
+                {
+                    row["workspace_seed"]
+                    for row in live_plan["rows"]
+                    if row["task_family"] == family
+                    and int(row["repeat_index"]) == repeat_index
+                }
+            )
+            == 1
+            for family in TASK_FAMILIES
+            for repeat_index in range(1, LIVE_MATRIX_REPEAT_COUNT + 1)
+        ),
+        "dominance_gates_preserved": set(DOMINANCE_GATES).issubset(
+            set(live_plan["dominance_gates"])
+        ),
+        "simple_hook_parity_blocks_value": failure_analysis[
+            "simple_hook_parity_blocks_value"
+        ]
+        is True,
+        "silent_success_blocks_value": failure_analysis[
+            "silent_success_blocks_value"
+        ]
+        is True,
+        "live_trials_not_run": live_plan["live_trials_ran"] is False,
+        "future_live_runner_not_implemented_here": live_plan["approval"][
+            "future_live_command_registered_not_implemented_here"
+        ]
+        is True,
+        "alphaevolve_mutation_loop_not_allowed": True,
+    }
+    passed = all(checks.values())
+    report = {
+        "passed": passed,
+        "verdict": (
+            "pass_cortex_stop_only_retained_spine_live_gate1"
+            if passed
+            else "failure_cortex_stop_only_retained_spine_live_gate1"
+        ),
+        "live_trials_ran": False,
+        "model_io_path": LAB_PROOF_MODEL_IO_PATH,
+        "active_policy_candidate": (
+            contract.get("active_policy_candidate") if contract else None
+        ),
+        "active_product_model_io_path": (
+            contract.get("active_product_model_io_path") if contract else None
+        ),
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": False,
+        "broad_cortex_lift_claim_allowed": False,
+        "codex_app_parity_claim_allowed": False,
+        "shipping_promotion_claim_allowed": False,
+        "product_progress_claim_allowed": False,
+        "retained_spine_value_claim_allowed": False,
+        "alphaevolve_candidate_evolution_allowed": False,
+        "posttooluse_reactivated_as_earned_policy": False,
+        "userpromptsubmit_active_value_reactivated": False,
+        "next_train_if_pass": "cortex-stop-only-retained-spine-live-run",
+        "next_train_if_fail": "cortex-stop-only-retained-spine-live-gate1-remediation",
+        "artifact_paths": {
+            "stop_only_spine_contract": "stop_only_spine_contract.json",
+            "evaluator_design": "evaluator_design.json",
+            "v2_case_registry": "v2_case_registry.json",
+            "live_plan": "live_plan.json",
+            "episode_table": "episode_table.jsonl",
+            "summary": "summary.json",
+            "leaderboard": "leaderboard.json",
+            "failure_analysis": "failure_analysis.json",
+            "registered_live_command": "registered_live_command.json",
+        },
+        "registered_live_commands": registered_stop_only_retained_spine_live_commands(),
+        "checks": checks,
+        "registry_validation_errors": list(registry_errors),
+        "contract_load_errors": list(contract_load_errors),
+        "contract_source": contract_source,
+        "mission_contract_errors": list(mission_contract_errors),
+        "live_plan": {key: value for key, value in live_plan.items() if key != "rows"},
+        "failure_analysis": failure_analysis,
+    }
+    _write_json(root / "stop_only_spine_contract.json", contract or {})
+    _write_json(root / "evaluator_design.json", design)
+    _write_json(root / "v2_case_registry.json", registry)
+    _write_json(root / "live_plan.json", live_plan)
+    _write_json(root / "leaderboard.json", leaderboard)
+    _write_json(root / "failure_analysis.json", failure_analysis)
+    _write_json(
+        root / "registered_live_command.json",
+        {
+            "live_trials_ran": False,
+            "registered_live_commands": registered_stop_only_retained_spine_live_commands(),
+            "approval_without_env_verdict": "not_run_approval_required",
+            "approved_in_this_seam_verdict": "not_run_registered_future_live_only",
+        },
+    )
+    _write_json(root / "summary.json", report)
+    return report
+
+
+def run_cortex_stop_only_retained_spine_live_matrix(
+    output_root: Path | str = DEFAULT_STOP_ONLY_RETAINED_SPINE_LIVE_MATRIX_OUTPUT_ROOT,
+    *,
+    approval_env: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    """Register the future Stop-only live matrix without executing it."""
+
+    env = approval_env if approval_env is not None else os.environ
+    root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
+    approved = (
+        env.get(STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_ENV)
+        == STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_VALUE
+    )
+    verdict = (
+        "not_run_registered_future_live_only"
+        if approved
+        else "not_run_approval_required"
+    )
+    report = {
+        "passed": False,
+        "verdict": verdict,
+        "live_trials_ran": False,
+        "approval_required": not approved,
+        "approval_received": approved,
+        "approval_env": STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_ENV,
+        "required_value": STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_VALUE,
+        "registered_live_commands": registered_stop_only_retained_spine_live_commands(),
+        "future_live_runner_not_implemented_in_this_seam": True,
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": False,
+        "broad_cortex_lift_claim_allowed": False,
+        "codex_app_parity_claim_allowed": False,
+        "shipping_promotion_claim_allowed": False,
+        "product_progress_claim_allowed": False,
+        "retained_spine_value_claim_allowed": False,
+        "alphaevolve_candidate_evolution_allowed": False,
+    }
+    _write_json(root / "registered_live_command.json", report)
+    _write_json(root / "summary.json", report)
+    return report
+
+
 def run_cortex_retained_active_policy_spine_live_gate1(
     output_root: Path | str = DEFAULT_RETAINED_SPINE_LIVE_GATE1_OUTPUT_ROOT,
 ) -> dict[str, Any]:
@@ -8293,6 +8855,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="prove the Stop-only retained active spine contract without live trials",
     )
     parser.add_argument(
+        "--stop-only-retained-spine-live-gate1",
+        action="store_true",
+        help="wire the Stop-only retained spine into a no-live matrix dry-run plan",
+    )
+    parser.add_argument(
+        "--stop-only-retained-spine-live-matrix",
+        action="store_true",
+        help="future approval-gated Stop-only retained-spine live command",
+    )
+    parser.add_argument(
         "--output-root",
         type=Path,
         default=None,
@@ -8325,6 +8897,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.retained_spine_clean_control_replication_gate1,
             args.retained_spine_clean_control_replication_live,
             args.stop_only_retained_spine_gate0,
+            args.stop_only_retained_spine_live_gate1,
+            args.stop_only_retained_spine_live_matrix,
         )
     )
     if selected_modes != 1:
@@ -8340,7 +8914,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             "--retained-spine-clean-control-stability-gate0, or "
             "--retained-spine-clean-control-replication-gate1, or "
             "--retained-spine-clean-control-replication-live, or "
-            "--stop-only-retained-spine-gate0"
+            "--stop-only-retained-spine-gate0, or "
+            "--stop-only-retained-spine-live-gate1, or "
+            "--stop-only-retained-spine-live-matrix"
         )
 
     output_root = args.output_root
@@ -8383,6 +8959,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         elif args.stop_only_retained_spine_gate0:
             output_root = DEFAULT_STOP_ONLY_RETAINED_SPINE_OUTPUT_ROOT
+        elif args.stop_only_retained_spine_live_gate1:
+            output_root = DEFAULT_STOP_ONLY_RETAINED_SPINE_LIVE_GATE1_OUTPUT_ROOT
+        elif args.stop_only_retained_spine_live_matrix:
+            output_root = DEFAULT_STOP_ONLY_RETAINED_SPINE_LIVE_MATRIX_OUTPUT_ROOT
         elif args.live_matrix:
             output_root = DEFAULT_LIVE_MATRIX_OUTPUT_ROOT
         else:
@@ -8426,6 +9006,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         report = run_cortex_retained_spine_clean_control_replication_live(output_root)
     elif args.stop_only_retained_spine_gate0:
         report = run_cortex_stop_only_retained_spine_gate0(output_root)
+    elif args.stop_only_retained_spine_live_gate1:
+        report = run_cortex_stop_only_retained_spine_live_gate1(output_root)
+    elif args.stop_only_retained_spine_live_matrix:
+        report = run_cortex_stop_only_retained_spine_live_matrix(output_root)
     else:
         report = run_cortex_effectiveness_evaluator_live_matrix(output_root)
 
