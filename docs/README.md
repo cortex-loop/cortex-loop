@@ -365,6 +365,9 @@ Active docs:
 - [Cortex Stop-Only Retained Spine Gate 0](recon/cortex_stop_only_retained_spine_gate0.md) —
   no-live contract proof defining `stop_only_closure_continuation_spine` with
   Codex Stop as the only future active product model-I/O path
+- [Cortex Stop-Only Retained Spine Live Gate 1](recon/cortex_stop_only_retained_spine_live_gate1.md) —
+  no-live dry-run interface gate scheduling the Stop-only spine against
+  no-Cortex, simple-hook, and silent controls before any live run
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation

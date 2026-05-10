@@ -337,8 +337,8 @@ CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_PATH = (
     / "cortex_codex_app_cli_posttooluse_task_standard_phase_aware_narrow_live_rerun.md"
 )
 
-CURRENT_WORK_SLUG = "cortex-stop-only-retained-spine-gate0"
-NEXT_PRODUCT_TRAIN_SLUG = "cortex-stop-only-retained-spine-live-gate1"
+CURRENT_WORK_SLUG = "cortex-stop-only-retained-spine-live-gate1"
+NEXT_PRODUCT_TRAIN_SLUG = "cortex-stop-only-retained-spine-live-run"
 CONTEXT_LOOP_TRACE_REMEDIATION_RECON_PATH = (
     REPO_ROOT
     / "docs"
@@ -530,6 +530,12 @@ CORTEX_STOP_ONLY_RETAINED_SPINE_GATE0_PATH = (
     / "recon"
     / "cortex_stop_only_retained_spine_gate0.md"
 )
+CORTEX_STOP_ONLY_RETAINED_SPINE_LIVE_GATE1_PATH = (
+    REPO_ROOT
+    / "docs"
+    / "recon"
+    / "cortex_stop_only_retained_spine_live_gate1.md"
+)
 
 CODEX_APP_CLI_POSTTOOLUSE_TASK_STANDARD_PHASE_AWARE_NARROW_LIVE_RERUN_AFTER_SHARED_TOOL_EVIDENCE_PATH = (
     REPO_ROOT
@@ -643,36 +649,34 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
 ) -> None:
     assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
     work_note = status["work_today"]["note"].lower()
-    assert "stop-only retained spine gate 0" in work_note
-    assert "pass_cortex_stop_only_retained_spine_gate0" in work_note
-    assert "cortex_stop_only_retained_spine_gate0.md" in work_note
+    assert "stop-only retained spine live gate 1" in work_note
+    assert "pass_cortex_stop_only_retained_spine_live_gate1" in work_note
+    assert "cortex_stop_only_retained_spine_live_gate1.md" in work_note
     assert "stop_only_spine_contract.json" in work_note
-    assert "gate0_report.json" in work_note
+    assert "evaluator_design.json" in work_note
+    assert "v2_case_registry.json" in work_note
+    assert "live_plan.json" in work_note
+    assert "episode_table.jsonl" in work_note
     assert "summary.json" in work_note
+    assert "leaderboard.json" in work_note
+    assert "failure_analysis.json" in work_note
+    assert "registered_live_command.json" in work_note
+    assert "60 rows" in work_note
+    assert "four arms x five v2 task families x three repeats" in work_note
     assert "stop_only_closure_continuation_spine" in work_note
     assert "codex stop `hookspecificoutput` or block stdout continuation" in work_note
     assert "userpromptsubmit `hookspecificoutput.additionalcontext`" in work_note
     assert "posttooluse task-standard context" in work_note
-    assert "pretooluse denial" in work_note
-    assert "permissionrequest policy" in work_note
-    assert "runtime snapshots" in work_note
-    assert "alphaevolve candidate mutation" in work_note
-    assert "non-model-visible only" in work_note
-    assert "taskstandardspine" in work_note
-    assert "cortex/sre/tool_evidence.py" in work_note
-    assert "transcript/tool evidence" in work_note
-    assert "closure-claim state" in work_note
-    assert "run_20260509t112542z" in work_note
-    assert "failure_no_value" in work_note
-    assert "run_20260509t192719z" in work_note
-    assert "raw/corrected retained-spine evidence" in work_note
-    assert "run_20260510t122608z" in work_note
-    assert "pass_clean_control_stable" in work_note
-    assert "decision_contract_retained_spine_to_stop_only" in work_note
-    assert "pass_gating_observed" in work_note
-    assert "posttooluse paired `failure_no_value`" in work_note
-    assert "contract readiness only" in work_note
-    assert "task_standard_posttooluse_paired_value_live_20260508t120907z" in work_note
+    assert "model_io_path=none_lab_proof_only" in work_note
+    assert "simple-hook prompt context remains support metadata" in work_note
+    assert "silent rows emit no model-visible cortex output" in work_note
+    assert "--stop-only-retained-spine-live-matrix" in work_note
+    assert "cortex_codex_app_cli_stop_only_retained_spine_live_approved=approved" in work_note
+    assert "not_run_approval_required" in work_note
+    assert "not_run_registered_future_live_only" in work_note
+    assert "simple-hook parity" in work_note
+    assert "silent success" in work_note
+    assert "dry-run readiness only" in work_note
     assert "no cortex value" in work_note
     assert "retained-spine value" in work_note
     assert "behavior lift" in work_note
@@ -681,18 +685,12 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
     assert "posttooluse reactivation" in work_note
     assert "userpromptsubmit active value reactivation" in work_note
     assert "alphaevolve candidate-evolution permission" in work_note
-    assert "next train is `cortex-stop-only-retained-spine-live-gate1`" in work_note
+    assert "next train is `cortex-stop-only-retained-spine-live-run`" in work_note
 
     next_train = status["next_product_train"]
     assert next_train["slug"] == NEXT_PRODUCT_TRAIN_SLUG
-    assert (
-        next_train["surface"]
-        == "no-live Stop-only retained-spine live-matrix interface gate"
-    )
-    assert "wire the stop-only retained spine" in next_train[
-        "executive_benefit"
-    ].lower()
-    assert "no-live dry-run future matrix" in next_train[
+    assert next_train["surface"] == "approval-gated Stop-only retained-spine live matrix"
+    assert "run the registered stop-only retained spine live matrix" in next_train[
         "executive_benefit"
     ].lower()
     assert "stop_only_closure_continuation_spine" in next_train[
@@ -702,28 +700,26 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
     assert "simple-hook" in next_train["executive_benefit"].lower()
     assert "silent controls" in next_train["executive_benefit"].lower()
     assert "codex stop" in next_train["executive_benefit"].lower()
-    assert "pass_cortex_stop_only_retained_spine_gate0" in next_train[
+    assert "pass_cortex_stop_only_retained_spine_live_gate1" in next_train[
         "why_now"
     ].lower()
-    assert "stop_only_closure_continuation_spine" in next_train[
+    assert "60-row dry-run plan" in next_train["why_now"].lower()
+    assert "stop closure/continuation model i/o" in next_train["why_now"].lower()
+    assert "cortex_codex_app_cli_stop_only_retained_spine_live_approved=approved" in next_train[
         "why_now"
     ].lower()
-    assert "codex stop `hookspecificoutput` or block stdout continuation" in next_train[
-        "why_now"
-    ].lower()
-    assert "userpromptsubmit and posttooluse as excluded active paths" in next_train[
-        "why_now"
-    ].lower()
-    assert "simple-hook parity/silent success" in next_train["why_now"].lower()
-    assert "dry-run interface gate" in next_train["why_now"].lower()
-    assert "not live execution" in next_train["why_now"].lower()
+    assert "--stop-only-retained-spine-live-matrix" in next_train["why_now"].lower()
+    assert "separately approved live run" in next_train["why_now"].lower()
     primary_metric = next_train["primary_metric"].lower()
-    assert "dry-run four-arm stop-only plan" in primary_metric
-    assert "stop-only contract" in primary_metric
-    assert "active rows use only stop closure/continuation" in primary_metric
-    assert "approval refusal" in primary_metric
+    assert "approval-gated stop-only live run" in primary_metric
+    assert "60-row artifact" in primary_metric
+    assert "active rows as stop-only" in primary_metric
+    assert "userpromptsubmit/posttooluse excluded" in primary_metric
+    assert "no-cortex and simple-hook" in primary_metric
+    assert "silent contamination or boundary dominance" in primary_metric
     guardrail = next_train["guardrail"].lower()
-    assert "no live codex run" in guardrail
+    assert "exact registered command/env pair" in guardrail
+    assert "explicit current-turn approval" in guardrail
     assert "no product deletion" in guardrail
     assert "no product code deletion" in guardrail
     assert "product behavior change" in guardrail
@@ -738,17 +734,18 @@ def _assert_current_posttooluse_strategy_failure_audit_status(
     assert "permissionrequest policy" in guardrail
     assert "runtime snapshot dependency" in guardrail
     assert "alphaevolve candidate evolution" in guardrail
-    assert "register a future approval-gated live command shape only" in guardrail
-    assert "must not execute it or claim value" in guardrail
+    assert "positive value evidence requires user review" in guardrail
+    assert "broad cortex lift or shipping truth" in guardrail
     kill_rule = next_train["kill_rule"].lower()
-    assert "runs live" in kill_rule
+    assert "registered stop-only live command" in kill_rule
     assert "active rows use userpromptsubmit additionalcontext" in kill_rule
     assert "posttooluse context" in kill_rule
     assert "changes scoring or fixtures" in kill_rule
     assert "treats stop-only as value without live proof" in kill_rule
     assert "reactivates posttooluse" in kill_rule
     assert "queues candidate evolution" in kill_rule
-    assert "omits the stop-only gate 0 contract" in kill_rule
+    assert "omits gate 1 artifacts" in kill_rule
+    assert "broad lift/product progress" in kill_rule
     assert "registered_live_commands" not in status["next_product_train"]
 
 
@@ -1594,6 +1591,7 @@ def test_docs_directory_only_exposes_archive_and_workflow_subtrees() -> None:
         "cortex_semantic_contraction_audit.md",
         "cortex_simple_hook_baseline_challenger.md",
         "cortex_stop_only_retained_spine_gate0.md",
+        "cortex_stop_only_retained_spine_live_gate1.md",
         "cortex_task_standard_executive_doctrine_math_refinement.md",
         "cortex_task_standard_sre_correspondence_reconciliation.md",
         "cortex_visible_intervention_product_perception_hardening.md",
@@ -5289,7 +5287,7 @@ def test_cortex_retained_spine_clean_control_replication_gate1_records_plan() ->
     assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
     assert (
         status["next_product_train"]["surface"]
-        == "no-live Stop-only retained-spine live-matrix interface gate"
+        == "approval-gated Stop-only retained-spine live matrix"
     )
     _assert_current_posttooluse_strategy_failure_audit_status(status)
 
@@ -5491,6 +5489,70 @@ def test_cortex_stop_only_retained_spine_gate0_records_contract() -> None:
     assert "recon/cortex_stop_only_retained_spine_gate0.md" in docs_index
     assert (
         "docs/recon/cortex_stop_only_retained_spine_gate0.md"
+        in status["active_docs"]
+    )
+    assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
+    assert status["next_product_train"]["slug"] == NEXT_PRODUCT_TRAIN_SLUG
+    _assert_current_posttooluse_strategy_failure_audit_status(status)
+
+
+def test_cortex_stop_only_retained_spine_live_gate1_records_dry_run_plan() -> None:
+    text = _read(CORTEX_STOP_ONLY_RETAINED_SPINE_LIVE_GATE1_PATH)
+    docs_index = _read(DOCS_INDEX_PATH)
+    status = _load_status()
+
+    for phrase in (
+        "Surface: no-live lab/proof evaluator interface",
+        "Verdict: `pass_cortex_stop_only_retained_spine_live_gate1`",
+        "`stop_only_closure_continuation_spine`",
+        "Codex Stop `hookSpecificOutput` or block stdout continuation",
+        "UserPromptSubmit and PostToolUse remain excluded from the active value spine",
+        "stop_only_spine_contract.json",
+        "evaluator_design.json",
+        "v2_case_registry.json",
+        "live_plan.json",
+        "episode_table.jsonl",
+        "summary.json",
+        "leaderboard.json",
+        "failure_analysis.json",
+        "registered_live_command.json",
+        "60 rows: four arms x five v2 task families x three repeats",
+        "`python3 lab/cortex_effectiveness_evaluator.py --stop-only-retained-spine-live-gate1 --require-pass`",
+        "`python3 lab/cortex_effectiveness_evaluator.py --stop-only-retained-spine-live-matrix`",
+        "`CORTEX_CODEX_APP_CLI_STOP_ONLY_RETAINED_SPINE_LIVE_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --stop-only-retained-spine-live-matrix`",
+        "`not_run_approval_required`",
+        "`not_run_registered_future_live_only`",
+        "Active rows use `stop_only_closure_continuation_spine` only",
+        "UserPromptSubmit `hookSpecificOutput.additionalContext` is disabled as active model I/O",
+        "PostToolUse task-standard context is disabled and remains role-demoted",
+        "Non-active rows use `model_io_path=none_lab_proof_only`",
+        "Simple-hook prompt context remains support metadata only",
+        "Silent rows emit no model-visible Cortex output",
+        "Simple-hook parity blocks value",
+        "Silent success blocks value",
+        "Queue `cortex-stop-only-retained-spine-live-run`",
+        "This Gate 1 does not authorize live execution",
+    ):
+        assert phrase in text
+
+    for forbidden in (
+        "No Cortex value",
+        "No retained-spine value",
+        "No behavior lift",
+        "No exactness value lift",
+        "No broad Cortex lift",
+        "No Codex App parity",
+        "No shipping promotion",
+        "No product progress",
+        "No PostToolUse reactivation",
+        "No UserPromptSubmit active value reactivation",
+        "No AlphaEvolve candidate-evolution permission",
+    ):
+        assert forbidden in text
+
+    assert "recon/cortex_stop_only_retained_spine_live_gate1.md" in docs_index
+    assert (
+        "docs/recon/cortex_stop_only_retained_spine_live_gate1.md"
         in status["active_docs"]
     )
     assert status["work_today"]["slug"] == CURRENT_WORK_SLUG
@@ -5908,7 +5970,7 @@ def test_status_registry_is_complete_and_stable() -> None:
     ].lower()
     assert (
         status["next_product_train"]["surface"]
-        == "no-live Stop-only retained-spine live-matrix interface gate"
+        == "approval-gated Stop-only retained-spine live matrix"
     )
     deferred_lines = {entry["slug"]: entry for entry in status["research_lines_under_evaluation"]}
     assert "brain-capability-observation-and-inference" in deferred_lines
@@ -6000,33 +6062,37 @@ def test_generated_status_doc_includes_system_map_and_next_product_train() -> No
     assert "cortex_retained_spine_clean_control_replication_live_run.md" in text
     assert "cortex_retained_active_policy_contraction_or_rebuild_decision.md" in text
     assert "cortex_stop_only_retained_spine_gate0.md" in text
-    assert "`cortex-stop-only-retained-spine-gate0`" in text
+    assert "cortex_stop_only_retained_spine_live_gate1.md" in text
     assert "`cortex-stop-only-retained-spine-live-gate1`" in text
-    assert "`cortex-stop-only-retained-spine-gate0`" in text
-    assert "run_20260509T192719Z" in text
-    assert "run_20260510T122608Z" in text
-    assert "run_20260509T112542Z" in text
-    assert "task_standard_posttooluse_paired_value_live_20260508T120907Z" in text
+    assert "`cortex-stop-only-retained-spine-live-run`" in text
     assert "stop_only_closure_continuation_spine" in text
     assert "Codex Stop" in text
     assert "UserPromptSubmit `hookSpecificOutput.additionalContext`" in text
-    assert "decision_contract_retained_spine_to_stop_only" in text
-    assert "pass_cortex_stop_only_retained_spine_gate0" in text
+    assert "pass_cortex_stop_only_retained_spine_live_gate1" in text
+    assert "Gate 1 passed" in text
     assert "stop_only_spine_contract.json" in text
+    assert "evaluator_design.json" in text
+    assert "v2_case_registry.json" in text
+    assert "live_plan.json" in text
+    assert "episode_table.jsonl" in text
+    assert "registered_live_command.json" in text
     assert "PostToolUse task-standard context" in text
     assert "PreToolUse denial" in text
     assert "PermissionRequest policy" in text
-    assert "failure_no_value" in text
-    assert "pass_clean_control_stable" in text
     assert "PostToolUse reactivation" in text
     assert "UserPromptSubmit active value reactivation" in text
+    assert "not_run_approval_required" in text
+    assert "not_run_registered_future_live_only" in text
+    assert "CORTEX_CODEX_APP_CLI_STOP_ONLY_RETAINED_SPINE_LIVE_APPROVED=approved" in text
     assert (
         "- Next product train after the current focus: "
-        "`cortex-stop-only-retained-spine-live-gate1`"
+        "`cortex-stop-only-retained-spine-live-run`"
     ) in text
-    assert "- Train: `cortex-stop-only-retained-spine-live-gate1`" in text
-    assert "no-live Stop-only retained-spine live-matrix interface gate" in text
-    assert "approval refusal" in text
+    assert "- Train: `cortex-stop-only-retained-spine-live-run`" in text
+    assert "approval-gated Stop-only retained-spine live matrix" in text
+    assert "60-row dry-run plan" in text
+    assert "registered approval refusal" in text
+    assert "separately approved live run" in text
     assert "`brain-capability-observation-and-inference` (deferred-by-current-task-standard-train)" in text
     assert "resume_verification" in text.lower()
     assert "hidden verifier" in text.lower()

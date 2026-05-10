@@ -26,11 +26,14 @@ from lab.cortex_effectiveness_evaluator import (
     RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE,
     RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT,
     RETAINED_SPINE_LIVE_APPROVAL_ENV,
+    STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_ENV,
+    STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_VALUE,
     EvaluatorEpisodeRow,
     build_retained_spine_clean_control_replication_executable_plan,
     build_retained_spine_clean_control_replication_plan,
     build_retained_spine_executable_live_matrix_plan,
     build_retained_spine_live_gate1_plan,
+    build_stop_only_retained_spine_live_gate1_plan,
     build_v2_executable_live_matrix_plan,
     build_v2_live_matrix_plan,
     build_live_matrix_plan,
@@ -55,6 +58,8 @@ from lab.cortex_effectiveness_evaluator import (
     run_cortex_retained_spine_live_matrix_materialization_remediation_gate0,
     run_cortex_retained_spine_measurement_stack_remediation_gate0,
     run_cortex_stop_only_retained_spine_gate0,
+    run_cortex_stop_only_retained_spine_live_gate1,
+    run_cortex_stop_only_retained_spine_live_matrix,
     run_cortex_simple_hook_baseline_gate0,
     stop_only_retained_spine_contract,
     validate_stop_only_retained_spine_contract,
@@ -1282,6 +1287,176 @@ def test_stop_only_retained_spine_cli_passes(tmp_path: Path) -> None:
     assert "pass_cortex_stop_only_retained_spine_gate0" in result.stdout
     assert (output_root / "stop_only_spine_contract.json").exists()
     assert (output_root / "summary.json").exists()
+
+
+def test_stop_only_retained_spine_live_gate1_builds_no_live_matrix(
+    tmp_path: Path,
+) -> None:
+    gate0_root = tmp_path / "gate0"
+    run_cortex_stop_only_retained_spine_gate0(output_root=gate0_root)
+    output_root = tmp_path / "gate1"
+
+    report = run_cortex_stop_only_retained_spine_live_gate1(
+        output_root=output_root,
+        gate0_contract_path=gate0_root / "stop_only_spine_contract.json",
+    )
+    live_plan = json.loads((output_root / "live_plan.json").read_text())
+    rows = [
+        json.loads(line)
+        for line in (output_root / "episode_table.jsonl").read_text().splitlines()
+    ]
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_cortex_stop_only_retained_spine_live_gate1"
+    assert report["live_trials_ran"] is False
+    assert report["model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+    assert report["active_policy_candidate"] == "stop_only_closure_continuation_spine"
+    assert report["next_train_if_pass"] == "cortex-stop-only-retained-spine-live-run"
+    assert report["checks"]["active_rows_use_stop_only_candidate"] is True
+    assert report["checks"]["active_rows_use_stop_only_model_io"] is True
+    assert report["checks"]["active_rows_disable_userpromptsubmit_context"] is True
+    assert report["checks"]["posttooluse_not_reactivated"] is True
+    assert report["checks"]["non_active_rows_lab_only"] is True
+    assert report["checks"]["simple_hook_support_context_metadata_only"] is True
+    assert report["checks"]["silent_rows_emit_no_model_visible_cortex_output"] is True
+    assert live_plan["matrix_id"] == "cortex_stop_only_retained_spine_live_gate1"
+    assert live_plan["row_count"] == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT
+    assert live_plan["approval"]["env"] == STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_ENV
+    assert live_plan["approval"]["without_approval_verdict"] == "not_run_approval_required"
+    assert live_plan["approval"]["future_live_command_registered_not_implemented_here"] is True
+    assert set(live_plan["arms"]) == set(ARMS)
+    assert set(live_plan["task_families"]) == set(TASK_FAMILIES)
+    assert all(str(case_id).endswith("_v2") for case_id in live_plan["case_ids"])
+    assert len(rows) == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT
+    assert all(
+        row["policy_candidate"] == "stop_only_closure_continuation_spine"
+        for row in live_plan["rows"]
+        if row["arm"] == "cortex_active_policy"
+    )
+    assert all(
+        row["arm_settings"]["enable_userpromptsubmit_task_standard"] is False
+        and row["arm_settings"]["enable_task_standard_text"] is False
+        for row in live_plan["rows"]
+        if row["arm"] == "cortex_active_policy"
+    )
+    assert all(
+        row["arm_settings"]["enable_posttooluse_task_standard_context"] is False
+        for row in live_plan["rows"]
+    )
+    assert all(
+        row["mission_objective"]["model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+        and row["mission_objective"]["product_spine"] == []
+        for row in live_plan["rows"]
+        if row["arm"] != "cortex_active_policy"
+    )
+    assert (output_root / "stop_only_spine_contract.json").exists()
+    assert (output_root / "v2_case_registry.json").exists()
+    assert (output_root / "registered_live_command.json").exists()
+
+
+def test_stop_only_retained_spine_live_gate1_plan_keeps_pair_seeds_matched(
+    tmp_path: Path,
+) -> None:
+    gate0_root = tmp_path / "gate0"
+    gate0_report = run_cortex_stop_only_retained_spine_gate0(output_root=gate0_root)
+    assert gate0_report["passed"] is True
+    contract = json.loads((gate0_root / "stop_only_spine_contract.json").read_text())
+
+    plan = build_stop_only_retained_spine_live_gate1_plan(contract=contract)
+
+    assert plan["row_count"] == len(ARMS) * len(TASK_FAMILIES) * LIVE_MATRIX_REPEAT_COUNT
+    for task_family in TASK_FAMILIES:
+        for repeat_index in range(1, LIVE_MATRIX_REPEAT_COUNT + 1):
+            seeds = {
+                row["workspace_seed"]
+                for row in plan["rows"]
+                if row["task_family"] == task_family
+                and int(row["repeat_index"]) == repeat_index
+            }
+            assert len(seeds) == 1
+    assert all(
+        row["policy_candidate"] != "stop_only_closure_continuation_spine"
+        for row in plan["rows"]
+        if row["arm"] != "cortex_active_policy"
+    )
+    assert all(
+        row["support_model_io_path"] == SIMPLE_HOOK_SUPPORT_MODEL_IO_PATH
+        for row in plan["rows"]
+        if row["arm"] == "simple_hook_baseline"
+    )
+
+
+def test_stop_only_retained_spine_live_matrix_placeholder_refuses_and_never_runs(
+    tmp_path: Path,
+) -> None:
+    refused = run_cortex_stop_only_retained_spine_live_matrix(
+        output_root=tmp_path / "refused",
+        approval_env={},
+    )
+    approved = run_cortex_stop_only_retained_spine_live_matrix(
+        output_root=tmp_path / "approved",
+        approval_env={
+            STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_ENV: (
+                STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_VALUE
+            )
+        },
+    )
+
+    assert refused["verdict"] == "not_run_approval_required"
+    assert refused["live_trials_ran"] is False
+    assert refused["approval_env"] == STOP_ONLY_RETAINED_SPINE_LIVE_APPROVAL_ENV
+    assert approved["verdict"] == "not_run_registered_future_live_only"
+    assert approved["live_trials_ran"] is False
+    assert approved["future_live_runner_not_implemented_in_this_seam"] is True
+
+
+def test_stop_only_retained_spine_live_gate1_cli_passes_and_live_refuses(
+    tmp_path: Path,
+) -> None:
+    gate0_root = tmp_path / "gate0"
+    run_cortex_stop_only_retained_spine_gate0(output_root=gate0_root)
+    default_gate0 = (
+        Path(".cortex/live_validation/cortex_stop_only_retained_spine_gate0")
+        / "stop_only_spine_contract.json"
+    )
+    default_gate0.parent.mkdir(parents=True, exist_ok=True)
+    default_gate0.write_text(
+        (gate0_root / "stop_only_spine_contract.json").read_text(),
+        encoding="utf-8",
+    )
+    output_root = tmp_path / "gate1"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--stop-only-retained-spine-live-gate1",
+            "--require-pass",
+            "--output-root",
+            str(output_root),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    refused = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--stop-only-retained-spine-live-matrix",
+            "--output-root",
+            str(tmp_path / "live_placeholder"),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "pass_cortex_stop_only_retained_spine_live_gate1" in result.stdout
+    assert (output_root / "summary.json").exists()
+    assert "not_run_approval_required" in refused.stdout
 
 
 def test_retained_spine_live_gate1_builds_no_live_dry_run_matrix(

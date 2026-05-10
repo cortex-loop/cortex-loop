@@ -125,7 +125,8 @@
     "docs/recon/cortex_retained_spine_clean_control_replication_gate1.md",
     "docs/recon/cortex_retained_spine_clean_control_replication_live_run.md",
     "docs/recon/cortex_retained_active_policy_contraction_or_rebuild_decision.md",
-    "docs/recon/cortex_stop_only_retained_spine_gate0.md"
+    "docs/recon/cortex_stop_only_retained_spine_gate0.md",
+    "docs/recon/cortex_stop_only_retained_spine_live_gate1.md"
   ],
   "bio_to_code_matrix": [
     {
@@ -492,7 +493,8 @@
           "docs/recon/cortex_retained_spine_clean_control_replication_gate1.md",
           "docs/recon/cortex_retained_spine_clean_control_replication_live_run.md",
           "docs/recon/cortex_retained_active_policy_contraction_or_rebuild_decision.md",
-          "docs/recon/cortex_stop_only_retained_spine_gate0.md"
+          "docs/recon/cortex_stop_only_retained_spine_gate0.md",
+          "docs/recon/cortex_stop_only_retained_spine_live_gate1.md"
         ],
         "update_rule": "Add a recon when a proof or decision is earned; do not treat recon alone as shipping truth without status promotion."
       }
@@ -966,14 +968,14 @@
     ]
   },
   "next_product_train": {
-    "executive_benefit": "Wire the Stop-only retained spine into a no-live dry-run future matrix before any live run: prove `stop_only_closure_continuation_spine` can be scheduled against no-Cortex, simple-hook, and silent controls with Codex Stop as the only active product model-I/O path.",
-    "guardrail": "No live Codex run; no exact registered command/env pair may be executed in this Gate 1; no product deletion; no product code deletion. No product behavior change. Do not change product host behavior, model-visible Cortex text, evaluator scoring or fixtures, hidden-verifier boundary, root hook, SRE law, UserPromptSubmit active value policy, PostToolUse policy, PreToolUse denial, PermissionRequest policy, runtime snapshot dependency, or AlphaEvolve candidate evolution. Gate 1 may register a future approval-gated live command shape only; it must not execute it or claim value.",
-    "kill_rule": "Fail or stop if the seam runs live, lets active rows use UserPromptSubmit additionalContext or PostToolUse context, changes scoring or fixtures, treats Stop-only as value without live proof, reactivates PostToolUse, queues candidate evolution, or omits the Stop-only Gate 0 contract.",
+    "executive_benefit": "Run the registered Stop-only retained spine live matrix after explicit approval: test whether `stop_only_closure_continuation_spine` beats no-Cortex, simple-hook, and silent controls with Codex Stop as the only active product model-I/O path.",
+    "guardrail": "Live Codex is allowed only through the exact registered command/env pair and only with explicit current-turn approval. No product deletion; no product code deletion. No product behavior change. Do not change product host behavior, model-visible Cortex text, evaluator scoring or fixtures, hidden-verifier boundary, root hook, SRE law, UserPromptSubmit active value policy, PostToolUse policy, PreToolUse denial, PermissionRequest policy, runtime snapshot dependency, or AlphaEvolve candidate evolution. Positive value evidence requires user review and cannot become broad Cortex lift or shipping truth.",
+    "kill_rule": "Fail or stop if the seam runs a command other than the registered Stop-only live command, lets active rows use UserPromptSubmit additionalContext or PostToolUse context, changes scoring or fixtures, treats Stop-only as value without live proof, reactivates PostToolUse, queues candidate evolution, omits Gate 1 artifacts, or reports broad lift/product progress.",
     "last_reviewed_at": "2026-05-10T00:00:00+00:00",
-    "primary_metric": "No-live Gate 1 writes a dry-run four-arm Stop-only plan, preserves the Stop-only contract, proves active rows use only Stop closure/continuation model I/O, and registers approval refusal for a later live command.",
-    "slug": "cortex-stop-only-retained-spine-live-gate1",
-    "surface": "no-live Stop-only retained-spine live-matrix interface gate",
-    "why_now": "Gate 0 passed with `pass_cortex_stop_only_retained_spine_gate0`: it named `stop_only_closure_continuation_spine`, Codex Stop `hookSpecificOutput` or block stdout continuation as the only active product model-I/O path, UserPromptSubmit and PostToolUse as excluded active paths, and simple-hook parity/silent success as no-value blockers. The next safe step is a dry-run interface gate, not live execution."
+    "primary_metric": "Approval-gated Stop-only live run writes a 60-row artifact, preserves active rows as Stop-only, keeps UserPromptSubmit/PostToolUse excluded, and records whether active Stop-only beats no-Cortex and simple-hook without silent contamination or boundary dominance.",
+    "slug": "cortex-stop-only-retained-spine-live-run",
+    "surface": "approval-gated Stop-only retained-spine live matrix",
+    "why_now": "Gate 1 passed with `pass_cortex_stop_only_retained_spine_live_gate1`: it wrote a 60-row dry-run plan, preserved the Stop-only contract, proved active rows use only Stop closure/continuation model I/O, and registered approval refusal for `CORTEX_CODEX_APP_CLI_STOP_ONLY_RETAINED_SPINE_LIVE_APPROVED=approved python3 lab/cortex_effectiveness_evaluator.py --stop-only-retained-spine-live-matrix`. The next step is the separately approved live run, not policy tuning."
   },
   "packet_to_code_anchors": [
     {
@@ -1630,7 +1632,7 @@
     "The Codex App/CLI PostToolUse task-standard narrow live probe harness seam then added `--task-standard-posttooluse-live`, approval env `CORTEX_CODEX_APP_CLI_TASK_STANDARD_POSTTOOLUSE_APPROVED=approved`, product-only subject config checks, and verdict classification for pass/no-context/ignored-context/overcontrol/scoped-negative/fail without running a live Codex command. The live probe remains unearned until explicitly approved and run; this seam earns harness readiness only and preserves signed UserPromptSubmit text, Stop text, SRE law, scored matcher, thresholds, fixtures, scoring, root hooks, hidden-verifier boundaries, Sinkhorn/transport deferral, PreToolUse denial deferral, and PermissionRequest policy."
   ],
   "work_today": {
-    "note": "The Stop-only retained spine Gate 0 recorded verdict `pass_cortex_stop_only_retained_spine_gate0` in `docs/recon/cortex_stop_only_retained_spine_gate0.md` and wrote `.cortex/live_validation/cortex_stop_only_retained_spine_gate0/stop_only_spine_contract.json`, `gate0_report.json`, and `summary.json`. The active policy candidate is `stop_only_closure_continuation_spine`; the only active product model-I/O path is Codex Stop `hookSpecificOutput` or block stdout continuation. UserPromptSubmit `hookSpecificOutput.additionalContext`, PostToolUse task-standard context, PreToolUse denial, PermissionRequest policy, runtime snapshots, and AlphaEvolve candidate mutation are explicitly excluded from active value. Allowed support law is non-model-visible only: `TaskStandardSpine`, `cortex/sre/tool_evidence.py`, transcript/tool evidence, and closure-claim state. Evidence preserved: `run_20260509T112542Z` `failure_no_value`, `run_20260509T192719Z` raw/corrected retained-spine evidence, `run_20260510T122608Z` `pass_clean_control_stable`, `decision_contract_retained_spine_to_stop_only`, prior Stop-gating `pass_gating_observed`, and `task_standard_posttooluse_paired_value_live_20260508T120907Z` PostToolUse paired `failure_no_value`. This earns Stop-only contract readiness only: no Cortex value, no retained-spine value, no behavior lift, no product progress, no shipping promotion, no PostToolUse reactivation, no UserPromptSubmit active value reactivation, and no AlphaEvolve candidate-evolution permission. The next train is `cortex-stop-only-retained-spine-live-gate1`.",
-    "slug": "cortex-stop-only-retained-spine-gate0"
+    "note": "The Stop-only retained spine live Gate 1 recorded verdict `pass_cortex_stop_only_retained_spine_live_gate1` in `docs/recon/cortex_stop_only_retained_spine_live_gate1.md` and wrote `.cortex/live_validation/cortex_stop_only_retained_spine_live_gate1/stop_only_spine_contract.json`, `evaluator_design.json`, `v2_case_registry.json`, `live_plan.json`, `episode_table.jsonl`, `summary.json`, `leaderboard.json`, `failure_analysis.json`, and `registered_live_command.json`. The dry-run plan has 60 rows: four arms x five v2 task families x three repeats. Active rows use `stop_only_closure_continuation_spine` only, with Codex Stop `hookSpecificOutput` or block stdout continuation as the only active product model-I/O path. UserPromptSubmit `hookSpecificOutput.additionalContext` and PostToolUse task-standard context are disabled as active paths; non-active rows use `model_io_path=none_lab_proof_only`, simple-hook prompt context remains support metadata, and silent rows emit no model-visible Cortex output. The future live command is `python3 lab/cortex_effectiveness_evaluator.py --stop-only-retained-spine-live-matrix` with env `CORTEX_CODEX_APP_CLI_STOP_ONLY_RETAINED_SPINE_LIVE_APPROVED=approved`; without approval it returns `not_run_approval_required`, and with approval in this seam it returns `not_run_registered_future_live_only`. Simple-hook parity and silent success still block value. This earns Stop-only dry-run readiness only: no Cortex value, no retained-spine value, no behavior lift, no product progress, no shipping promotion, no PostToolUse reactivation, no UserPromptSubmit active value reactivation, and no AlphaEvolve candidate-evolution permission. The next train is `cortex-stop-only-retained-spine-live-run`.",
+    "slug": "cortex-stop-only-retained-spine-live-gate1"
   }
 }
