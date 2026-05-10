@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -22,8 +23,12 @@ from lab.cortex_effectiveness_evaluator import (
     SIMPLE_HOOK_LOC_LIMIT,
     SIMPLE_HOOK_SOURCE_PATH,
     TASK_FAMILIES,
+    RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV,
+    RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE,
+    RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT,
     RETAINED_SPINE_LIVE_APPROVAL_ENV,
     EvaluatorEpisodeRow,
+    build_retained_spine_clean_control_replication_plan,
     build_retained_spine_executable_live_matrix_plan,
     build_retained_spine_live_gate1_plan,
     build_v2_executable_live_matrix_plan,
@@ -44,6 +49,8 @@ from lab.cortex_effectiveness_evaluator import (
     run_cortex_retained_active_policy_spine_gate0,
     run_cortex_retained_active_policy_spine_live_gate1,
     run_cortex_retained_active_policy_spine_live_matrix,
+    run_cortex_retained_spine_clean_control_replication_gate1,
+    run_cortex_retained_spine_clean_control_replication_live,
     run_cortex_retained_spine_clean_control_stability_gate0,
     run_cortex_retained_spine_live_matrix_materialization_remediation_gate0,
     run_cortex_retained_spine_measurement_stack_remediation_gate0,
@@ -1494,6 +1501,138 @@ def test_retained_spine_clean_control_stability_gate0_fails_when_missing(
     assert "summary.json" in report["missing_artifacts"]["historical_run"]
 
 
+def test_retained_spine_clean_control_replication_gate1_plans_clean_control_only(
+    tmp_path: Path,
+) -> None:
+    report = run_cortex_retained_spine_clean_control_replication_gate1(
+        output_root=tmp_path,
+    )
+    plan = json.loads((tmp_path / "clean_control_replication_plan.json").read_text())
+    rows = plan["rows"]
+
+    assert report["passed"] is True
+    assert report["verdict"] == (
+        "pass_cortex_retained_spine_clean_control_replication_gate1"
+    )
+    assert report["live_trials_ran"] is False
+    assert report["case_id"] == "clean_verified_work_control_v2"
+    assert report["repeat_count"] == RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT
+    assert report["row_count"] == len(ARMS) * RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT
+    assert report["next_train_if_pass"] == (
+        "cortex-retained-spine-clean-control-replication-live-run"
+    )
+    assert report["retained_spine_value_claim_allowed"] is False
+    assert report["retained_spine_no_value_parity_interpretation_allowed"] is False
+    assert plan["matrix_id"] == "cortex_retained_spine_clean_control_replication_gate1"
+    assert plan["live_trials_ran"] is False
+    assert plan["case_ids"] == ["clean_verified_work_control_v2"]
+    assert plan["task_families"] == ["clean_verified_work_control"]
+    assert len(rows) == 20
+    assert {row["episode_id"] for row in rows} == {
+        f"retained_spine_clean_control_replication__clean_verified_work_control_v2__{repeat:03d}__{arm}"
+        for repeat in range(1, RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT + 1)
+        for arm in ARMS
+    }
+    assert {
+        int(row["repeat_index"])
+        for row in rows
+    } == set(range(1, RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT + 1))
+    assert all(row["case_materialization_status"].endswith("_no_live") for row in rows)
+    assert all(
+        row["arm_settings"]["enable_posttooluse_task_standard_context"] is False
+        for row in rows
+    )
+    assert all(
+        row["policy_candidate"] == "userpromptsubmit_stop_taskstandard_spine"
+        for row in rows
+        if row["arm"] == "cortex_active_policy"
+    )
+    assert all(
+        row["policy_candidate"] != "userpromptsubmit_stop_taskstandard_spine"
+        for row in rows
+        if row["arm"] != "cortex_active_policy"
+    )
+    assert all(
+        len(
+            {
+                row["workspace_seed"]
+                for row in rows
+                if int(row["repeat_index"]) == repeat
+            }
+        )
+        == 1
+        for repeat in range(1, RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT + 1)
+    )
+    assert set(DOMINANCE_GATES).issubset(set(plan["dominance_gates"]))
+    assert plan["future_verdict_handling"][
+        "no_cortex_readout_instability_reproduces"
+    ] == "cortex-retained-spine-clean-control-readout-remediation"
+    assert (tmp_path / "registered_live_command.json").exists()
+    assert (tmp_path / "episode_table.jsonl").exists()
+
+
+def test_retained_spine_clean_control_replication_plan_keeps_support_io_lab_only() -> None:
+    plan = build_retained_spine_clean_control_replication_plan()
+    rows = plan["rows"]
+
+    assert plan["registered_live_commands"] == [
+        {
+            "command": (
+                "python3 lab/cortex_effectiveness_evaluator.py "
+                "--retained-spine-clean-control-replication-live"
+            ),
+            "env": {
+                RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV: (
+                    RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE
+                )
+            },
+        }
+    ]
+    assert all(
+        row["mission_objective"]["model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+        and row["mission_objective"]["product_spine"] == []
+        for row in rows
+        if row["arm"] != "cortex_active_policy"
+    )
+    assert all(
+        row["support_model_io_path"] == SIMPLE_HOOK_SUPPORT_MODEL_IO_PATH
+        for row in rows
+        if row["arm"] == "simple_hook_baseline"
+    )
+    assert all(
+        row["mission_objective"]["model_io_path"]
+        == "codex_hooks_UserPromptSubmit_Stop_hookSpecificOutput_or_block_stdout"
+        and row["mission_objective"]["product_spine"]
+        for row in rows
+        if row["arm"] == "cortex_active_policy"
+    )
+
+
+def test_retained_spine_clean_control_replication_live_placeholder_refuses(
+    tmp_path: Path,
+) -> None:
+    refused = run_cortex_retained_spine_clean_control_replication_live(
+        output_root=tmp_path / "refused",
+        approval_env={},
+    )
+    approved_placeholder = run_cortex_retained_spine_clean_control_replication_live(
+        output_root=tmp_path / "approved",
+        approval_env={
+            RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV: (
+                RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE
+            )
+        },
+    )
+
+    assert refused["passed"] is False
+    assert refused["verdict"] == "not_run_approval_required"
+    assert refused["live_trials_ran"] is False
+    assert approved_placeholder["passed"] is False
+    assert approved_placeholder["verdict"] == "not_run_registered_future_live_only"
+    assert approved_placeholder["live_trials_ran"] is False
+    assert approved_placeholder["future_live_command_executable_in_this_seam"] is False
+
+
 def test_retained_spine_clean_control_stability_cli_passes(tmp_path: Path) -> None:
     result = subprocess.run(
         [
@@ -1511,6 +1650,63 @@ def test_retained_spine_clean_control_stability_cli_passes(tmp_path: Path) -> No
     )
 
     assert "pass_cortex_retained_spine_clean_control_stability_gate0" in result.stdout
+
+
+def test_retained_spine_clean_control_replication_gate1_cli_passes_and_live_refuses(
+    tmp_path: Path,
+) -> None:
+    gate_root = tmp_path / "retained_spine_clean_control_replication_gate1"
+    gate = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--retained-spine-clean-control-replication-gate1",
+            "--require-pass",
+            "--output-root",
+            str(gate_root),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    refusal = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--retained-spine-clean-control-replication-live",
+            "--output-root",
+            str(tmp_path / "retained_spine_clean_control_replication_refusal"),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    approved_placeholder = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--retained-spine-clean-control-replication-live",
+            "--output-root",
+            str(tmp_path / "retained_spine_clean_control_replication_approved"),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        env={
+            **os.environ,
+            RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV: (
+                RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE
+            ),
+        },
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "pass_cortex_retained_spine_clean_control_replication_gate1" in gate.stdout
+    assert (gate_root / "clean_control_replication_plan.json").exists()
+    assert "not_run_approval_required" in refusal.stdout
+    assert "not_run_registered_future_live_only" in approved_placeholder.stdout
 
 
 def test_retained_spine_measurement_stack_remediation_cli_passes(

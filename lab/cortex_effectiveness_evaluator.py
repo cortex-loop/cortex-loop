@@ -81,6 +81,9 @@ DEFAULT_RETAINED_SPINE_MEASUREMENT_STACK_REMEDIATION_OUTPUT_ROOT = Path(
 DEFAULT_RETAINED_SPINE_CLEAN_CONTROL_STABILITY_OUTPUT_ROOT = Path(
     ".cortex/live_validation/cortex_retained_spine_clean_control_stability_gate0"
 )
+DEFAULT_RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_GATE1_OUTPUT_ROOT = Path(
+    ".cortex/live_validation/cortex_retained_spine_clean_control_replication_gate1"
+)
 HISTORICAL_EFFECTIVENESS_LIVE_MATRIX_RUN_ROOT = (
     DEFAULT_LIVE_MATRIX_OUTPUT_ROOT / "run_20260508T221352Z"
 )
@@ -120,6 +123,10 @@ RETAINED_SPINE_LIVE_APPROVAL_ENV = (
     "CORTEX_CODEX_APP_CLI_RETAINED_SPINE_LIVE_APPROVED"
 )
 RETAINED_SPINE_LIVE_APPROVAL_VALUE = "approved"
+RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV = (
+    "CORTEX_CODEX_APP_CLI_RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVED"
+)
+RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE = "approved"
 EVALUATOR_LIVE_MATRIX_COMMAND = (
     "python3 lab/cortex_effectiveness_evaluator.py --live-matrix"
 )
@@ -132,7 +139,16 @@ RETAINED_SPINE_LIVE_GATE1_COMMAND = (
 RETAINED_SPINE_LIVE_MATRIX_COMMAND = (
     "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-live-matrix"
 )
+RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_LIVE_COMMAND = (
+    "python3 lab/cortex_effectiveness_evaluator.py "
+    "--retained-spine-clean-control-replication-live"
+)
 LIVE_MATRIX_REPEAT_COUNT = 3
+RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT = 5
+RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_CASE_ID = "clean_verified_work_control_v2"
+RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_TASK_FAMILY = (
+    "clean_verified_work_control"
+)
 SIMPLE_HOOK_LOC_LIMIT = 500
 SIMPLE_HOOK_SOURCE_PATH = Path(__file__).with_name("cortex_simple_hook_baseline.py")
 DEFAULT_LIVE_MATRIX_MODEL = "gpt-5.3-codex"
@@ -508,6 +524,23 @@ def registered_retained_spine_live_commands() -> list[dict[str, Any]]:
             "env": {
                 RETAINED_SPINE_LIVE_APPROVAL_ENV: (
                     RETAINED_SPINE_LIVE_APPROVAL_VALUE
+                )
+            },
+        }
+    ]
+
+
+def registered_retained_spine_clean_control_replication_live_commands() -> list[
+    dict[str, Any]
+]:
+    """Return the exact future clean-control replication command/env pair."""
+
+    return [
+        {
+            "command": RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_LIVE_COMMAND,
+            "env": {
+                RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV: (
+                    RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE
                 )
             },
         }
@@ -6650,6 +6683,481 @@ def run_cortex_retained_spine_clean_control_stability_gate0(
     return report
 
 
+def build_retained_spine_clean_control_replication_plan(
+    *,
+    repeat_count: int = RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT,
+    registry: Mapping[str, Any] | None = None,
+    contract: Mapping[str, Any] | None = None,
+    materializations: Mapping[str, Mapping[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Build the no-live clean-control-only retained-spine replication plan."""
+
+    case_registry = (
+        dict(registry) if registry is not None else cortex_effectiveness_v2_case_registry()
+    )
+    spine_contract = (
+        dict(contract)
+        if contract is not None
+        else retained_active_policy_spine_contract()
+    )
+    case_materializations = (
+        dict(materializations)
+        if materializations is not None
+        else cortex_effectiveness_v2_case_materializations()
+    )
+    registry_errors = validate_cortex_effectiveness_v2_case_registry(case_registry)
+    contract_errors = validate_retained_active_policy_spine_contract(spine_contract)
+    materialization_errors = _v2_case_materialization_errors(
+        registry=case_registry,
+        materializations=case_materializations,
+    )
+    registry_hash = _stable_hash(case_registry)
+    contract_hash = _stable_hash(spine_contract)
+    cases = (
+        case_registry.get("cases")
+        if isinstance(case_registry.get("cases"), list)
+        else []
+    )
+    cases_by_id = {
+        str(case["case_id"]): case
+        for case in cases
+        if isinstance(case, Mapping) and isinstance(case.get("case_id"), str)
+    }
+    clean_case = cases_by_id.get(RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_CASE_ID)
+    clean_materialization = case_materializations.get(
+        RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_CASE_ID
+    )
+    case_errors: list[str] = []
+    if not isinstance(clean_case, Mapping):
+        case_errors.append(
+            f"{RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_CASE_ID}: registry case missing"
+        )
+    elif clean_case.get("task_family") != (
+        RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_TASK_FAMILY
+    ):
+        case_errors.append(
+            f"{RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_CASE_ID}: task_family invalid"
+        )
+    if not isinstance(clean_materialization, Mapping):
+        case_errors.append(
+            f"{RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_CASE_ID}: materialization missing"
+        )
+
+    rows: list[dict[str, Any]] = []
+    if (
+        not registry_errors
+        and not contract_errors
+        and not materialization_errors
+        and not case_errors
+        and isinstance(clean_case, Mapping)
+        and isinstance(clean_materialization, Mapping)
+    ):
+        case_hash = _stable_hash(clean_case)
+        prompt = str(clean_materialization["prompt"])
+        for repeat_index in range(1, repeat_count + 1):
+            workspace_seed = _stable_hash(
+                {
+                    "matrix": "cortex_retained_spine_clean_control_replication",
+                    "registry_hash": registry_hash,
+                    "retained_spine_contract_hash": contract_hash,
+                    "case_id": RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_CASE_ID,
+                    "repeat_index": repeat_index,
+                }
+            )
+            for arm in ARMS:
+                policy_candidate = _retained_spine_policy_candidate_for_arm(arm)
+                row = _row(
+                    arm,
+                    task_family=RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_TASK_FAMILY,
+                    case_id=RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_CASE_ID,
+                    repeat_index=repeat_index,
+                    policy_candidate=policy_candidate,
+                    source="retained_spine_clean_control_replication_gate1_plan",
+                    expected_verdict=(
+                        "not_run_retained_spine_clean_control_replication_gate1"
+                    ),
+                    notes=(
+                        "Clean-control replication dry-run schedule only; no "
+                        "live Codex command, fixture change, scoring change, "
+                        "or product behavior change executed."
+                    ),
+                    mission_objective=_retained_spine_mission_objective_for_row(
+                        arm=arm,
+                        task_family=(
+                            RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_TASK_FAMILY
+                        ),
+                        policy_candidate=policy_candidate,
+                    ),
+                    live_trials_ran=False,
+                    root_config_mutation=False,
+                    runtime_snapshot_loaded=False,
+                    hidden_verifier_leakage=False,
+                    trace_ambiguity=False,
+                    repeated_intervention_loop=False,
+                    overcontrol=False,
+                    model_visible_cortex_output_count=0,
+                    v2_case_registry_hash=registry_hash,
+                    v2_case_spec_hash=case_hash,
+                    retained_spine_contract_hash=contract_hash,
+                    case_materialized=True,
+                    arm_model_io_path=_retained_spine_model_io_path(arm),
+                    support_model_io_path=_retained_spine_support_model_io_path(arm),
+                    workspace_seed=workspace_seed,
+                )
+                row = EvaluatorEpisodeRow(
+                    **{
+                        **row.to_json(),
+                        "episode_id": (
+                            "retained_spine_clean_control_replication__"
+                            f"{RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_CASE_ID}__"
+                            f"{repeat_index:03d}__{arm}"
+                        ),
+                    }
+                )
+                payload = row.to_json()
+                payload.update(
+                    {
+                        "prompt": prompt,
+                        "prompt_hash": _stable_hash(prompt),
+                        "workspace_setup": clean_materialization[
+                            "workspace_setup"
+                        ],
+                        "verifier": clean_materialization["verifier"],
+                        "workspace_seed": workspace_seed,
+                        "arm_settings": _retained_spine_arm_settings(arm),
+                        "registry_id": case_registry["registry_id"],
+                        "registry_hash": registry_hash,
+                        "case_spec_hash": case_hash,
+                        "case_registry_version": case_registry["version"],
+                        "v1_failure_link": clean_case["v1_failure_link"],
+                        "case_measurement_rationale": clean_case[
+                            "measurement_rationale"
+                        ],
+                        "case_acceptance_criteria": clean_case[
+                            "acceptance_criteria"
+                        ],
+                        "case_forbidden_shortcuts": clean_case[
+                            "forbidden_shortcuts"
+                        ],
+                        "dominance_gates": list(clean_case["dominance_gates"]),
+                        "retained_spine_id": spine_contract["retained_spine_id"],
+                        "retained_spine_contract_hash": contract_hash,
+                        "retained_spine_components": [
+                            component["component_id"]
+                            for component in spine_contract[
+                                "retained_spine_components"
+                            ]
+                        ],
+                        "posttooluse_role_demoted": True,
+                        "support_model_io_path": _retained_spine_support_model_io_path(
+                            arm
+                        ),
+                        "approval": {
+                            "env": (
+                                RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV
+                            ),
+                            "required_value": (
+                                RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE
+                            ),
+                            "without_approval_verdict": (
+                                "not_run_approval_required"
+                            ),
+                            "with_approval_verdict_this_seam": (
+                                "not_run_registered_future_live_only"
+                            ),
+                        },
+                        "live_trials_ran": False,
+                        "case_materialization_status": (
+                            "materialized_clean_control_replication_gate1_no_live"
+                        ),
+                    }
+                )
+                rows.append(payload)
+
+    future_verdict_handling = {
+        "no_cortex_stable_boundaries_clean": (
+            "cortex-retained-active-policy-contraction-or-rebuild-decision"
+        ),
+        "no_cortex_readout_instability_reproduces": (
+            "cortex-retained-spine-clean-control-readout-remediation"
+        ),
+        "silent_arm_model_visible_or_support_leak": (
+            "cortex-retained-spine-silent-arm-isolation-remediation"
+        ),
+        "active_arm_overcontrols_clean_work": "cortex-retained-spine-boundary-remediation",
+        "boundary_failure_or_missing_artifact": (
+            "cortex-retained-spine-clean-control-replication-live-remediation"
+        ),
+    }
+    return {
+        "matrix_id": "cortex_retained_spine_clean_control_replication_gate1",
+        "live_trials_ran": False,
+        "repeat_count": repeat_count,
+        "row_count": len(rows),
+        "expected_row_count": len(ARMS) * repeat_count,
+        "arms": list(ARMS),
+        "task_families": [RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_TASK_FAMILY],
+        "case_ids": [RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_CASE_ID]
+        if clean_case
+        else [],
+        "v2_case_registry": {
+            "registry_id": case_registry.get("registry_id"),
+            "version": case_registry.get("version"),
+            "hash": registry_hash,
+            "validation_errors": list(registry_errors),
+        },
+        "retained_spine": {
+            "retained_spine_id": spine_contract.get("retained_spine_id"),
+            "policy_candidate": spine_contract.get(
+                "retained_policy_candidate_for_next_gate",
+                {},
+            ).get("policy_candidate"),
+            "hash": contract_hash,
+            "validation_errors": list(contract_errors),
+        },
+        "materialization_errors": list(materialization_errors),
+        "case_errors": case_errors,
+        "executable_future_live_runner_implemented": False,
+        "registered_live_commands": (
+            registered_retained_spine_clean_control_replication_live_commands()
+        ),
+        "dominance_gates": list(DOMINANCE_GATES),
+        "interpretation_boundaries": [
+            "simple_hook_parity_blocks_value",
+            "silent_success_blocks_value",
+            "no_cortex_readout_instability_is_not_cortex_value",
+            "active_clean_control_intervention_is_overcontrol",
+            "posttooluse_reactivation_blocks_interpretation",
+            "root_config_mutation_blocks_interpretation",
+            "runtime_snapshot_blocks_interpretation",
+            "hidden_verifier_leakage_blocks_interpretation",
+        ],
+        "future_verdict_handling": future_verdict_handling,
+        "workspace_isolation": {
+            "mode": "isolated_workspace_per_row_with_matched_repeat_seed",
+            "matched_seed_fields": [
+                "registry_hash",
+                "retained_spine_contract_hash",
+                "case_id",
+                "repeat_index",
+            ],
+            "row_identity_fields": ["case_id", "repeat_index", "arm"],
+            "root_config_mutation_allowed": False,
+            "runtime_snapshot_allowed": False,
+        },
+        "approval": {
+            "env": RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV,
+            "required_value": RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE,
+            "without_approval_verdict": "not_run_approval_required",
+            "with_approval_verdict_this_seam": (
+                "not_run_registered_future_live_only"
+            ),
+            "future_live_command_registered_not_implemented_here": True,
+        },
+        "reports": [
+            "clean_control_replication_plan.json",
+            "episode_table.jsonl",
+            "gate1_report.json",
+            "summary.json",
+            "registered_live_command.json",
+        ],
+        "rows": rows,
+    }
+
+
+def run_cortex_retained_spine_clean_control_replication_gate1(
+    output_root: Path | str = DEFAULT_RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_GATE1_OUTPUT_ROOT,
+) -> dict[str, Any]:
+    """Register a no-live retained-spine clean-control replication plan."""
+
+    root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
+    plan = build_retained_spine_clean_control_replication_plan()
+    rows = [_episode_row_from_json(row) for row in plan["rows"]]
+    mission_contract_errors = validate_episode_rows_mission_contract(rows)
+    episode_table_path = root / "episode_table.jsonl"
+    write_episode_table(episode_table_path, rows)
+    registered_command = {
+        "registered_live_commands": plan["registered_live_commands"],
+        "approval": plan["approval"],
+        "future_live_command_executable_in_this_seam": False,
+    }
+    repeats = {
+        int(row["repeat_index"])
+        for row in plan["rows"]
+        if row["case_id"] == RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_CASE_ID
+    }
+    checks = {
+        "live_trials_not_run": plan["live_trials_ran"] is False,
+        "single_clean_control_case_only": plan["case_ids"]
+        == [RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_CASE_ID]
+        and plan["task_families"]
+        == [RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_TASK_FAMILY],
+        "row_count_matches_replication_plan": plan["row_count"]
+        == len(ARMS) * RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT,
+        "all_required_arms_scheduled": set(plan["arms"]) == set(ARMS)
+        and all(
+            {row["arm"] for row in plan["rows"] if int(row["repeat_index"]) == repeat}
+            == set(ARMS)
+            for repeat in range(
+                1,
+                RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT + 1,
+            )
+        ),
+        "five_repeats_scheduled": repeats
+        == set(
+            range(
+                1,
+                RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT + 1,
+            )
+        ),
+        "workspace_seeds_matched_across_arms": all(
+            len(
+                {
+                    row["workspace_seed"]
+                    for row in plan["rows"]
+                    if int(row["repeat_index"]) == repeat
+                }
+            )
+            == 1
+            for repeat in range(
+                1,
+                RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT + 1,
+            )
+        ),
+        "active_rows_use_retained_spine_only": all(
+            row["policy_candidate"] == "userpromptsubmit_stop_taskstandard_spine"
+            for row in plan["rows"]
+            if row["arm"] == "cortex_active_policy"
+        ),
+        "posttooluse_not_reactivated": all(
+            row["arm_settings"]["enable_posttooluse_task_standard_context"] is False
+            for row in plan["rows"]
+        ),
+        "mission_contract_preserved": not mission_contract_errors,
+        "registered_future_live_command": registered_command[
+            "registered_live_commands"
+        ]
+        == registered_retained_spine_clean_control_replication_live_commands(),
+        "future_live_placeholder_only": plan["approval"][
+            "future_live_command_registered_not_implemented_here"
+        ]
+        is True,
+        "dominance_boundaries_registered": set(DOMINANCE_GATES).issubset(
+            set(plan["dominance_gates"])
+        )
+        and all(plan["interpretation_boundaries"]),
+        "v2_registry_valid": not plan["v2_case_registry"]["validation_errors"],
+        "retained_spine_contract_valid": not plan["retained_spine"][
+            "validation_errors"
+        ],
+        "materialization_valid": not plan["materialization_errors"]
+        and not plan["case_errors"],
+        "episode_table_written": episode_table_path.exists(),
+    }
+    passed = all(checks.values())
+    report = {
+        "passed": passed,
+        "verdict": (
+            "pass_cortex_retained_spine_clean_control_replication_gate1"
+            if passed
+            else "failure_cortex_retained_spine_clean_control_replication_gate1"
+        ),
+        "failure_reason": None if passed else "clean_control_replication_gate1_failed",
+        "live_trials_ran": False,
+        "model_io_path": LAB_PROOF_MODEL_IO_PATH,
+        "case_id": RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_CASE_ID,
+        "task_family": RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_TASK_FAMILY,
+        "repeat_count": RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT,
+        "row_count": plan["row_count"],
+        "expected_row_count": plan["expected_row_count"],
+        "retained_spine_id": plan["retained_spine"]["retained_spine_id"],
+        "policy_candidate": "userpromptsubmit_stop_taskstandard_spine",
+        "posttooluse_reactivated_as_earned_policy": False,
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": False,
+        "broad_cortex_lift_claim_allowed": False,
+        "codex_app_parity_claim_allowed": False,
+        "shipping_promotion_claim_allowed": False,
+        "product_progress_claim_allowed": False,
+        "alphaevolve_candidate_evolution_allowed": False,
+        "retained_spine_value_claim_allowed": False,
+        "retained_spine_no_value_parity_interpretation_allowed": False,
+        "next_train_if_pass": "cortex-retained-spine-clean-control-replication-live-run",
+        "next_train_if_fail": (
+            "cortex-retained-spine-clean-control-replication-gate1-remediation"
+        ),
+        "artifact_paths": {
+            "clean_control_replication_plan": "clean_control_replication_plan.json",
+            "episode_table": "episode_table.jsonl",
+            "gate1_report": "gate1_report.json",
+            "summary": "summary.json",
+            "registered_live_command": "registered_live_command.json",
+        },
+        "registered_live_commands": plan["registered_live_commands"],
+        "future_verdict_handling": plan["future_verdict_handling"],
+        "checks": checks,
+        "mission_contract_errors": list(mission_contract_errors),
+        "registry_validation_errors": list(
+            plan["v2_case_registry"]["validation_errors"]
+        ),
+        "contract_validation_errors": list(plan["retained_spine"]["validation_errors"]),
+        "materialization_errors": list(plan["materialization_errors"]),
+        "case_errors": list(plan["case_errors"]),
+    }
+    _write_json(root / "clean_control_replication_plan.json", plan)
+    _write_json(root / "registered_live_command.json", registered_command)
+    _write_json(root / "gate1_report.json", report)
+    _write_json(root / "summary.json", report)
+    return report
+
+
+def run_cortex_retained_spine_clean_control_replication_live(
+    output_root: Path | str = DEFAULT_RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_GATE1_OUTPUT_ROOT,
+    *,
+    approval_env: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    """Refusal-only placeholder for the future clean-control replication live run."""
+
+    env = approval_env if approval_env is not None else os.environ
+    root = Path(output_root)
+    root.mkdir(parents=True, exist_ok=True)
+    approved = (
+        env.get(RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV)
+        == RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE
+    )
+    report = {
+        "passed": False,
+        "verdict": (
+            "not_run_registered_future_live_only"
+            if approved
+            else "not_run_approval_required"
+        ),
+        "live_trials_ran": False,
+        "approval_required": not approved,
+        "approval_env": RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_ENV,
+        "required_value": RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_APPROVAL_VALUE,
+        "registered_live_commands": (
+            registered_retained_spine_clean_control_replication_live_commands()
+        ),
+        "future_live_command_executable_in_this_seam": False,
+        "model_io_path": LAB_PROOF_MODEL_IO_PATH,
+        "case_id": RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_CASE_ID,
+        "repeat_count": RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_REPEAT_COUNT,
+        "behavior_lift_claim_allowed": False,
+        "exactness_value_lift_claim_allowed": False,
+        "broad_cortex_lift_claim_allowed": False,
+        "codex_app_parity_claim_allowed": False,
+        "shipping_promotion_claim_allowed": False,
+        "product_progress_claim_allowed": False,
+        "alphaevolve_candidate_evolution_allowed": False,
+        "retained_spine_value_claim_allowed": False,
+        "retained_spine_no_value_parity_interpretation_allowed": False,
+    }
+    _write_json(root / "summary.json", report)
+    return report
+
+
 def run_cortex_effectiveness_evaluator_gate0(
     output_root: Path | str = DEFAULT_OUTPUT_ROOT,
 ) -> dict[str, Any]:
@@ -6839,6 +7347,16 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="diagnose retained-spine clean-control readout stability without live trials",
     )
     parser.add_argument(
+        "--retained-spine-clean-control-replication-gate1",
+        action="store_true",
+        help="register the no-live retained-spine clean-control replication plan",
+    )
+    parser.add_argument(
+        "--retained-spine-clean-control-replication-live",
+        action="store_true",
+        help="future approval-gated retained-spine clean-control replication live command",
+    )
+    parser.add_argument(
         "--output-root",
         type=Path,
         default=None,
@@ -6868,6 +7386,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.retained_spine_materialization_remediation_gate0,
             args.retained_spine_measurement_stack_remediation_gate0,
             args.retained_spine_clean_control_stability_gate0,
+            args.retained_spine_clean_control_replication_gate1,
+            args.retained_spine_clean_control_replication_live,
         )
     )
     if selected_modes != 1:
@@ -6880,7 +7400,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             "--retained-spine-live-gate1, --retained-spine-live-matrix, "
             "--retained-spine-materialization-remediation-gate0, or "
             "--retained-spine-measurement-stack-remediation-gate0, or "
-            "--retained-spine-clean-control-stability-gate0"
+            "--retained-spine-clean-control-stability-gate0, or "
+            "--retained-spine-clean-control-replication-gate1, or "
+            "--retained-spine-clean-control-replication-live"
         )
 
     output_root = args.output_root
@@ -6913,6 +7435,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         elif args.retained_spine_clean_control_stability_gate0:
             output_root = DEFAULT_RETAINED_SPINE_CLEAN_CONTROL_STABILITY_OUTPUT_ROOT
+        elif args.retained_spine_clean_control_replication_gate1:
+            output_root = (
+                DEFAULT_RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_GATE1_OUTPUT_ROOT
+            )
+        elif args.retained_spine_clean_control_replication_live:
+            output_root = (
+                DEFAULT_RETAINED_SPINE_CLEAN_CONTROL_REPLICATION_GATE1_OUTPUT_ROOT
+            )
         elif args.live_matrix:
             output_root = DEFAULT_LIVE_MATRIX_OUTPUT_ROOT
         else:
@@ -6950,6 +7480,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     elif args.retained_spine_clean_control_stability_gate0:
         report = run_cortex_retained_spine_clean_control_stability_gate0(output_root)
+    elif args.retained_spine_clean_control_replication_gate1:
+        report = run_cortex_retained_spine_clean_control_replication_gate1(output_root)
+    elif args.retained_spine_clean_control_replication_live:
+        report = run_cortex_retained_spine_clean_control_replication_live(output_root)
     else:
         report = run_cortex_effectiveness_evaluator_live_matrix(output_root)
 

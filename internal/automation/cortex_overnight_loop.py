@@ -33,6 +33,7 @@ EVALUATOR_BUILD_BLOAT_EXEMPT_SLUGS = {
     "cortex-retained-spine-live-matrix-materialization-remediation",
     "cortex-retained-spine-measurement-stack-remediation",
     "cortex-retained-spine-clean-control-stability-gate0",
+    "cortex-retained-spine-clean-control-replication-gate1",
     "cortex-simple-hook-baseline-challenger",
     "cortex-automation-product-boundary-contract",
 }
@@ -59,6 +60,7 @@ EVALUATOR_AUTHORIZED_EXACT_SLUGS = {
     "cortex-retained-spine-live-matrix-materialization-remediation",
     "cortex-retained-spine-measurement-stack-remediation",
     "cortex-retained-spine-clean-control-stability-gate0",
+    "cortex-retained-spine-clean-control-replication-gate1",
 }
 ALLOWED_LIVE_SLUG_PARTS = (
     "evaluator",
@@ -227,6 +229,15 @@ CODE_OWNER_READS_BY_SLUG = {
         "tests/lab/test_cortex_effectiveness_evaluator.py",
         "tests/internal/test_docs_boundary.py",
     ),
+    "cortex-retained-spine-clean-control-replication-gate1": (
+        "lab/cortex_effectiveness_evaluator.py",
+        ".cortex/live_validation/cortex_retained_spine_clean_control_stability_gate0/clean_control_stability_report.json",
+        ".cortex/live_validation/cortex_retained_spine_clean_control_stability_gate0/no_cortex_readout_diagnosis.json",
+        ".cortex/live_validation/cortex_retained_spine_clean_control_stability_gate0/arm_isolation_report.json",
+        "docs/recon/cortex_retained_spine_clean_control_stability_gate0.md",
+        "tests/lab/test_cortex_effectiveness_evaluator.py",
+        "tests/internal/test_docs_boundary.py",
+    ),
 }
 ANTI_REINVENTION_SEARCHES_BY_SLUG = {
     "cortex-effectiveness-measurement-stack-rebuild": (
@@ -266,6 +277,10 @@ ANTI_REINVENTION_SEARCHES_BY_SLUG = {
         "rg -n \"clean_control_stability|clean_verified_work_control_v2|no_cortex_closure_readout_instability|silent_arm_model_io_isolated\" lab tests docs/recon internal .cortex/live_validation",
         "rg -n \"run_20260509T192719Z|mission_contract_error|failure_silent_perception_contamination|cortex-retained-spine-clean-control-stability-gate0\" internal/truth docs tests lab .cortex/live_validation",
     ),
+    "cortex-retained-spine-clean-control-replication-gate1": (
+        "rg -n \"clean_control_replication|clean_verified_work_control_v2|no_cortex_closure_readout_instability|retained-spine-clean-control-replication\" lab tests docs/recon internal .cortex/live_validation",
+        "rg -n \"retained-spine-clean-control-stability-gate0|run_20260509T192719Z|PostToolUse|userpromptsubmit_stop_taskstandard_spine\" internal/truth docs tests lab .cortex/live_validation",
+    ),
 }
 DEFAULT_ANTI_REINVENTION_SEARCHES = (
     "rg -n \"EvaluatorEpisodeRow|evaluate_cortex_effectiveness_rows|simple_hook_baseline|cortex_silent_perception|active_cortex\" lab tests internal",
@@ -284,11 +299,11 @@ CURRENT_BINDING_EVIDENCE = {
     "verdict": "failure_silent_perception_contamination",
     "interpretation": (
         "Materialization replay corrected the simple-hook support metadata "
-        "but preserved silent-contamination: clean_verified_work_control_v2 "
-        "repeat 1 let silent Cortex beat no-Cortex, while exactness repeat 2 "
-        "showed retained-spine active underperformance and zero family wins."
+        "but preserved silent-contamination. The stability Gate 0 narrowed "
+        "clean_verified_work_control_v2 repeat 1 to no-Cortex closure/evidence "
+        "readout instability with clean silent isolation."
     ),
-    "next_train": "cortex-retained-spine-clean-control-stability-gate0",
+    "next_train": "cortex-retained-spine-clean-control-replication-gate1",
     "forbidden_inference": (
         "Do not treat this as behavior lift, exactness value lift, product progress, "
         "shipping promotion, no-value parity, or permission for candidate evolution."
@@ -881,6 +896,17 @@ def _allowed_commands_for_slug(slug: str | None, git_state: GitState) -> tuple[s
         return (
             "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
             "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-clean-control-stability-gate0 --require-pass",
+            "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
+            "python3 -m pytest tests/internal/test_docs_boundary.py -q",
+            "python3 internal/truth/generate_status.py --check",
+            "python3 internal/truth/generate_cortex_doc.py --check",
+            "git diff --check",
+        )
+    if slug == "cortex-retained-spine-clean-control-replication-gate1":
+        return (
+            "python3 -m pytest tests/lab/test_cortex_effectiveness_evaluator.py -q",
+            "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-clean-control-replication-gate1 --require-pass",
+            "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-clean-control-replication-live",
             "python3 -m pytest tests/internal/test_cortex_overnight_loop.py -q",
             "python3 -m pytest tests/internal/test_docs_boundary.py -q",
             "python3 internal/truth/generate_status.py --check",

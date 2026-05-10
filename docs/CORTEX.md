@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-retained-spine-clean-control-stability-gate0`
-### Next Product Train
 - Slug: `cortex-retained-spine-clean-control-replication-gate1`
-- Surface: `no-live retained-spine clean-control replication gate`
-- Why now: The retained-spine clean-control stability Gate 0 passed and preserved raw `fail` / `mission_contract_error`, corrected replay `failure_silent_perception_contamination` / `silent_perception_beat_no_cortex`, PostToolUse disabled, retained-spine active rows only, unchanged root config, absent runtime snapshot, and hidden-verifier boundary. It classified clean-control repeat 1 as `no_cortex_closure_readout_instability` with `stdout_stderr_and_verifier_artifacts`: no-Cortex reported `command not found: python` and did not report the successful `python3` fallback, while the comparison arms reported closure evidence. The diagnosis found silent-arm model I/O isolation clean, so the immediate blocker is narrow clean-control replication readiness rather than policy tuning, live matrix rerun, or candidate evolution.
+### Next Product Train
+- Slug: `cortex-retained-spine-clean-control-replication-live-run`
+- Surface: `approval-gated retained-spine clean-control replication live run`
+- Why now: The no-live retained-spine clean-control replication Gate 1 passed and wrote `clean_control_replication_plan.json`, `episode_table.jsonl`, `gate1_report.json`, `summary.json`, and `registered_live_command.json` under `.cortex/live_validation/cortex_retained_spine_clean_control_replication_gate1/`. It registered a future approval-gated command but did not run live: without approval it returns `not_run_approval_required`; with approval in that seam it returns `not_run_registered_future_live_only`. The plan is clean-control-only, uses `clean_verified_work_control_v2`, schedules five repeats across no-Cortex, simple-hook, silent Cortex, and active Cortex, keeps active rows on `userpromptsubmit_stop_taskstandard_spine`, keeps PostToolUse disabled and role-demoted, preserves simple-hook support I/O as lab-only metadata, keeps non-active mission rows at `model_io_path=none_lab_proof_only` with `product_spine=[]`, and allows no Cortex value, product progress, live result interpretation, full matrix rerun, PostToolUse reactivation, or AlphaEvolve candidate evolution.
 
 ### Research Lines Under Evaluation
 

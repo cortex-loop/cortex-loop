@@ -349,6 +349,10 @@ Active docs:
   no-live diagnosis of `clean_verified_work_control_v2` repeat 1 as
   no-Cortex closure/evidence readout instability, queueing a narrow
   clean-control replication gate before any retained-spine value interpretation
+- [Cortex Retained-Spine Clean-Control Replication Gate 1](recon/cortex_retained_spine_clean_control_replication_gate1.md) —
+  no-live registration of a 20-row clean-control-only retained-spine
+  replication plan and refusal-only future live command before any live result
+  interpretation
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation

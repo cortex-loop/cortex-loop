@@ -300,6 +300,34 @@ def test_classify_next_work_allows_retained_spine_clean_control_stability_gate0(
     )
 
 
+def test_classify_next_work_allows_retained_spine_clean_control_replication_gate1() -> None:
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-retained-spine-clean-control-replication-gate1",
+            surface="no-live retained-spine clean-control replication gate",
+            guardrail="No live Codex run in this seam.",
+            primary_metric=(
+                "Register a clean-control-only replication plan without "
+                "rerunning live or changing product policy."
+            ),
+            extra={"registered_live_commands": []},
+        ),
+        _git(),
+    )
+
+    assert decision.status == "ready"
+    assert decision.live_codex_allowed is False
+    assert decision.safe_to_auto_merge is True
+    assert (
+        "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-clean-control-replication-gate1 --require-pass"
+        in decision.allowed_commands
+    )
+    assert (
+        "python3 lab/cortex_effectiveness_evaluator.py --retained-spine-clean-control-replication-live"
+        in decision.allowed_commands
+    )
+
+
 def test_classify_next_work_allows_registered_v2_live_but_never_auto_merges() -> None:
     decision = loop.classify_next_work(
         _status(
@@ -343,7 +371,7 @@ def test_fresh_chat_work_packet_forces_repo_grounding_and_anti_reinvention() -> 
     assert packet.model_io_path == loop.LAB_PROOF_MODEL_IO_PATH
     assert packet.current_binding_evidence["artifact"] == "run_20260509T192719Z"
     assert packet.current_binding_evidence["verdict"] == "failure_silent_perception_contamination"
-    assert "zero family wins" in packet.current_binding_evidence["interpretation"]
+    assert "no-Cortex closure/evidence readout instability" in packet.current_binding_evidence["interpretation"]
     assert "internal/truth/cortex_status.json" in packet.required_boot_reads
     assert "lab/cortex_effectiveness_evaluator.py" in packet.required_code_owner_reads
     assert any("failure_silent_perception_contamination" in command for command in packet.anti_reinvention_searches)
