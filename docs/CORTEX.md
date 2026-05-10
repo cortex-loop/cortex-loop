@@ -325,11 +325,11 @@ state, read `internal/truth/cortex_status.json` directly.
 
 ### Current Train
 
-- Slug: `cortex-retained-active-policy-contraction-or-rebuild-decision`
-### Next Product Train
 - Slug: `cortex-stop-only-retained-spine-gate0`
-- Surface: `no-live Stop-only retained active-policy proof gate`
-- Why now: The contraction decision `decision_contract_retained_spine_to_stop_only` found that UserPromptSubmit task-standard formation cannot remain the center of active value search after simple-hook parity, silent success blockers, and active clean-control underperformance. Stop closure / continuation still has independent product model-I/O evidence from prior task-standard Stop-gating runs, so the disciplined next step is to isolate Stop-only before any deletion, rebuild, live rerun, or candidate evolution.
+### Next Product Train
+- Slug: `cortex-stop-only-retained-spine-live-gate1`
+- Surface: `no-live Stop-only retained-spine live-matrix interface gate`
+- Why now: Gate 0 passed with `pass_cortex_stop_only_retained_spine_gate0`: it named `stop_only_closure_continuation_spine`, Codex Stop `hookSpecificOutput` or block stdout continuation as the only active product model-I/O path, UserPromptSubmit and PostToolUse as excluded active paths, and simple-hook parity/silent success as no-value blockers. The next safe step is a dry-run interface gate, not live execution.
 
 ### Research Lines Under Evaluation
 

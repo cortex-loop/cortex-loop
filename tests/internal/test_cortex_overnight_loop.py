@@ -165,6 +165,30 @@ def test_classify_next_work_allows_retained_active_policy_spine_gate0() -> None:
     )
 
 
+def test_classify_next_work_allows_stop_only_retained_spine_gate0() -> None:
+    decision = loop.classify_next_work(
+        _status(
+            slug="cortex-stop-only-retained-spine-gate0",
+            surface="no-live Stop-only retained active-policy proof gate",
+            guardrail="No live Codex run in this seam.",
+            primary_metric=(
+                "Produce a Stop-only retained spine contract with exact Stop "
+                "model-I/O path, support law, excluded active paths, and "
+                "forbidden claims."
+            ),
+        ),
+        _git(),
+    )
+
+    assert decision.status == "ready"
+    assert decision.safe_to_auto_merge is True
+    assert decision.live_codex_allowed is False
+    assert (
+        "python3 lab/cortex_effectiveness_evaluator.py --stop-only-retained-spine-gate0 --require-pass"
+        in decision.allowed_commands
+    )
+
+
 def test_classify_next_work_allows_retained_spine_live_gate1_no_live() -> None:
     decision = loop.classify_next_work(
         _status(

@@ -362,6 +362,9 @@ Active docs:
   no-live contraction decision recording that the composed retained spine
   still earned no value after stable clean-control replication, contracting
   the next proof to a Stop-only retained spine Gate 0
+- [Cortex Stop-Only Retained Spine Gate 0](recon/cortex_stop_only_retained_spine_gate0.md) —
+  no-live contract proof defining `stop_only_closure_continuation_spine` with
+  Codex Stop as the only future active product model-I/O path
 - [Cortex Overnight Evaluator Automation Hardening](recon/cortex_overnight_evaluator_automation_hardening.md) —
   internal guardrail seam adding a local overnight runner contract, digest,
   bloat metrics, safe auto-merge boundaries, and evaluator-only automation

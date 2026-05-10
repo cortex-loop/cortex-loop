@@ -54,7 +54,10 @@ from lab.cortex_effectiveness_evaluator import (
     run_cortex_retained_spine_clean_control_stability_gate0,
     run_cortex_retained_spine_live_matrix_materialization_remediation_gate0,
     run_cortex_retained_spine_measurement_stack_remediation_gate0,
+    run_cortex_stop_only_retained_spine_gate0,
     run_cortex_simple_hook_baseline_gate0,
+    stop_only_retained_spine_contract,
+    validate_stop_only_retained_spine_contract,
 )
 from lab.cortex_simple_hook_baseline import (
     assess_simple_hook_closure,
@@ -1188,6 +1191,96 @@ def test_retained_active_policy_spine_cli_passes(tmp_path: Path) -> None:
 
     assert "pass_cortex_retained_active_policy_spine_gate0" in result.stdout
     assert (output_root / "retained_spine_contract.json").exists()
+    assert (output_root / "summary.json").exists()
+
+
+def test_stop_only_retained_spine_gate0_writes_contract(tmp_path: Path) -> None:
+    report = run_cortex_stop_only_retained_spine_gate0(output_root=tmp_path)
+    contract = json.loads((tmp_path / "stop_only_spine_contract.json").read_text())
+
+    assert report["passed"] is True
+    assert report["verdict"] == "pass_cortex_stop_only_retained_spine_gate0"
+    assert report["model_io_path"] == LAB_PROOF_MODEL_IO_PATH
+    assert report["live_trials_ran"] is False
+    assert report["active_policy_candidate"] == "stop_only_closure_continuation_spine"
+    assert (
+        report["active_product_model_io_path"]
+        == "Codex Stop hookSpecificOutput or block stdout continuation only"
+    )
+    assert "taskstandardspine_state_law" in report["allowed_support_law_ids"]
+    assert "sre_tool_evidence_classifier" in report["allowed_support_law_ids"]
+    assert "UserPromptSubmit task-standard formation" in report[
+        "excluded_active_model_io_surfaces"
+    ]
+    assert "PostToolUse task-standard context" in report[
+        "excluded_active_model_io_surfaces"
+    ]
+    assert report["checks"]["active_model_io_path_is_stop_only"] is True
+    assert report["checks"]["userpromptsubmit_excluded_from_active_value"] is True
+    assert report["checks"]["posttooluse_excluded_from_active_value"] is True
+    assert report["checks"]["simple_hook_parity_blocks_value"] is True
+    assert report["checks"]["silent_success_blocks_value"] is True
+    assert report["behavior_lift_claim_allowed"] is False
+    assert report["product_progress_claim_allowed"] is False
+    assert report["alphaevolve_candidate_evolution_allowed"] is False
+    assert report["next_train_if_pass"] == "cortex-stop-only-retained-spine-live-gate1"
+    assert contract["active_policy_candidate"] == "stop_only_closure_continuation_spine"
+    assert contract["future_proof_criteria"]["simple_hook_parity_blocks_value"] is True
+    assert contract["future_proof_criteria"]["silent_success_blocks_value"] is True
+    assert contract["future_proof_criteria"][
+        "userpromptsubmit_active_context_blocks_stop_only_interpretation"
+    ] is True
+    assert contract["future_proof_criteria"][
+        "posttooluse_reactivation_blocks_interpretation"
+    ] is True
+    assert "run_20260509T112542Z" in str(contract["source_evidence"])
+    assert "run_20260509T192719Z" in str(contract["source_evidence"])
+    assert "run_20260510T122608Z" in str(contract["source_evidence"])
+    assert (tmp_path / "gate0_report.json").exists()
+    assert (tmp_path / "summary.json").exists()
+
+
+def test_stop_only_retained_spine_contract_rejects_non_stop_active_io() -> None:
+    contract = stop_only_retained_spine_contract()
+    contract["active_product_model_io_path"] = (
+        "Codex UserPromptSubmit hookSpecificOutput.additionalContext"
+    )
+
+    errors = validate_stop_only_retained_spine_contract(contract)
+
+    assert any("must name Stop" in error for error in errors)
+    assert any("UserPromptSubmit" in error for error in errors)
+
+    contract = stop_only_retained_spine_contract()
+    contract["active_components"][0]["model_io_path"] = (
+        "Codex PostToolUse hookSpecificOutput.additionalContext"
+    )
+
+    errors = validate_stop_only_retained_spine_contract(contract)
+
+    assert any("active component model_io_path must name Stop" in error for error in errors)
+    assert any("PostToolUse" in error for error in errors)
+
+
+def test_stop_only_retained_spine_cli_passes(tmp_path: Path) -> None:
+    output_root = tmp_path / "stop_only_spine"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "lab/cortex_effectiveness_evaluator.py",
+            "--stop-only-retained-spine-gate0",
+            "--require-pass",
+            "--output-root",
+            str(output_root),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+
+    assert "pass_cortex_stop_only_retained_spine_gate0" in result.stdout
+    assert (output_root / "stop_only_spine_contract.json").exists()
     assert (output_root / "summary.json").exists()
 
 
